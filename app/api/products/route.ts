@@ -31,3 +31,5 @@ export async function GET() {
   const result = await turso.execute('SELECT * FROM catalog WHERE is_active = 1 ORDER BY created_at DESC');
   return NextResponse.json(result.rows);
 }
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
