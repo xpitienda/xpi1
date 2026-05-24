@@ -1,12 +1,10 @@
-// app/cart/page.tsx
 'use client';
 
 import { useCart } from '@/context/CartContext';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export default function CartPage() {
-  const { cart, removeFromCart, total, clearCart } = useCart();
+  const { cart, removeFromCart, clearCart, total } = useCart();
   const [sending, setSending] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -14,115 +12,97 @@ export default function CartPage() {
     setMounted(true);
   }, []);
 
-  const WHATSAPP_NUMBER = "573000000000"; 
-
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     setSending(true);
-    
-    let message = "🛍️ *Nuevo Pedido desde XPI Tienda*\n\n";
-    message += "📦 *Detalle del pedido:*\n";
-    
-    cart.forEach((item) => {
-      message += `- ${item.name} (x${item.quantity}): $${(item.price * item.quantity).toLocaleString()}\n`;
-    });
-
-    message += `\n💰 *TOTAL: $${total.toLocaleString()}*`;
-    message += "\n\n¡Quedo atento para coordinar el pago y envío!";
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    alert('¡Pedido realizado con éxito!');
     clearCart();
     setSending(false);
   };
 
-  // Mostrar loading hasta que monte
   if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p>Cargando carrito...</p>
-      </div>
-    );
+    return null;
   }
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <h1 className="text-4xl font-bold mb-4">Tu carrito está vacío 🛒</h1>
-        <p className="text-gray-500 mb-6">Agrega productos desde el catálogo.</p>
-        <Link 
-          href="/catalog" 
-          className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition"
-        >
-          Ir al Catálogo
-        </Link>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Tu carrito está vacío
+          </h1>
+          <a
+            href="/catalog"
+            className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Ver Catálogo
+          </a>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">🛒 Tu Carrito de Compras</h1>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          Carrito de Compras
+        </h1>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-4">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           {cart.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 bg-white p-4 rounded-lg shadow border">
-              <img 
-                src={item.image_url} 
-                alt={item.name} 
-                className="w-20 h-20 object-cover rounded border"
+            <div
+              key={item.id}
+              className="flex items-center gap-4 p-4 border-b last:border-b-0"
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-20 h-20 object-cover rounded"
               />
               <div className="flex-1">
-                <h3 className="font-bold text-lg">{item.name}</h3>
-                <p className="text-gray-500 text-sm">Cantidad: {item.quantity}</p>
-                <p className="text-green-600 font-bold">
-                  ${(item.price * item.quantity).toLocaleString()}
-                </p>
+                <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                <p className="text-gray-600">Precio: ${item.price}</p>
+                <p className="text-gray-600">Cantidad: {item.quantity}</p>
               </div>
-              <button
-                onClick={() => removeFromCart(item.id)}
-                className="text-red-500 hover:text-red-700 p-2 text-sm font-medium"
-              >
-                🗑️ Quitar
-              </button>
+              <div className="text-right">
+                <p className="font-bold text-gray-900">
+                  ${(item.price * item.quantity).toFixed(2)}
+                </p>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-red-600 hover:text-red-800 text-sm mt-2"
+                >
+                  Eliminar
+                </button>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow border h-fit sticky top-24">
-          <h2 className="text-xl font-bold mb-4">Resumen</h2>
-          
-          <div className="space-y-2 mb-4 text-gray-600">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>${total.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Envío</span>
-              <span>Gratis</span>
-            </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-lg font-semibold">Total:</span>
+            <span className="text-2xl font-bold text-purple-600">
+              ${total.toFixed(2)}
+            </span>
           </div>
 
-          <div className="border-t pt-4 mb-6">
-            <div className="flex justify-between text-xl font-bold">
-              <span>Total</span>
-              <span>${total.toLocaleString()}</span>
-            </div>
+          <div className="flex gap-4">
+            <button
+              onClick={clearCart}
+              className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Vaciar Carrito
+            </button>
+            <button
+              onClick={handleCheckout}
+              disabled={sending}
+              className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+            >
+              {sending ? 'Procesando...' : 'Finalizar Compra'}
+            </button>
           </div>
-
-          <button 
-            onClick={handleCheckout}
-            disabled={sending}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center gap-2"
-          >
-            {sending ? 'Procesando...' : '✅ Pedir por WhatsApp'}
-          </button>
-          
-          <p className="text-xs text-center text-gray-400 mt-2">
-            Te redirigiremos a WhatsApp para confirmar tu compra.
-          </p>
         </div>
       </div>
     </div>
