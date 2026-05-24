@@ -86,3 +86,6 @@ export default async function CatalogPage(props: {
     </div>
   );
 }
+// Evita que Next.js intente generar estáticamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
