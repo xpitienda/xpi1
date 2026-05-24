@@ -1,0 +1,6 @@
+﻿name = "xpitienda-r2-cors"
+type = "javascript"
+
+[[r2_buckets]]
+bucket_name = "xpitienda-images"
+variable_name = "BUCKET"

@@ -1,0 +1,42 @@
+// app/debug-url/page.tsx
+import { turso } from '@/lib/turso';
+
+export default async function DebugUrl() {
+  const result = await turso.execute({
+    sql: 'SELECT id, name, image_url FROM catalog ORDER BY created_at DESC',
+    args: [],
+  });
+
+  return (
+    <div className="p-10">
+      <h1 className="text-2xl font-bold mb-6">🔍 URLs Guardadas</h1>
+      <div className="space-y-4">
+        {result.rows.map((product: any) => (
+          <div key={product.id} className="bg-white p-4 rounded shadow">
+            <p><strong>Producto:</strong> {product.name}</p>
+            <p><strong>URL guardada:</strong></p>
+            <a 
+              href={product.image_url} 
+              target="_blank" 
+              className="text-blue-600 underline break-all"
+              rel="noreferrer"
+            >
+              {product.image_url}
+            </a>
+            <div className="mt-2">
+              <p><strong>¿Se ve?</strong></p>
+              <img 
+                src={product.image_url} 
+                alt={product.name}
+                className="max-w-xs border mt-2"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
