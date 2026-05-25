@@ -23,7 +23,7 @@ export default async function CatalogPage(props: {
     args.push(category);
   }
 
-  sql += ' ORDER BY created_at DESC';
+  sql += ' ORDER BY id DESC';
 
   const result = await turso.execute({ sql, args });
   const products = JSON.parse(JSON.stringify(result.rows));
