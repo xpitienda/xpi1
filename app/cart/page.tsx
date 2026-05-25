@@ -12,12 +12,17 @@ export default function CartPage() {
     setMounted(true);
   }, []);
 
-  const handleCheckout = async () => {
-    setSending(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert('¡Pedido realizado con éxito!');
-    clearCart();
-    setSending(false);
+  const handleCheckout = () => {
+    // Crear mensaje de WhatsApp con el resumen del carrito
+    const message = `¡Hola! Quiero finalizar mi compra:\n\n${cart
+      .map((item) => `- ${item.name} (x${item.quantity}): $${(item.price * item.quantity).toLocaleString('es-CO')}`)
+      .join('\n')}\n\n*Total: $${total.toLocaleString('es-CO')}*`;
+    
+    // Codificar para URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Redirigir a WhatsApp
+    window.open(`https://wa.me/573234475311?text=${encodedMessage}`, '_blank');
   };
 
   if (!mounted) {
@@ -58,7 +63,7 @@ export default function CartPage() {
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-20 h-20 object-cover rounded"
+                className="w-16 h-16 object-cover rounded"
               />
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">{item.name}</h3>
