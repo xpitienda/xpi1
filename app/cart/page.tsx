@@ -13,15 +13,11 @@ export default function CartPage() {
   }, []);
 
   const handleCheckout = () => {
-    // Crear mensaje de WhatsApp con el resumen del carrito
     const message = `¡Hola! Quiero finalizar mi compra:\n\n${cart
       .map((item) => `- ${item.name} (x${item.quantity}): $${(item.price * item.quantity).toLocaleString('es-CO')}`)
       .join('\n')}\n\n*Total: $${total.toLocaleString('es-CO')}*`;
     
-    // Codificar para URL
     const encodedMessage = encodeURIComponent(message);
-    
-    // Redirigir a WhatsApp en la MISMA página
     window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
   };
 
@@ -63,7 +59,7 @@ export default function CartPage() {
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-16 h-16 object-cover rounded"
+                className="w-12 h-12 object-cover rounded"  // ← IMÁGENES MÁS PEQUEÑAS
               />
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">{item.name}</h3>
