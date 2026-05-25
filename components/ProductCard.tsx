@@ -17,7 +17,13 @@ export default function ProductCard({ product }: { product: Product }) {
   const { showToast } = useToast();
 
   const handleAddToCart = () => {
-    addToCart(product);
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image_url,  // ← Mapear image_url → image
+      quantity: 1,
+    });
     showToast(`${product.name} agregado al carrito`, 'success');
   };
 
