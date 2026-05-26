@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ShoppingBag, Search, Menu, Store } from "lucide-react"
+import { ShoppingBag, Search, Menu, Tag, ShoppingCart } from "lucide-react"
 import Link from "next/link"
+import { useCart } from "@/contexts/cart-context"
 import { NeonNavigationButtons } from "@/components/neon-navigation-buttons"
 import { ProductCard } from "@/components/product-card"
 import { Jeans3DCarousel } from "@/components/jeans-3d-carousel"
-import { CatalogModal } from "@/components/catalog-modal"
 import { LoginScene } from "@/components/login-scene"
 import { useCatalog } from "@/contexts/catalog-context"
 
@@ -41,8 +41,8 @@ const products = [
 
 // Scene 2: Product Store with Catalog
 function StoreScene() {
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const { images } = useCatalog()
+  const { itemCount } = useCart()
 
   return (
     <div className="w-full max-w-6xl mx-auto">
@@ -62,12 +62,14 @@ function StoreScene() {
           <button className="p-2 hover:bg-purple-200 rounded-full">
             <Search className="w-5 h-5 text-purple-700" />
           </button>
-          <button className="p-2 hover:bg-purple-200 rounded-full relative">
-            <ShoppingBag className="w-5 h-5 text-purple-700" />
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              0
-            </span>
-          </button>
+          <Link href="/cart" className="p-2 hover:bg-purple-200 rounded-full relative">
+            <ShoppingCart className="w-5 h-5 text-purple-700" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
         </div>
       </header>
 
@@ -80,27 +82,28 @@ function StoreScene() {
           Descubre nuestros jeans de alta calidad con los mejores precios
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
-            onClick={() => setIsCatalogOpen(true)}
-            className="bg-purple-800 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-900 transition-colors relative"
+          <Link
+            href="/catalog"
+            className="bg-purple-800 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-900 transition-colors relative inline-flex items-center gap-2"
           >
+            <ShoppingBag className="w-5 h-5" />
             Ver Catalogo
             {images.length > 0 && (
               <span className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
                 {images.length}
               </span>
             )}
-          </button>
+          </Link>
           
           <Link
-            href="/marketplace"
+            href="/vender"
             className="group relative inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white transition-all duration-300 overflow-hidden
               bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 bg-[length:200%_100%]
               hover:bg-[position:100%_0] hover:shadow-lg hover:shadow-green-500/30
               border-2 border-green-400/50 hover:border-green-300"
           >
-            <Store className="w-5 h-5 transition-transform group-hover:scale-110" />
-            <span>Ir al Marketplace</span>
+            <Tag className="w-5 h-5 transition-transform group-hover:scale-110" />
+            <span>Vender Producto</span>
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
           </Link>
         </div>
@@ -132,9 +135,6 @@ function StoreScene() {
           ))}
         </div>
       </div>
-
-      {/* Catalog Modal */}
-      <CatalogModal isOpen={isCatalogOpen} onClose={() => setIsCatalogOpen(false)} />
     </div>
   )
 }

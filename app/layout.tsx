@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CatalogProvider } from '@/contexts/catalog-context'
+import { CartProvider } from '@/contexts/cart-context'
+import { ToastProvider } from '@/contexts/toast-context'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -38,9 +40,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <CatalogProvider>
-          {children}
-        </CatalogProvider>
+        <CartProvider>
+          <ToastProvider>
+            <CatalogProvider>
+              {children}
+            </CatalogProvider>
+          </ToastProvider>
+        </CartProvider>
         <Analytics />
       </body>
     </html>
