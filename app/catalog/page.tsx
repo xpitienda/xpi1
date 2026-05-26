@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Search, ShoppingCart, ArrowLeft, Filter, X } from "lucide-react"
+import { Search, ShoppingCart, ArrowLeft, SlidersHorizontal, X, Plus } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
 import { useToast } from "@/contexts/toast-context"
 
@@ -27,7 +27,7 @@ const CATEGORIES = [
   "Zapatos",
 ]
 
-// Demo products for when API is not available
+// Mock products for preview
 const DEMO_PRODUCTS: Product[] = [
   {
     id: 1,
@@ -100,8 +100,8 @@ function formatPrice(price: number): string {
 }
 
 export default function CatalogPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<Product[]>(DEMO_PRODUCTS)
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(DEMO_PRODUCTS)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Todos")
   const [isLoading, setIsLoading] = useState(true)
@@ -110,30 +110,11 @@ export default function CatalogPage() {
   const { showToast } = useToast()
 
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch("/api/products")
-        if (res.ok) {
-          const data = await res.json()
-          if (data.length > 0) {
-            setProducts(data)
-            setFilteredProducts(data)
-          } else {
-            setProducts(DEMO_PRODUCTS)
-            setFilteredProducts(DEMO_PRODUCTS)
-          }
-        } else {
-          setProducts(DEMO_PRODUCTS)
-          setFilteredProducts(DEMO_PRODUCTS)
-        }
-      } catch {
-        setProducts(DEMO_PRODUCTS)
-        setFilteredProducts(DEMO_PRODUCTS)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchProducts()
+    // Simulate loading then show demo products
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -166,30 +147,30 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-green-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-purple-100">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <Link
               href="/"
-              className="flex items-center gap-2 text-purple-700 hover:text-purple-900 transition-colors"
+              className="flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline font-medium">Volver</span>
+              <span className="hidden sm:inline text-sm font-medium">Volver</span>
             </Link>
 
-            <h1 className="text-xl sm:text-2xl font-bold text-purple-800">
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground tracking-tight">
               Catalogo
             </h1>
 
             <Link
               href="/cart"
-              className="relative p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors"
+              className="relative p-2.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
             >
-              <ShoppingCart className="w-6 h-6 text-purple-700" />
+              <ShoppingCart className="w-5 h-5 text-foreground" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-accent-foreground text-xs rounded-full flex items-center justify-center font-semibold">
                   {itemCount}
                 </span>
               )}
@@ -197,22 +178,26 @@ export default function CatalogPage() {
           </div>
 
           {/* Search Bar */}
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-purple-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-sm"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="p-3 rounded-xl border border-purple-200 bg-white hover:bg-purple-50 transition-colors md:hidden"
+              className={`p-3 rounded-xl border transition-colors md:hidden ${
+                showFilters 
+                  ? "bg-primary text-primary-foreground border-primary" 
+                  : "border-border bg-card hover:bg-secondary"
+              }`}
             >
-              <Filter className="w-5 h-5 text-purple-600" />
+              <SlidersHorizontal className="w-5 h-5" />
             </button>
           </div>
 
@@ -224,8 +209,8 @@ export default function CatalogPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selectedCategory === cat
-                    ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                    : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
                 {cat}
@@ -236,11 +221,11 @@ export default function CatalogPage() {
 
         {/* Mobile Filters Drawer */}
         {showFilters && (
-          <div className="md:hidden bg-white border-t border-purple-100 px-4 py-3">
+          <div className="md:hidden bg-card border-t border-border px-4 py-4 animate-in slide-in-from-top-2">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-purple-800">Categorias</span>
-              <button onClick={() => setShowFilters(false)}>
-                <X className="w-5 h-5 text-purple-600" />
+              <span className="font-medium text-foreground text-sm">Categorias</span>
+              <button onClick={() => setShowFilters(false)} className="p-1 rounded-full hover:bg-secondary">
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -253,8 +238,8 @@ export default function CatalogPage() {
                   }}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     selectedCategory === cat
-                      ? "bg-purple-600 text-white"
-                      : "bg-purple-100 text-purple-700"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground"
                   }`}
                 >
                   {cat}
@@ -266,30 +251,44 @@ export default function CatalogPage() {
       </header>
 
       {/* Products Grid */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Results count */}
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-muted-foreground">
+            {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""}
+          </p>
+          <Link 
+            href="/vender"
+            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            + Vender producto
+          </Link>
+        </div>
+
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse"
+                className="bg-card rounded-2xl overflow-hidden border border-border animate-pulse"
               >
-                <div className="aspect-square bg-purple-100" />
+                <div className="aspect-[4/5] bg-secondary" />
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-purple-100 rounded w-3/4" />
-                  <div className="h-4 bg-purple-100 rounded w-1/2" />
-                  <div className="h-10 bg-purple-100 rounded" />
+                  <div className="h-4 bg-secondary rounded w-3/4" />
+                  <div className="h-5 bg-secondary rounded w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-purple-800 mb-2">
+          <div className="text-center py-20">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
+              <Search className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               No se encontraron productos
             </h3>
-            <p className="text-purple-600">
+            <p className="text-muted-foreground text-sm">
               Intenta con otra busqueda o categoria
             </p>
           </div>
@@ -298,35 +297,35 @@ export default function CatalogPage() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-purple-100 hover:border-purple-300"
+                className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
               >
-                <div className="aspect-square relative overflow-hidden bg-purple-50">
+                <div className="aspect-[4/5] relative overflow-hidden bg-secondary">
                   <Image
                     src={product.image_url || "/placeholder.svg"}
                     alt={product.name}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                   />
-                  <div className="absolute top-2 right-2">
-                    <span className="px-2 py-1 bg-purple-600 text-white text-xs rounded-full font-medium">
-                      {product.category}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-purple-900 text-sm sm:text-base line-clamp-2 mb-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-lg sm:text-xl font-bold text-green-600 mb-3">
-                    {formatPrice(product.price)}
-                  </p>
+                  {/* Quick add button */}
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium hover:from-purple-700 hover:to-purple-800 transition-all shadow-md hover:shadow-lg active:scale-95"
+                    className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:border-primary"
                   >
-                    Agregar al Carrito
+                    <Plus className="w-5 h-5" />
                   </button>
+                  {/* Category badge */}
+                  <span className="absolute top-3 left-3 px-2.5 py-1 bg-card/90 backdrop-blur-sm text-foreground text-xs rounded-full font-medium border border-border">
+                    {product.category}
+                  </span>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-medium text-foreground text-sm line-clamp-2 mb-2 leading-snug">
+                    {product.name}
+                  </h3>
+                  <p className="text-base font-semibold text-accent">
+                    {formatPrice(product.price)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -338,7 +337,7 @@ export default function CatalogPage() {
       {itemCount > 0 && (
         <Link
           href="/cart"
-          className="fixed bottom-6 right-6 md:hidden flex items-center gap-2 px-5 py-3 rounded-full bg-green-600 text-white font-semibold shadow-lg shadow-green-300 hover:bg-green-700 transition-all z-50"
+          className="fixed bottom-6 right-6 md:hidden flex items-center gap-2 px-5 py-3 rounded-full bg-accent text-accent-foreground font-semibold shadow-lg shadow-accent/30 hover:shadow-xl transition-all z-50"
         >
           <ShoppingCart className="w-5 h-5" />
           <span>Ver Carrito ({itemCount})</span>
