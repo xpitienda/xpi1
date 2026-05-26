@@ -1,254 +1,289 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { ArrowLeft, Upload, X, Loader2, CheckCircle, Camera } from "lucide-react"
-import { useToast } from "@/contexts/toast-context"
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { ArrowLeft, Upload, Package, Tag, FileText, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 const CATEGORIES = [
-  "Jeans",
-  "Camisetas",
-  "Vestidos",
-  "Accesorios",
-  "Zapatos",
-  "Otro",
-]
+  { value: 'General', label: 'General', icon: '📦' },
+  { value: 'Ropa', label: 'Ropa', icon: '👕' },
+  { value: 'Tecnología', label: 'Tecnología', icon: '💻' },
+  { value: 'Hogar', label: 'Hogar', icon: '🏠' },
+  { value: 'Deportes', label: 'Deportes', icon: '⚽' },
+];
 
 export default function VenderPage() {
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
-  const [price, setPrice] = useState("")
-  const [category, setCategory] = useState("")
-  const [stock, setStock] = useState("1")
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const { showToast } = useToast()
+  const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState({
+    nombre: '',
+    descripcion: '',
+    precio: '',
+    categoria: 'General',
+    archivo: null as File | null,
+  });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData({ ...formData, archivo: file });
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
-
-  const removeImage = () => {
-    setImageFile(null)
-    setImagePreview(null)
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    setLoading(true);
+    setMensaje(null);
 
-    if (!name || !price || !category) {
-      showToast("Por favor completa los campos requeridos", "error")
-      return
+    if (!formData.archivo) {
+      setMensaje({ type: 'error', text: 'Debes seleccionar una imagen.' });
+      setLoading(false);
+      return;
     }
 
-    setIsSubmitting(true)
+    try {
+      const fileData = new FormData();
+      fileData.append('file', formData.archivo);
 
-    // Simulate API call for demo
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    setIsSuccess(true)
-    showToast("Producto publicado exitosamente!", "success")
-    
-    // Reset form
-    setName("")
-    setDescription("")
-    setPrice("")
-    setCategory("")
-    setStock("1")
-    setImageFile(null)
-    setImagePreview(null)
-    setIsSubmitting(false)
-    
-    setTimeout(() => setIsSuccess(false), 3000)
-  }
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: fileData });
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Error subiendo imagen');
+
+      const saveRes = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.nombre,
+          description: formData.descripcion,
+          price: Number(formData.precio),
+          category: formData.categoria,
+          image_url: uploadData.url,
+          stock: 1,
+          is_active: 1
+        }),
+      });
+
+      if (!saveRes.ok) throw new Error('Error guardando producto');
+
+      setMensaje({ type: 'success', text: 'Producto publicado con éxito!' });
+      setFormData({ nombre: '', descripcion: '', precio: '', categoria: 'General', archivo: null });
+      setImagePreview(null);
+
+    } catch (error: any) {
+      setMensaje({ type: 'error', text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
-        <div className="max-w-xl mx-auto px-4 py-4 flex items-center">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">Inicio</span>
-          </Link>
-          <h1 className="flex-1 text-center text-lg font-semibold text-foreground pr-16">
-            Vender Producto
-          </h1>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        
+        {/* Back Link */}
+        <Link 
+          href="/catalog" 
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-xpi-purple mb-6 transition-colors text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver al catálogo
+        </Link>
 
-      <main className="max-w-xl mx-auto px-4 py-8">
-        {isSuccess && (
-          <div className="mb-6 p-4 bg-accent/10 border border-accent/20 rounded-xl flex items-center gap-3 text-accent animate-in fade-in slide-in-from-top-2">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium text-sm">Producto publicado exitosamente!</span>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-xpi-purple/10 rounded-full mb-4">
+            <Tag className="w-8 h-8 text-xpi-purple" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Vende tu producto
+          </h1>
+          <p className="text-gray-500">
+            Publica gratis y llega a miles de compradores
+          </p>
+        </div>
+
+        {/* Message Alert */}
+        {mensaje && (
+          <div className={`flex items-center gap-3 p-4 rounded-xl mb-6 ${
+            mensaje.type === 'success' 
+              ? 'bg-xpi-green/10 text-xpi-green-dark border border-xpi-green/30' 
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+            {mensaje.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            <p className="font-medium">{mensaje.text}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              Imagen del Producto
+        {/* Form Card */}
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          
+          {/* Image Upload Section */}
+          <div className="p-6 bg-gray-50 border-b border-gray-100">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <Upload className="w-4 h-4 inline-block mr-2" />
+              Foto del producto
             </label>
-            {imagePreview ? (
-              <div className="relative w-full aspect-square max-w-[200px] mx-auto rounded-2xl overflow-hidden border border-border bg-secondary">
-                <Image
-                  src={imagePreview}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 p-2 bg-card/90 backdrop-blur-sm text-foreground rounded-full border border-border hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <label className="block w-full max-w-[200px] mx-auto cursor-pointer">
-                <div className="aspect-square border-2 border-dashed border-border rounded-2xl bg-secondary/50 hover:bg-secondary hover:border-primary/30 transition-all flex flex-col items-center justify-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                    <Camera className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-medium text-foreground text-sm">
-                      Subir imagen
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      JPG, PNG hasta 5MB
-                    </p>
-                  </div>
+            
+            <div className="relative">
+              {imagePreview ? (
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    className="w-full h-full object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagePreview(null);
+                      setFormData({ ...formData, archivo: null });
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-xpi-purple hover:bg-xpi-purple/5 transition-all">
+                  <Upload className="w-10 h-10 text-gray-400 mb-2" />
+                  <span className="text-sm text-gray-500">Haz clic o arrastra una imagen</span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG hasta 10MB</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Form Fields */}
+          <div className="p-6 space-y-5">
+            
+            {/* Name */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <Package className="w-4 h-4" />
+                Nombre del producto
+              </label>
+              <input 
+                type="text" 
+                name="nombre" 
+                value={formData.nombre} 
+                onChange={handleInputChange} 
+                required 
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-xpi-purple/20 focus:border-xpi-purple outline-none transition-all" 
+                placeholder="Ej: Zapatillas deportivas Nike" 
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <Tag className="w-4 h-4" />
+                Categoría
+              </label>
+              <div className="grid grid-cols-5 gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, categoria: cat.value })}
+                    className={`p-3 rounded-xl border-2 transition-all text-center ${
+                      formData.categoria === cat.value
+                        ? 'border-xpi-purple bg-xpi-purple/10 text-xpi-purple'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="text-xl block mb-1">{cat.icon}</span>
+                    <span className="text-xs font-medium">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FileText className="w-4 h-4" />
+                Descripción
+              </label>
+              <textarea 
+                name="descripcion" 
+                value={formData.descripcion} 
+                onChange={handleInputChange} 
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-xpi-purple/20 focus:border-xpi-purple outline-none transition-all resize-none" 
+                placeholder="Describe el estado, características, medidas, etc." 
+                rows={4} 
+              />
+            </div>
+
+            {/* Price */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <DollarSign className="w-4 h-4" />
+                Precio (COP)
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">$</span>
+                <input 
+                  type="number" 
+                  name="precio" 
+                  value={formData.precio} 
+                  onChange={handleInputChange} 
+                  required 
+                  min="0"
+                  step="100"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-xpi-purple/20 focus:border-xpi-purple outline-none transition-all" 
+                  placeholder="0" 
                 />
-              </label>
-            )}
-          </div>
-
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Nombre del Producto <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Jean Skinny Tiro Alto"
-              className="w-full px-4 py-3 rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-sm"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Descripcion
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe tu producto..."
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none text-sm"
-            />
-          </div>
-
-          {/* Price and Stock */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Precio (COP) <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="89900"
-                min="0"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Stock
-              </label>
-              <input
-                type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                min="1"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-sm"
-              />
+              </div>
             </div>
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              Categoria <span className="text-destructive">*</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    category === cat
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+          {/* Submit Button */}
+          <div className="p-6 bg-gray-50 border-t border-gray-100">
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full bg-xpi-purple text-white py-4 rounded-xl font-bold text-lg hover:bg-xpi-purple-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Publicando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  Publicar Producto
+                </>
+              )}
+            </button>
           </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Publicando...
-              </>
-            ) : (
-              "Publicar Producto"
-            )}
-          </button>
         </form>
-
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Tu producto aparecera en el catalogo una vez publicado
-        </p>
-      </main>
+      </div>
     </div>
-  )
+  );
 }

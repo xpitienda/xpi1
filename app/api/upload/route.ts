@@ -1,89 +1,62 @@
-import { NextResponse } from "next/server"
+// app/api/upload/route.ts
+import { NextResponse } from 'next/server';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
+import { v4 as uuidv4 } from 'uuid';
+import * as https from 'https';
+
+// Agente HTTPS que ignora certificados autofirmados (SOLO DESARROLLO)
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'xpitienda-images';
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData()
-    const file = formData.get("file") as File | null
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File too large. Max 5MB allowed." },
-        { status: 400 }
-      )
-    }
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
+    const ext = file.name.split('.').pop();
+    const key = `products/${uuidv4()}.${ext}`;
 
-    // Check file type
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "Only image files are allowed" },
-        { status: 400 }
-      )
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now()
-    const extension = file.name.split(".").pop() || "jpg"
-    const filename = `product-${timestamp}.${extension}`
-
-    // Get R2 credentials from environment
-    const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
-    const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID
-    const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY
-    const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "xpitienda"
-    const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL
-
-    // If R2 is not configured, return a local placeholder
-    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-      console.warn("R2 not configured, using placeholder URL")
-      return NextResponse.json({
-        success: true,
-        url: "/placeholder.svg",
-        message: "R2 not configured - using placeholder",
-      })
-    }
-
-    // Upload to R2 using S3-compatible API
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    const uploadUrl = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${filename}`
-
-    const response = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type,
-        "X-Amz-Content-Sha256": "UNSIGNED-PAYLOAD",
+    // Crear cliente R2 con NodeHttpHandler personalizado
+    const client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID!,
+        secretAccessKey: R2_SECRET_ACCESS_KEY!,
       },
-      body: buffer,
-    })
+      requestHandler: new NodeHttpHandler({
+        httpsAgent: httpsAgent,
+      }),
+    });
 
-    if (!response.ok) {
-      throw new Error(`R2 upload failed: ${response.statusText}`)
-    }
+    await client.send(new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+    }));
 
-    // Return public URL
-    const publicUrl = R2_PUBLIC_URL 
-      ? `${R2_PUBLIC_URL}/${filename}`
-      : `https://pub-${R2_ACCOUNT_ID}.r2.dev/${filename}`
+    const url = `https://pub-aa262763875e4dc4ab1d8c212bad2fa0.r2.dev/${key}`;
+    
+    console.log(`✅ Imagen subida: ${url}`);
+    return NextResponse.json({ success: true, url });
 
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      filename,
-    })
-  } catch (error) {
-    console.error("Error uploading file:", error)
-    return NextResponse.json(
-      { error: "Error uploading file" },
-      { status: 500 }
-    )
+  } catch (error: any) {
+    console.error("🔴 ERROR:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

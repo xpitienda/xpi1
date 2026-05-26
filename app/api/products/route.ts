@@ -1,69 +1,35 @@
-import { NextResponse } from "next/server"
-import { turso } from "@/lib/turso"
-
-export async function GET() {
-  try {
-    const result = await turso.execute(
-      "SELECT * FROM catalog WHERE is_active = 1 ORDER BY id DESC"
-    )
-    
-    const products = result.rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      price: row.price,
-      image_url: row.image_url,
-      category: row.category,
-      stock: row.stock,
-      is_active: row.is_active,
-    }))
-
-    return NextResponse.json(products)
-  } catch (error) {
-    console.error("Error fetching products:", error)
-    return NextResponse.json(
-      { error: "Error fetching products" },
-      { status: 500 }
-    )
-  }
-}
+// app/api/products/route.ts
+import { NextResponse } from 'next/server';
+import { turso } from '@/lib/turso';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { name, description, price, image_url, category, stock, is_active } = body
+    const body = await request.json();
+    
+    // Aseguramos recibir la categoría (si no viene, usa 'General')
+    const { name, description, price, image_url, category = 'General', stock = 1, is_active = 1 } = body;
 
-    if (!name || !price || !category) {
-      return NextResponse.json(
-        { error: "Missing required fields: name, price, category" },
-        { status: 400 }
-      )
-    }
+    // Consulta SQL INSERT incluyendo la columna 'category'
+    const sql = `
+      INSERT INTO catalog (name, description, price, image_url, category, stock, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const args = [name, description, price, image_url, category, stock, is_active];
 
-    const result = await turso.execute({
-      sql: `INSERT INTO catalog (name, description, price, image_url, category, stock, is_active) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        name,
-        description || "",
-        price,
-        image_url || "/placeholder.svg",
-        category,
-        stock || 1,
-        is_active !== undefined ? (is_active ? 1 : 0) : 1,
-      ],
-    })
+    await turso.execute({ sql, args });
 
-    return NextResponse.json({
-      success: true,
-      id: Number(result.lastInsertRowid),
-      message: "Product created successfully",
-    })
-  } catch (error) {
-    console.error("Error creating product:", error)
-    return NextResponse.json(
-      { error: "Error creating product" },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Producto creado exitosamente' }, { status: 201 });
+
+  } catch (error: any) {
+    console.error('Error al crear producto:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function GET() {
+  const result = await turso.execute('SELECT * FROM catalog WHERE is_active = 1 ORDER BY created_at DESC');
+  return NextResponse.json(result.rows);
+}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
