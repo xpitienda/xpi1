@@ -3,8 +3,6 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { ToastProvider } from '@/context/ToastContext';
 import { CartProvider } from '@/context/CartContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -22,13 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className="bg-xpi-purple-dark">
       <body className={`${inter.variable} font-sans`}>
         <CartProvider>
           <ToastProvider>
-            <Header />
-            <main className="min-h-screen">{children}</main>
-            <Footer />
+            {children}
           </ToastProvider>
         </CartProvider>
       </body>

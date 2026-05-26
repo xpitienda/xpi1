@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { ArrowLeft, Upload, Package, Tag, FileText, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import Header from '@/components/Header';
+import { Upload, Package, Tag, FileText, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 const CATEGORIES = [
   { value: 'General', label: 'General', icon: '📦' },
   { value: 'Ropa', label: 'Ropa', icon: '👕' },
-  { value: 'Tecnología', label: 'Tecnología', icon: '💻' },
+  { value: 'Tecnologia', label: 'Tecnologia', icon: '💻' },
   { value: 'Hogar', label: 'Hogar', icon: '🏠' },
   { value: 'Deportes', label: 'Deportes', icon: '⚽' },
 ];
@@ -80,7 +79,7 @@ export default function VenderPage() {
 
       if (!saveRes.ok) throw new Error('Error guardando producto');
 
-      setMensaje({ type: 'success', text: 'Producto publicado con éxito!' });
+      setMensaje({ type: 'success', text: 'Producto publicado con exito!' });
       setFormData({ nombre: '', descripcion: '', precio: '', categoria: 'General', archivo: null });
       setImagePreview(null);
 
@@ -92,197 +91,193 @@ export default function VenderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        
-        {/* Back Link */}
-        <Link 
-          href="/catalog" 
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-xpi-purple mb-6 transition-colors text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver al catálogo
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-xpi-purple-dark via-xpi-purple to-xpi-purple-light">
+      <Header />
+      
+      <div className="py-8 px-4">
+        <div className="max-w-2xl mx-auto">
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-xpi-purple/10 rounded-full mb-4">
-            <Tag className="w-8 h-8 text-xpi-purple" />
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-xpi-purple-light/50 rounded-full mb-4 border border-xpi-purple-glow/50">
+              <Tag className="w-8 h-8 text-xpi-green" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">
+              <span className="text-white">Vende tu </span>
+              <span className="text-xpi-green">producto</span>
+            </h1>
+            <p className="text-gray-400">
+              Publica gratis y llega a miles de compradores
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Vende tu producto
-          </h1>
-          <p className="text-gray-500">
-            Publica gratis y llega a miles de compradores
-          </p>
-        </div>
 
-        {/* Message Alert */}
-        {mensaje && (
-          <div className={`flex items-center gap-3 p-4 rounded-xl mb-6 ${
-            mensaje.type === 'success' 
-              ? 'bg-xpi-green/10 text-xpi-green-dark border border-xpi-green/30' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {mensaje.type === 'success' ? (
-              <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            )}
-            <p className="font-medium">{mensaje.text}</p>
-          </div>
-        )}
-
-        {/* Form Card */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          
-          {/* Image Upload Section */}
-          <div className="p-6 bg-gray-50 border-b border-gray-100">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              <Upload className="w-4 h-4 inline-block mr-2" />
-              Foto del producto
-            </label>
-            
-            <div className="relative">
-              {imagePreview ? (
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    className="w-full h-full object-contain"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreview(null);
-                      setFormData({ ...formData, archivo: null });
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                  </button>
-                </div>
+          {/* Message Alert */}
+          {mensaje && (
+            <div className={`flex items-center gap-3 p-4 rounded-xl mb-6 ${
+              mensaje.type === 'success' 
+                ? 'bg-xpi-green/20 text-xpi-green border border-xpi-green/30' 
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+            }`}>
+              {mensaje.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 flex-shrink-0" />
               ) : (
-                <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-xpi-purple hover:bg-xpi-purple/5 transition-all">
-                  <Upload className="w-10 h-10 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-500">Haz clic o arrastra una imagen</span>
-                  <span className="text-xs text-gray-400 mt-1">PNG, JPG hasta 10MB</span>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
               )}
+              <p className="font-medium">{mensaje.text}</p>
             </div>
-          </div>
+          )}
 
-          {/* Form Fields */}
-          <div className="p-6 space-y-5">
+          {/* Form Card */}
+          <form onSubmit={handleSubmit} className="bg-xpi-purple-dark/80 backdrop-blur-sm rounded-2xl border border-xpi-purple-glow/30 overflow-hidden animate-glow">
             
-            {/* Name */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <Package className="w-4 h-4" />
-                Nombre del producto
+            {/* Image Upload Section */}
+            <div className="p-6 bg-xpi-purple-light/20 border-b border-xpi-purple-glow/30">
+              <label className="block text-sm font-semibold text-white mb-3">
+                <Upload className="w-4 h-4 inline-block mr-2" />
+                Foto del producto
               </label>
-              <input 
-                type="text" 
-                name="nombre" 
-                value={formData.nombre} 
-                onChange={handleInputChange} 
-                required 
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-xpi-purple/20 focus:border-xpi-purple outline-none transition-all" 
-                placeholder="Ej: Zapatillas deportivas Nike" 
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <Tag className="w-4 h-4" />
-                Categoría
-              </label>
-              <div className="grid grid-cols-5 gap-2">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, categoria: cat.value })}
-                    className={`p-3 rounded-xl border-2 transition-all text-center ${
-                      formData.categoria === cat.value
-                        ? 'border-xpi-purple bg-xpi-purple/10 text-xpi-purple'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="text-xl block mb-1">{cat.icon}</span>
-                    <span className="text-xs font-medium">{cat.label}</span>
-                  </button>
-                ))}
+              
+              <div className="relative">
+                {imagePreview ? (
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-xpi-purple-light/30">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-full object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setFormData({ ...formData, archivo: null });
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-xpi-purple-glow/50 rounded-xl cursor-pointer hover:border-xpi-green hover:bg-xpi-green/5 transition-all">
+                    <Upload className="w-10 h-10 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-400">Haz clic o arrastra una imagen</span>
+                    <span className="text-xs text-gray-500 mt-1">PNG, JPG hasta 10MB</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
-            {/* Description */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <FileText className="w-4 h-4" />
-                Descripción
-              </label>
-              <textarea 
-                name="descripcion" 
-                value={formData.descripcion} 
-                onChange={handleInputChange} 
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-xpi-purple/20 focus:border-xpi-purple outline-none transition-all resize-none" 
-                placeholder="Describe el estado, características, medidas, etc." 
-                rows={4} 
-              />
-            </div>
-
-            {/* Price */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <DollarSign className="w-4 h-4" />
-                Precio (COP)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">$</span>
+            {/* Form Fields */}
+            <div className="p-6 space-y-5">
+              
+              {/* Name */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-white mb-2">
+                  <Package className="w-4 h-4" />
+                  Nombre del producto
+                </label>
                 <input 
-                  type="number" 
-                  name="precio" 
-                  value={formData.precio} 
+                  type="text" 
+                  name="nombre" 
+                  value={formData.nombre} 
                   onChange={handleInputChange} 
                   required 
-                  min="0"
-                  step="100"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-xpi-purple/20 focus:border-xpi-purple outline-none transition-all" 
-                  placeholder="0" 
+                  className="w-full px-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all" 
+                  placeholder="Ej: Zapatillas deportivas Nike" 
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Submit Button */}
-          <div className="p-6 bg-gray-50 border-t border-gray-100">
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="w-full bg-xpi-purple text-white py-4 rounded-xl font-bold text-lg hover:bg-xpi-purple-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Publicar Producto
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+              {/* Category */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-white mb-2">
+                  <Tag className="w-4 h-4" />
+                  Categoria
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, categoria: cat.value })}
+                      className={`p-3 rounded-xl border-2 transition-all text-center ${
+                        formData.categoria === cat.value
+                          ? 'border-xpi-green bg-xpi-green/20 text-xpi-green'
+                          : 'border-xpi-purple-glow/30 hover:border-xpi-purple-glow/50 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-xl block mb-1">{cat.icon}</span>
+                      <span className="text-xs font-medium">{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-white mb-2">
+                  <FileText className="w-4 h-4" />
+                  Descripcion
+                </label>
+                <textarea 
+                  name="descripcion" 
+                  value={formData.descripcion} 
+                  onChange={handleInputChange} 
+                  className="w-full px-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all resize-none" 
+                  placeholder="Describe el estado, caracteristicas, medidas, etc." 
+                  rows={4} 
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-white mb-2">
+                  <DollarSign className="w-4 h-4" />
+                  Precio (COP)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">$</span>
+                  <input 
+                    type="number" 
+                    name="precio" 
+                    value={formData.precio} 
+                    onChange={handleInputChange} 
+                    required 
+                    min="0"
+                    step="100"
+                    className="w-full pl-10 pr-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all" 
+                    placeholder="0" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="p-6 bg-xpi-purple-light/20 border-t border-xpi-purple-glow/30">
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-gradient-to-r from-xpi-green via-xpi-cyan to-xpi-green text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Publicar Producto
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

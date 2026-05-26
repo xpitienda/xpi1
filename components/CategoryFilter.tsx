@@ -3,7 +3,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const categories = ['Todas', 'General', 'Ropa', 'Tecnología', 'Hogar', 'Deportes'];
+const categories = ['Todas', 'General', 'Ropa', 'Tecnologia', 'Hogar', 'Deportes'];
 
 export default function CategoryFilter() {
   const router = useRouter();
@@ -26,15 +26,15 @@ export default function CategoryFilter() {
   };
 
   return (
-    <div className="flex flex-wrap gap-2 justify-center mb-8">
+    <div className="flex flex-wrap gap-2 justify-center">
       {categories.map((cat) => (
         <button
           key={cat}
           onClick={() => handleCategoryChange(cat)}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
             currentCategory === cat
-              ? 'bg-black text-white shadow-lg scale-105'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+              ? 'bg-xpi-green text-white shadow-lg scale-105'
+              : 'bg-xpi-purple-light/30 text-gray-300 border border-xpi-purple-glow/30 hover:border-xpi-green/50 hover:text-white'
           }`}
         >
           {cat}
