@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ShoppingBag, Search, Menu } from "lucide-react"
+import { ShoppingBag, Search, Menu, Store } from "lucide-react"
+import Link from "next/link"
 import { NeonNavigationButtons } from "@/components/neon-navigation-buttons"
 import { ProductCard } from "@/components/product-card"
 import { Jeans3DCarousel } from "@/components/jeans-3d-carousel"
@@ -78,17 +79,31 @@ function StoreScene() {
         <p className="text-purple-700 text-lg mb-6">
           Descubre nuestros jeans de alta calidad con los mejores precios
         </p>
-        <button
-          onClick={() => setIsCatalogOpen(true)}
-          className="bg-purple-800 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-900 transition-colors relative"
-        >
-          Ver Catalogo
-          {images.length > 0 && (
-            <span className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-              {images.length}
-            </span>
-          )}
-        </button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button
+            onClick={() => setIsCatalogOpen(true)}
+            className="bg-purple-800 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-900 transition-colors relative"
+          >
+            Ver Catalogo
+            {images.length > 0 && (
+              <span className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                {images.length}
+              </span>
+            )}
+          </button>
+          
+          <Link
+            href="/marketplace"
+            className="group relative inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white transition-all duration-300 overflow-hidden
+              bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 bg-[length:200%_100%]
+              hover:bg-[position:100%_0] hover:shadow-lg hover:shadow-green-500/30
+              border-2 border-green-400/50 hover:border-green-300"
+          >
+            <Store className="w-5 h-5 transition-transform group-hover:scale-110" />
+            <span>Ir al Marketplace</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+          </Link>
+        </div>
       </div>
 
       {/* Products Section */}
