@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Header from '@/components/Header';
-import { Upload, Package, Tag, FileText, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import Header from "@/components/Header";
+import { Upload, Package, Tag, FileText, DollarSign, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const CATEGORIES = [
-  { value: 'General', label: 'General', icon: '📦' },
-  { value: 'Ropa', label: 'Ropa', icon: '👕' },
-  { value: 'Tecnologia', label: 'Tecnologia', icon: '💻' },
-  { value: 'Hogar', label: 'Hogar', icon: '🏠' },
-  { value: 'Deportes', label: 'Deportes', icon: '⚽' },
+  { value: "General", label: "General", icon: "📦" },
+  { value: "Ropa", label: "Ropa", icon: "👕" },
+  { value: "Tecnologia", label: "Tecnologia", icon: "💻" },
+  { value: "Hogar", label: "Hogar", icon: "🏠" },
+  { value: "Deportes", label: "Deportes", icon: "⚽" },
 ];
 
 export default function VenderPage() {
   const [loading, setLoading] = useState(false);
-  const [mensaje, setMensaje] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [mensaje, setMensaje] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    precio: '',
-    categoria: 'General',
+    nombre: "",
+    descripcion: "",
+    precio: "",
+    categoria: "General",
     archivo: null as File | null,
   });
 
@@ -34,7 +34,6 @@ export default function VenderPage() {
       const file = e.target.files[0];
       setFormData({ ...formData, archivo: file });
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -49,23 +48,23 @@ export default function VenderPage() {
     setMensaje(null);
 
     if (!formData.archivo) {
-      setMensaje({ type: 'error', text: 'Debes seleccionar una imagen.' });
+      setMensaje({ type: "error", text: "Debes seleccionar una imagen." });
       setLoading(false);
       return;
     }
 
     try {
       const fileData = new FormData();
-      fileData.append('file', formData.archivo);
+      fileData.append("file", formData.archivo);
 
-      const uploadRes = await fetch('/api/upload', { method: 'POST', body: fileData });
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: fileData });
       const uploadData = await uploadRes.json();
 
-      if (!uploadRes.ok) throw new Error(uploadData.error || 'Error subiendo imagen');
+      if (!uploadRes.ok) throw new Error(uploadData.error || "Error subiendo imagen");
 
-      const saveRes = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const saveRes = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.nombre,
           description: formData.descripcion,
@@ -77,21 +76,21 @@ export default function VenderPage() {
         }),
       });
 
-      if (!saveRes.ok) throw new Error('Error guardando producto');
+      if (!saveRes.ok) throw new Error("Error guardando producto");
 
-      setMensaje({ type: 'success', text: 'Producto publicado con exito!' });
-      setFormData({ nombre: '', descripcion: '', precio: '', categoria: 'General', archivo: null });
+      setMensaje({ type: "success", text: "Producto publicado con exito!" });
+      setFormData({ nombre: "", descripcion: "", precio: "", categoria: "General", archivo: null });
       setImagePreview(null);
 
     } catch (error: any) {
-      setMensaje({ type: 'error', text: error.message });
+      setMensaje({ type: "error", text: error.message });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-xpi-purple-dark via-xpi-purple to-xpi-purple-light">
+    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 50%, #2d1b4e 100%)" }}>
       <Header />
       
       <div className="py-8 px-4">
@@ -99,12 +98,18 @@ export default function VenderPage() {
 
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-xpi-purple-light/50 rounded-full mb-4 border border-xpi-purple-glow/50">
-              <Tag className="w-8 h-8 text-xpi-green" />
+            <div 
+              className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+              style={{ 
+                background: "rgba(45, 27, 78, 0.5)",
+                border: "1px solid rgba(107, 63, 160, 0.5)"
+              }}
+            >
+              <Tag className="w-8 h-8" style={{ color: "#00d4aa" }} />
             </div>
             <h1 className="text-3xl font-bold mb-2">
               <span className="text-white">Vende tu </span>
-              <span className="text-xpi-green">producto</span>
+              <span style={{ color: "#00d4aa" }}>producto</span>
             </h1>
             <p className="text-gray-400">
               Publica gratis y llega a miles de compradores
@@ -113,12 +118,15 @@ export default function VenderPage() {
 
           {/* Message Alert */}
           {mensaje && (
-            <div className={`flex items-center gap-3 p-4 rounded-xl mb-6 ${
-              mensaje.type === 'success' 
-                ? 'bg-xpi-green/20 text-xpi-green border border-xpi-green/30' 
-                : 'bg-red-500/20 text-red-400 border border-red-500/30'
-            }`}>
-              {mensaje.type === 'success' ? (
+            <div 
+              className="flex items-center gap-3 p-4 rounded-xl mb-6"
+              style={{
+                background: mensaje.type === "success" ? "rgba(0, 212, 170, 0.2)" : "rgba(239, 68, 68, 0.2)",
+                color: mensaje.type === "success" ? "#00d4aa" : "#f87171",
+                border: `1px solid ${mensaje.type === "success" ? "rgba(0, 212, 170, 0.3)" : "rgba(239, 68, 68, 0.3)"}`
+              }}
+            >
+              {mensaje.type === "success" ? (
                 <CheckCircle className="w-5 h-5 flex-shrink-0" />
               ) : (
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -128,10 +136,23 @@ export default function VenderPage() {
           )}
 
           {/* Form Card */}
-          <form onSubmit={handleSubmit} className="bg-xpi-purple-dark/80 backdrop-blur-sm rounded-2xl border border-xpi-purple-glow/30 overflow-hidden animate-glow">
+          <form 
+            onSubmit={handleSubmit} 
+            className="backdrop-blur-sm rounded-2xl overflow-hidden"
+            style={{ 
+              background: "rgba(26, 10, 46, 0.8)",
+              border: "1px solid rgba(107, 63, 160, 0.3)"
+            }}
+          >
             
             {/* Image Upload Section */}
-            <div className="p-6 bg-xpi-purple-light/20 border-b border-xpi-purple-glow/30">
+            <div 
+              className="p-6"
+              style={{ 
+                background: "rgba(45, 27, 78, 0.2)",
+                borderBottom: "1px solid rgba(107, 63, 160, 0.3)"
+              }}
+            >
               <label className="block text-sm font-semibold text-white mb-3">
                 <Upload className="w-4 h-4 inline-block mr-2" />
                 Foto del producto
@@ -139,7 +160,10 @@ export default function VenderPage() {
               
               <div className="relative">
                 {imagePreview ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-xpi-purple-light/30">
+                  <div 
+                    className="relative w-full aspect-video rounded-xl overflow-hidden"
+                    style={{ background: "rgba(45, 27, 78, 0.3)" }}
+                  >
                     <img 
                       src={imagePreview} 
                       alt="Preview" 
@@ -157,7 +181,10 @@ export default function VenderPage() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-xpi-purple-glow/50 rounded-xl cursor-pointer hover:border-xpi-green hover:bg-xpi-green/5 transition-all">
+                  <label 
+                    className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-xl cursor-pointer transition-all"
+                    style={{ borderColor: "rgba(107, 63, 160, 0.5)" }}
+                  >
                     <Upload className="w-10 h-10 text-gray-400 mb-2" />
                     <span className="text-sm text-gray-400">Haz clic o arrastra una imagen</span>
                     <span className="text-xs text-gray-500 mt-1">PNG, JPG hasta 10MB</span>
@@ -187,7 +214,11 @@ export default function VenderPage() {
                   value={formData.nombre} 
                   onChange={handleInputChange} 
                   required 
-                  className="w-full px-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all" 
+                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all" 
+                  style={{ 
+                    background: "rgba(45, 27, 78, 0.3)",
+                    border: "1px solid rgba(107, 63, 160, 0.3)"
+                  }}
                   placeholder="Ej: Zapatillas deportivas Nike" 
                 />
               </div>
@@ -204,11 +235,12 @@ export default function VenderPage() {
                       key={cat.value}
                       type="button"
                       onClick={() => setFormData({ ...formData, categoria: cat.value })}
-                      className={`p-3 rounded-xl border-2 transition-all text-center ${
-                        formData.categoria === cat.value
-                          ? 'border-xpi-green bg-xpi-green/20 text-xpi-green'
-                          : 'border-xpi-purple-glow/30 hover:border-xpi-purple-glow/50 text-gray-400'
-                      }`}
+                      className="p-3 rounded-xl border-2 transition-all text-center"
+                      style={{
+                        borderColor: formData.categoria === cat.value ? "#00d4aa" : "rgba(107, 63, 160, 0.3)",
+                        background: formData.categoria === cat.value ? "rgba(0, 212, 170, 0.2)" : "transparent",
+                        color: formData.categoria === cat.value ? "#00d4aa" : "#9ca3af"
+                      }}
                     >
                       <span className="text-xl block mb-1">{cat.icon}</span>
                       <span className="text-xs font-medium">{cat.label}</span>
@@ -227,7 +259,11 @@ export default function VenderPage() {
                   name="descripcion" 
                   value={formData.descripcion} 
                   onChange={handleInputChange} 
-                  className="w-full px-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all resize-none" 
+                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all resize-none" 
+                  style={{ 
+                    background: "rgba(45, 27, 78, 0.3)",
+                    border: "1px solid rgba(107, 63, 160, 0.3)"
+                  }}
                   placeholder="Describe el estado, caracteristicas, medidas, etc." 
                   rows={4} 
                 />
@@ -249,7 +285,11 @@ export default function VenderPage() {
                     required 
                     min="0"
                     step="100"
-                    className="w-full pl-10 pr-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all" 
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all" 
+                    style={{ 
+                      background: "rgba(45, 27, 78, 0.3)",
+                      border: "1px solid rgba(107, 63, 160, 0.3)"
+                    }}
                     placeholder="0" 
                   />
                 </div>
@@ -257,11 +297,21 @@ export default function VenderPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="p-6 bg-xpi-purple-light/20 border-t border-xpi-purple-glow/30">
+            <div 
+              className="p-6"
+              style={{ 
+                background: "rgba(45, 27, 78, 0.2)",
+                borderTop: "1px solid rgba(107, 63, 160, 0.3)"
+              }}
+            >
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="w-full bg-gradient-to-r from-xpi-green via-xpi-cyan to-xpi-green text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full text-white py-4 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                style={{ 
+                  background: "linear-gradient(90deg, #00d4aa 0%, #00a896 100%)",
+                  boxShadow: "0 4px 15px rgba(0, 212, 170, 0.3)"
+                }}
               >
                 {loading ? (
                   <>

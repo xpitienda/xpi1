@@ -26,7 +26,6 @@ export default async function CatalogPage(props: {
 
   let products = MOCK_PRODUCTS;
 
-  // Only try Turso if configured
   if (isTursoConfigured) {
     try {
       let sql = 'SELECT * FROM catalog WHERE is_active = 1';
@@ -52,7 +51,6 @@ export default async function CatalogPage(props: {
       console.error('Turso error, using mock data:', error);
     }
   } else {
-    // Filter mock data locally
     if (query) {
       products = products.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -65,19 +63,25 @@ export default async function CatalogPage(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-xpi-purple-dark via-xpi-purple to-xpi-purple-light">
+    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 50%, #2d1b4e 100%)" }}>
       <Header />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-xpi-purple-dark/50 to-xpi-purple-glow/30 text-white py-12 px-4 border-b border-xpi-purple-glow/30">
+      <div 
+        className="text-white py-12 px-4"
+        style={{ 
+          background: "linear-gradient(90deg, rgba(45, 27, 78, 0.5), rgba(107, 63, 160, 0.3))",
+          borderBottom: "1px solid rgba(107, 63, 160, 0.3)"
+        }}
+      >
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-xpi-green rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "#00d4aa" }}>
               <ShoppingBag className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold">
               <span className="text-white">Catalogo de </span>
-              <span className="text-xpi-green">Productos</span>
+              <span style={{ color: "#00d4aa" }}>Productos</span>
             </h1>
           </div>
           
@@ -88,7 +92,13 @@ export default async function CatalogPage(props: {
       </div>
 
       {/* Search and Filters */}
-      <div className="sticky top-[73px] z-40 bg-xpi-purple-dark/95 backdrop-blur-md border-b border-xpi-purple-glow/30 shadow-lg">
+      <div 
+        className="sticky top-[73px] z-40 backdrop-blur-md shadow-lg"
+        style={{ 
+          background: "rgba(26, 10, 46, 0.95)",
+          borderBottom: "1px solid rgba(107, 63, 160, 0.3)"
+        }}
+      >
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="w-full md:w-96">
@@ -104,15 +114,21 @@ export default async function CatalogPage(props: {
       {/* Results Info */}
       {(query || (category && category !== 'Todas')) && (
         <div className="max-w-6xl mx-auto px-4 pt-6">
-          <div className="bg-xpi-purple-light/30 rounded-lg px-4 py-3 flex flex-wrap items-center gap-2 border border-xpi-purple-glow/30">
+          <div 
+            className="rounded-lg px-4 py-3 flex flex-wrap items-center gap-2"
+            style={{ 
+              background: "rgba(45, 27, 78, 0.3)",
+              border: "1px solid rgba(107, 63, 160, 0.3)"
+            }}
+          >
             <span className="text-gray-300">Resultados para:</span>
             {query && (
-              <span className="bg-xpi-blue text-white px-3 py-1 rounded-full text-sm font-medium">
+              <span className="text-white px-3 py-1 rounded-full text-sm font-medium" style={{ background: "#3b82f6" }}>
                 &quot;{query}&quot;
               </span>
             )}
             {category && category !== 'Todas' && (
-              <span className="bg-xpi-green text-white px-3 py-1 rounded-full text-sm font-medium">
+              <span className="text-white px-3 py-1 rounded-full text-sm font-medium" style={{ background: "#00d4aa" }}>
                 {category}
               </span>
             )}
@@ -127,7 +143,10 @@ export default async function CatalogPage(props: {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {products.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-20 h-20 bg-xpi-purple-light/50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: "rgba(45, 27, 78, 0.5)" }}
+            >
               <ShoppingBag className="w-10 h-10 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">

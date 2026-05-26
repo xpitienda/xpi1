@@ -1,13 +1,12 @@
-// components/SearchBar.tsx
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Search } from "lucide-react";
 
 export default function SearchBar() {
   const router = useRouter();
-  const [term, setTerm] = useState('');
+  const [term, setTerm] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +31,17 @@ export default function SearchBar() {
             placeholder="Buscar productos..."
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-xpi-purple-light/30 border border-xpi-purple-glow/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-all"
+            className="w-full pl-10 pr-4 py-3 rounded-xl text-white placeholder-gray-400 focus:outline-none transition-all"
+            style={{ 
+              background: "rgba(45, 27, 78, 0.3)",
+              border: "1px solid rgba(107, 63, 160, 0.3)"
+            }}
           />
         </div>
         <button
           type="submit"
-          className="bg-xpi-orange text-white px-6 py-3 rounded-xl font-medium hover:bg-xpi-orange/80 transition-all flex items-center gap-2"
+          className="text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 hover:opacity-90"
+          style={{ background: "#f97316" }}
         >
           <Search className="w-4 h-4" />
           Buscar
