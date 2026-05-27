@@ -1,93 +1,162 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShoppingBag, Tag, Sparkles, Shield, Zap } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, LogIn, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function HomePage() {
+export default function SplashPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push('/catalog');
+  };
+
+  const handleRetroceso = () => {
+    if (window.history.length > 1) {
+      router.back();
+    }
+  };
+
+  const handleAvance = () => {
+    router.push('/catalog');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-green-50">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-xpi-purple/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-xpi-green/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <Image
-              src="/logo-xpitienda.png"
-              alt="XPI Tienda"
-              width={280}
-              height={120}
-              className="object-contain drop-shadow-lg"
-              priority
-            />
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%)' }}>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        {/* Logo */}
+        <div className="mb-6">
+          <Image
+            src="/logo-xpitienda.png"
+            alt="XPI Tienda"
+            width={180}
+            height={80}
+            className="object-contain"
+            priority
+          />
+        </div>
+
+        {/* Title */}
+        <h1 className="text-3xl font-bold mb-8 text-center">
+          <span className="text-white">Iniciar </span>
+          <span style={{ color: '#00d4aa' }}>Sesion</span>
+        </h1>
+
+        {/* Login Card */}
+        <div 
+          className="rounded-2xl p-6 sm:p-8 bg-[#1a0a2e]/95 border-2 border-purple-500/50 shadow-[0_0_40px_rgba(147,51,234,0.3)]"
+          style={{ width: '100%', maxWidth: '400px' }}
+        >
+          {/* Shield Icon */}
+          <div className="flex justify-center mb-4">
+            <div 
+              className="w-14 h-14 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(0, 212, 170, 0.15)' }}
+            >
+              <ShieldCheck className="w-7 h-7" style={{ color: '#00d4aa' }} />
+            </div>
           </div>
 
-          {/* Tagline */}
-          <h1 className="text-3xl md:text-5xl font-bold text-center mb-4">
-            <span className="text-xpi-purple">Tu Marketplace</span>{' '}
-            <span className="text-xpi-green">de Confianza</span>
-          </h1>
-          <p className="text-gray-600 text-center text-lg md:text-xl mb-12 max-w-2xl mx-auto">
-            Compra y vende productos de forma segura y rapida
+          {/* Subtitle */}
+          <p className="text-gray-400 text-center text-sm mb-6">
+            Ingresa con tu correo registrado
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <button
-              onClick={() => router.push('/catalog')}
-              className="w-full sm:w-auto px-8 py-4 bg-xpi-purple text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-3 hover:bg-xpi-purple-dark transition-colors shadow-lg shadow-xpi-purple/30"
-            >
-              <ShoppingBag className="w-6 h-6" />
-              Ver Catalogo
-            </button>
-            <button
-              onClick={() => router.push('/vender')}
-              className="w-full sm:w-auto px-8 py-4 bg-xpi-green text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-3 hover:bg-xpi-green-dark transition-colors shadow-lg shadow-xpi-green/30"
-            >
-              <Tag className="w-6 h-6" />
-              Vender Producto
-            </button>
-          </div>
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Email Field */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Correo electronico
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                className="w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 bg-[#2d1b4e]/50 border border-purple-500/30"
+              />
+            </div>
 
-          {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-xpi-purple/10 rounded-xl flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-xpi-purple" />
+            {/* Password Field */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Contrasena
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="********"
+                  className="w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 pr-12 bg-[#2d1b4e]/50 border border-purple-500/30"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Seguro</h3>
-              <p className="text-gray-500 text-sm">Transacciones protegidas y verificadas</p>
             </div>
-            
-            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-xpi-green/10 rounded-xl flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-xpi-green" />
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Rapido</h3>
-              <p className="text-gray-500 text-sm">Publica y compra en minutos</p>
-            </div>
-            
-            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-xpi-purple/10 rounded-xl flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-xpi-purple" />
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Variedad</h3>
-              <p className="text-gray-500 text-sm">Miles de productos disponibles</p>
-            </div>
-          </div>
+
+            {/* Login Button */}
+            <button
+              type="submit"
+              className="w-full py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 bg-gradient-to-r from-[#00d4aa] to-[#00b894]"
+            >
+              <LogIn className="w-5 h-5" />
+              Ingresar
+            </button>
+          </form>
+
+          {/* Footer Text */}
+          <p className="text-gray-500 text-xs text-center mt-4">
+            Ingresa con tu correo registrado en el sistema
+          </p>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center py-8 text-gray-500 text-sm">
-        <p>&copy; 2024 XPI Tienda. Todos los derechos reservados.</p>
-      </footer>
+      {/* Bottom Navigation */}
+      <div className="pb-8 px-4">
+        {/* Page Indicators */}
+        <div className="flex justify-center gap-2 mb-6">
+          <div className="w-3 h-3 rounded-full bg-[#00d4aa]" />
+          <div className="w-3 h-3 rounded-full bg-[#6b3fa0]" />
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-center gap-6">
+          {/* Retroceso Button */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleRetroceso}
+              className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105 bg-[#3b82f6]"
+            >
+              <ChevronLeft className="w-7 h-7 text-white" />
+            </button>
+            <span className="text-sm mt-2 text-[#3b82f6]">Retroceso</span>
+          </div>
+
+          {/* Avance Button */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleAvance}
+              className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105 bg-[#f97316]"
+            >
+              <ChevronRight className="w-7 h-7 text-white" />
+            </button>
+            <span className="text-sm mt-2 text-[#f97316]">Avance</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
