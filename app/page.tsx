@@ -1,122 +1,106 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShoppingBag, DollarSign, Truck, CreditCard, Star, ChevronRight } from 'lucide-react';
+import { ChevronRight, Shield, Sparkles } from 'lucide-react';
 
-export default function HomePage() {
+export default function SplashPage() {
   const router = useRouter();
+  const [showContent, setShowContent] = useState(false);
+  const [showButtons, setShowButtons] = useState(false);
+
+  useEffect(() => {
+    // Animación escalonada
+    setTimeout(() => setShowContent(true), 300);
+    setTimeout(() => setShowButtons(true), 800);
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden">
-      {/* Hero Section with Gradient Background */}
-      <div 
-        className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative"
-        style={{ 
-          background: 'linear-gradient(135deg, #6B2D8B 0%, #4a1f61 40%, #1B8A3B 100%)'
-        }}
-      >
-        {/* Decorative Pattern Overlay */}
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-
-        {/* Content */}
-        <div className="relative z-10 text-center animate-fadeIn">
-          {/* Logo */}
-          <div className="mb-8 animate-scaleIn">
-            <Image
-              src="/logo-xpitienda.png"
-              alt="XPI Tienda"
-              width={220}
-              height={100}
-              className="object-contain mx-auto drop-shadow-2xl"
-              priority
-            />
-          </div>
-
-          {/* Tagline */}
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-            Tu Marketplace
-          </h1>
-          <p className="text-2xl sm:text-3xl font-semibold text-white/90 mb-8">
-            de Confianza
-          </p>
-
-          <p className="text-white/80 text-lg mb-10 max-w-md mx-auto">
-            Compra y vende productos de forma segura, rapida y confiable
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <button
-              onClick={() => router.push('/catalog')}
-              className="group px-8 py-4 bg-[#6B2D8B] hover:bg-[#4a1f61] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
-            >
-              <ShoppingBag className="w-6 h-6" />
-              Ver Catalogo
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-            
-            <button
-              onClick={() => router.push('/vender')}
-              className="group px-8 py-4 bg-[#1B8A3B] hover:bg-[#156b2e] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
-            >
-              <DollarSign className="w-6 h-6" />
-              Vender Productos
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ 
+        background: 'linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 30%, #1a0a2e 50%, #0d3d1a 80%, #1B8A3B 100%)'
+      }}
+    >
+      {/* Animated Background Particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-64 h-64 bg-[#6B2D8B]/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-[#1B8A3B]/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#6B2D8B]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
       </div>
 
-      {/* Features Section */}
-      <div className="bg-white py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-[#6B2D8B] mb-10">
-            Por que elegirnos?
+      {/* Sparkles decorativos */}
+      <Sparkles className="absolute top-20 right-20 w-8 h-8 text-xpi-green/40 animate-pulse" />
+      <Sparkles className="absolute bottom-32 left-16 w-6 h-6 text-[#6B2D8B]/40 animate-pulse" style={{ animationDelay: '0.7s' }} />
+      <Sparkles className="absolute top-40 left-1/4 w-5 h-5 text-xpi-green/30 animate-pulse" style={{ animationDelay: '1.2s' }} />
+
+      {/* Main Content */}
+      <div className={`relative z-10 text-center px-6 max-w-lg transition-all duration-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        
+        {/* Logo con glow */}
+        <div className="mb-8 relative">
+          <div className="absolute inset-0 bg-xpi-green/30 blur-3xl rounded-full scale-150" />
+          <Image
+            src="/logo-xpitienda.png"
+            alt="XPI Tienda"
+            width={280}
+            height={130}
+            className="object-contain mx-auto relative z-10 drop-shadow-2xl"
+            priority
+          />
+        </div>
+
+        {/* Mensaje de Bienvenida */}
+        <div className="mb-10">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+            Bienvenido a
+          </h1>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            <span className="text-[#6B2D8B] drop-shadow-lg">XPI</span>
+            <span className="text-xpi-green drop-shadow-lg"> Tienda</span>
           </h2>
+          <p className="text-gray-300 text-lg leading-relaxed">
+            Tu marketplace de confianza para comprar y vender productos de forma segura
+          </p>
+        </div>
+
+        {/* Indicadores de Pagina */}
+        <div className="flex justify-center gap-2 mb-10">
+          <div className="w-3 h-3 rounded-full bg-xpi-green" />
+          <div className="w-3 h-3 rounded-full bg-[#6B2D8B]/50" />
+          <div className="w-3 h-3 rounded-full bg-[#6B2D8B]/30" />
+        </div>
+
+        {/* Botones */}
+        <div className={`space-y-4 transition-all duration-700 ${showButtons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="bg-gradient-to-br from-[#F3E8FF] to-[#EDE9FE] p-6 rounded-xl text-center hover:shadow-lg transition-shadow border border-[#6B2D8B]/20">
-              <div className="w-16 h-16 mx-auto mb-4 bg-[#6B2D8B] rounded-full flex items-center justify-center">
-                <Truck className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-bold text-[#6B2D8B] text-lg mb-2">Envio Rapido</h3>
-              <p className="text-gray-600 text-sm">Recibe tus productos en tiempo record</p>
-            </div>
+          {/* Boton Avance - Ir al Catalogo */}
+          <button
+            onClick={() => router.push('/catalog')}
+            className="w-full group px-8 py-4 bg-gradient-to-r from-xpi-green to-[#22A84A] hover:from-[#22A84A] hover:to-xpi-green text-white font-bold text-lg rounded-2xl shadow-lg shadow-xpi-green/30 hover:shadow-xl hover:shadow-xpi-green/40 transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-3"
+          >
+            <ChevronRight className="w-6 h-6" />
+            Comenzar a Explorar
+            <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+          </button>
 
-            {/* Feature 2 */}
-            <div className="bg-gradient-to-br from-[#F3E8FF] to-[#EDE9FE] p-6 rounded-xl text-center hover:shadow-lg transition-shadow border border-[#6B2D8B]/20">
-              <div className="w-16 h-16 mx-auto mb-4 bg-[#1B8A3B] rounded-full flex items-center justify-center">
-                <CreditCard className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-bold text-[#1B8A3B] text-lg mb-2">Pago Seguro</h3>
-              <p className="text-gray-600 text-sm">Transacciones 100% protegidas</p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-gradient-to-br from-[#F3E8FF] to-[#EDE9FE] p-6 rounded-xl text-center hover:shadow-lg transition-shadow border border-[#6B2D8B]/20">
-              <div className="w-16 h-16 mx-auto mb-4 bg-[#22A84A] rounded-full flex items-center justify-center">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-bold text-[#22A84A] text-lg mb-2">Mejores Precios</h3>
-              <p className="text-gray-600 text-sm">Ofertas exclusivas todos los dias</p>
-            </div>
-          </div>
+          {/* Boton Login Super Administrador */}
+          <button
+            onClick={() => router.push('/admin/login')}
+            className="w-full group px-8 py-4 bg-gradient-to-r from-[#6B2D8B] to-[#4a1f61] hover:from-[#4a1f61] hover:to-[#6B2D8B] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#6B2D8B]/30 hover:shadow-xl hover:shadow-[#6B2D8B]/40 transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-3"
+          >
+            <Shield className="w-6 h-6" />
+            Super Administrador
+          </button>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-[#6B2D8B] py-6 px-4 text-center">
-        <p className="text-white/80 text-sm">
+      <div className="absolute bottom-6 text-center">
+        <p className="text-gray-500 text-sm">
           2024 XPI Tienda. Todos los derechos reservados.
         </p>
-      </footer>
+      </div>
     </div>
   );
 }

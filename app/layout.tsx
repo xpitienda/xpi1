@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ToastProvider } from '@/context/ToastContext';
 import { CartProvider } from '@/context/CartContext';
 import { ImageModalProvider } from '@/context/ImageModalContext';
+import { AdminAuthProvider } from '@/context/AdminAuthContext';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -24,11 +25,13 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.variable} font-sans`}>
         <CartProvider>
-          <ToastProvider>
-            <ImageModalProvider>
-              {children}
-            </ImageModalProvider>
-          </ToastProvider>
+          <AdminAuthProvider>
+            <ToastProvider>
+              <ImageModalProvider>
+                {children}
+              </ImageModalProvider>
+            </ToastProvider>
+          </AdminAuthProvider>
         </CartProvider>
       </body>
     </html>
