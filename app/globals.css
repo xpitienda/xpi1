@@ -90,6 +90,35 @@
   animation: text-color-change 2s ease-in-out infinite;
 }
 
+/* Letter color change with stagger */
+@keyframes letter-color-change {
+  0%, 100% {
+    color: #00FF41;
+    text-shadow: 0 0 15px rgba(0, 255, 65, 0.8), 0 0 30px rgba(0, 255, 65, 0.5);
+  }
+  50% {
+    color: #BF00FF;
+    text-shadow: 0 0 15px rgba(191, 0, 255, 0.8), 0 0 30px rgba(191, 0, 255, 0.5);
+  }
+}
+
+.animate-letter {
+  animation: letter-color-change 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+.animate-letter-0 { animation-delay: 0s; }
+.animate-letter-1 { animation-delay: 0.1s; }
+.animate-letter-2 { animation-delay: 0.2s; }
+.animate-letter-3 { animation-delay: 0.3s; }
+.animate-letter-4 { animation-delay: 0.4s; }
+.animate-letter-5 { animation-delay: 0.5s; }
+.animate-letter-6 { animation-delay: 0.6s; }
+.animate-letter-7 { animation-delay: 0.7s; }
+.animate-letter-8 { animation-delay: 0.8s; }
+.animate-letter-9 { animation-delay: 0.9s; }
+.animate-letter-10 { animation-delay: 1s; }
+
 /* Button Neon Pulse - Green */
 @keyframes neon-pulse-green {
   0%, 100% {

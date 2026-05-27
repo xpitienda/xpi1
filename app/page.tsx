@@ -55,30 +55,20 @@ export default function SplashPage() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#0d051a]">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden">
       
-      {/* Fondo con logos repetidos en 4 colores pastel */}
-      <div className="absolute inset-0 grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 p-4 opacity-10">
-        {Array.from({ length: 80 }).map((_, i) => {
-          const colors = [
-            'brightness-100 sepia saturate-200 hue-rotate-[20deg]',   // Naranja pastel
-            'brightness-100 saturate-150 hue-rotate-[80deg]',         // Verde pastel
-            'brightness-100 saturate-150 hue-rotate-[260deg]',        // Morado pastel
-            'brightness-150 saturate-0',                               // Blanco pastel
-          ];
-          const colorClass = colors[i % 4];
-          return (
-            <div key={i} className="flex items-center justify-center">
-              <Image
-                src={logoUrl}
-                alt=""
-                width={60}
-                height={30}
-                className={`object-contain ${colorClass}`}
-              />
-            </div>
-          );
-        })}
+      {/* Fondo crema con visos verde y morado */}
+      <div className="absolute inset-0 bg-[#FDF6E3]">
+        {/* Viso verde superior izquierdo */}
+        <div className="absolute top-0 left-0 w-[60%] h-[50%] bg-gradient-to-br from-[#00FF41]/15 via-[#00CC33]/10 to-transparent rounded-full blur-3xl transform -translate-x-1/4 -translate-y-1/4"></div>
+        {/* Viso morado superior derecho */}
+        <div className="absolute top-0 right-0 w-[50%] h-[60%] bg-gradient-to-bl from-[#BF00FF]/15 via-[#9900CC]/10 to-transparent rounded-full blur-3xl transform translate-x-1/4 -translate-y-1/4"></div>
+        {/* Viso morado inferior izquierdo */}
+        <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-gradient-to-tr from-[#BF00FF]/12 via-[#9900CC]/8 to-transparent rounded-full blur-3xl transform -translate-x-1/4 translate-y-1/4"></div>
+        {/* Viso verde inferior derecho */}
+        <div className="absolute bottom-0 right-0 w-[60%] h-[50%] bg-gradient-to-tl from-[#00FF41]/12 via-[#00CC33]/8 to-transparent rounded-full blur-3xl transform translate-x-1/4 translate-y-1/4"></div>
+        {/* Viso central suave */}
+        <div className="absolute top-1/2 left-1/2 w-[40%] h-[40%] bg-gradient-to-r from-[#00FF41]/5 to-[#BF00FF]/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
       </div>
 
       {/* Contenido principal */}
@@ -102,33 +92,40 @@ export default function SplashPage() {
         {/* Texto Bienvenidos - aparece despues de 5 segundos */}
         {showText && (
           <div className="animate-fade-in-up text-center">
-            <h1 className="text-5xl md:text-7xl font-extrabold animate-text-color-change mb-4">
-              Bienvenidos
+            <h1 className="text-7xl md:text-9xl font-extrabold mb-6 tracking-wider">
+              {'Bienvenidos'.split('').map((letter, index) => (
+                <span 
+                  key={index} 
+                  className={`animate-letter animate-letter-${index}`}
+                >
+                  {letter}
+                </span>
+              ))}
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 font-light tracking-wide">
-              <span className="text-[#00FF41]">Xpi Tienda</span>
-              <span className="text-white mx-2">Una Alternativa</span>
-              <span className="text-[#BF00FF]">Inteligente</span>
+            <p className="text-xl md:text-2xl font-light tracking-wide">
+              <span className="text-[#00CC33] font-semibold">Xpi Tienda</span>
+              <span className="text-gray-600 mx-2">Una Alternativa</span>
+              <span className="text-[#9900CC] font-semibold">Inteligente</span>
             </p>
           </div>
         )}
 
         {/* Botones con intermitencia neon */}
         {showButtons && (
-          <div className="animate-fade-in-up flex flex-col sm:flex-row gap-6 items-center mt-8">
+          <div className="animate-fade-in-up flex flex-col gap-5 items-center mt-12">
             
             {/* Boton Explorar - Verde Neon */}
             <button
               onClick={() => router.push('/catalog')}
-              className="px-10 py-4 bg-gradient-to-r from-[#00FF41]/20 to-[#00CC33]/20 hover:from-[#00FF41]/40 hover:to-[#00CC33]/40 text-[#00FF41] font-bold text-lg rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[180px] animate-neon-green"
+              className="px-12 py-4 bg-[#00FF41]/10 hover:bg-[#00FF41]/30 text-[#00CC33] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[220px] animate-neon-green"
             >
               Explorar
             </button>
 
-            {/* Boton Super Administrador - Morado Neon */}
+            {/* Boton Super Administrador - Morado Neon - mas abajo */}
             <button
               onClick={() => router.push('/admin/login')}
-              className="px-8 py-3 bg-gradient-to-r from-[#BF00FF]/20 to-[#9900CC]/20 hover:from-[#BF00FF]/40 hover:to-[#9900CC]/40 text-[#BF00FF] font-bold text-sm rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[200px] animate-neon-purple"
+              className="px-8 py-3 bg-[#BF00FF]/10 hover:bg-[#BF00FF]/30 text-[#9900CC] font-bold text-sm rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[200px] animate-neon-purple mt-4"
             >
               Super Administrador
             </button>
