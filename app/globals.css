@@ -59,30 +59,83 @@
   animation: scaleIn 0.3s ease-out;
 }
 
-/* Rotating Dash Animation - Clockwise (like clock hands) */
-@keyframes dash-clockwise {
+/* Logo Spin - Slow rotation on its own axis */
+@keyframes logo-spin {
   0% {
-    stroke-dashoffset: 0;
+    transform: rotateY(0deg);
   }
   100% {
-    stroke-dashoffset: -1000;
+    transform: rotateY(360deg);
   }
 }
 
-/* Rotating Dash Animation - Counter Clockwise */
-@keyframes dash-counter {
-  0% {
-    stroke-dashoffset: 0;
+.animate-logo-spin {
+  animation: logo-spin 4s ease-in-out forwards;
+  transform-style: preserve-3d;
+}
+
+/* Text color change - Green and Purple like the logo */
+@keyframes text-color-change {
+  0%, 100% {
+    color: #00FF41;
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.7), 0 0 40px rgba(0, 255, 65, 0.4);
   }
-  100% {
-    stroke-dashoffset: 1000;
+  50% {
+    color: #BF00FF;
+    text-shadow: 0 0 20px rgba(191, 0, 255, 0.7), 0 0 40px rgba(191, 0, 255, 0.4);
   }
 }
 
-.animate-dash-clockwise {
-  animation: dash-clockwise 4s linear infinite;
+.animate-text-color-change {
+  animation: text-color-change 2s ease-in-out infinite;
 }
 
-.animate-dash-counter {
-  animation: dash-counter 4s linear infinite;
+/* Button Neon Pulse - Green */
+@keyframes neon-pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 5px #00FF41, 0 0 10px #00FF41, 0 0 20px #00FF41, 0 0 40px #00FF41;
+    border-color: #00FF41;
+  }
+  50% {
+    box-shadow: 0 0 10px #00FF41, 0 0 20px #00FF41, 0 0 40px #00FF41, 0 0 80px #00FF41;
+    border-color: #00CC33;
+  }
+}
+
+.animate-neon-green {
+  animation: neon-pulse-green 1.5s ease-in-out infinite;
+  border: 2px solid #00FF41;
+}
+
+/* Button Neon Pulse - Purple */
+@keyframes neon-pulse-purple {
+  0%, 100% {
+    box-shadow: 0 0 5px #BF00FF, 0 0 10px #BF00FF, 0 0 20px #BF00FF, 0 0 40px #BF00FF;
+    border-color: #BF00FF;
+  }
+  50% {
+    box-shadow: 0 0 10px #BF00FF, 0 0 20px #BF00FF, 0 0 40px #BF00FF, 0 0 80px #BF00FF;
+    border-color: #9900CC;
+  }
+}
+
+.animate-neon-purple {
+  animation: neon-pulse-purple 1.5s ease-in-out infinite;
+  border: 2px solid #BF00FF;
+}
+
+/* Fade in up animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
 }
