@@ -56,7 +56,7 @@ export default async function CatalogPage(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-green-50">
+    <div className="min-h-screen bg-[#F3E8FF]">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -84,14 +84,16 @@ export default async function CatalogPage(props: {
 
         {products.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-lg text-gray-500 mb-2">No se encontraron productos.</p>
-            <p className="text-gray-400">Intenta con otros filtros.</p>
+            <div className="bg-white/80 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
+              <p className="text-lg text-gray-500 mb-2">No se encontraron productos.</p>
+              <p className="text-gray-400">Intenta con otros filtros.</p>
+            </div>
           </div>
         ) : (
           <div 
             className="grid gap-4"
             style={{
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))'
             }}
           >
             {products.map((product: any) => (

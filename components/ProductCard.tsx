@@ -2,6 +2,7 @@
 
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useImageModal } from '@/context/ImageModalContext';
 import { ShoppingCart } from 'lucide-react';
 
 type Product = {
@@ -16,8 +17,10 @@ type Product = {
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const { openModal } = useImageModal();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     addToCart({
       id: product.id,
       name: product.name,
@@ -38,9 +41,12 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg hover:border-xpi-purple/30 transition-all group">
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+    <div className="bg-white rounded-2xl overflow-hidden border-2 border-xpi-green/30 shadow-sm hover:shadow-lg hover:border-xpi-green/60 transition-all group">
+      {/* Image - Click to open modal */}
+      <div 
+        className="relative aspect-square overflow-hidden bg-xpi-green/5 cursor-pointer"
+        onClick={() => openModal(product)}
+      >
         <img 
           src={product.image_url} 
           alt={product.name} 
@@ -54,14 +60,14 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       {/* Content */}
-      <div className="p-3">
+      <div className="p-3 bg-gradient-to-b from-white to-xpi-green/5">
         <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">{product.name}</h3>
         {product.description && (
-          <p className="text-gray-400 text-xs mb-2 line-clamp-2">{product.description}</p>
+          <p className="text-gray-500 text-xs mb-2 line-clamp-2">{product.description}</p>
         )}
         
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-xpi-green">
+          <span className="text-lg font-bold text-xpi-green-vibrant">
             ${Number(product.price).toLocaleString('es-CO')}
           </span>
           <button

@@ -87,7 +87,7 @@ export default function VenderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-green-50">
+    <div className="min-h-screen bg-[#F3E8FF]">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -100,14 +100,14 @@ export default function VenderPage() {
         {mensaje && (
           <div className={`p-4 rounded-xl mb-6 text-center font-medium ${
             mensaje.includes('exito') 
-              ? 'bg-green-50 text-xpi-green border border-xpi-green/30' 
-              : 'bg-red-50 text-red-500 border border-red-200'
+              ? 'bg-xpi-green/10 text-xpi-green border-2 border-xpi-green/30' 
+              : 'bg-red-50 text-red-500 border-2 border-red-200'
           }`}>
             {mensaje}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border-2 border-xpi-green/30 shadow-sm space-y-5">
           
           {/* Image Upload */}
           <div>
@@ -116,11 +116,11 @@ export default function VenderPage() {
             </label>
             <div className="relative">
               {previewUrl ? (
-                <div className="relative w-full h-48 rounded-xl overflow-hidden mb-2">
+                <div className="relative w-full h-48 rounded-xl overflow-hidden mb-2 border-2 border-xpi-green/30">
                   <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                 </div>
               ) : (
-                <div className="w-full h-48 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 mb-2">
+                <div className="w-full h-48 rounded-xl border-2 border-dashed border-xpi-green/40 flex items-center justify-center bg-xpi-green/5 mb-2">
                   <span className="text-gray-400">Sin imagen</span>
                 </div>
               )}
@@ -128,7 +128,7 @@ export default function VenderPage() {
                 type="file" 
                 accept="image/*" 
                 onChange={handleFileChange} 
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-xpi-purple/10 file:text-xpi-purple hover:file:bg-xpi-purple/20 cursor-pointer" 
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-xpi-green/10 file:text-xpi-green hover:file:bg-xpi-green/20 cursor-pointer" 
               />
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function VenderPage() {
               value={formData.nombre} 
               onChange={handleInputChange} 
               required 
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors" 
+              className="w-full px-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
               placeholder="Ej: Zapatillas deportivas" 
             />
           </div>
@@ -163,7 +163,7 @@ export default function VenderPage() {
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                     formData.categoria === cat.value
                       ? 'bg-xpi-purple text-white'
-                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:border-xpi-purple/50'
+                      : 'bg-xpi-green/10 text-gray-600 border-2 border-xpi-green/30 hover:border-xpi-green'
                   }`}
                 >
                   {cat.label}
@@ -181,7 +181,7 @@ export default function VenderPage() {
               name="descripcion" 
               value={formData.descripcion} 
               onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors resize-none" 
+              className="w-full px-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors resize-none" 
               placeholder="Detalles, estado, medidas, etc." 
               rows={4} 
             />
@@ -199,7 +199,7 @@ export default function VenderPage() {
               onChange={handleInputChange} 
               required 
               min="0"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors" 
+              className="w-full px-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
               placeholder="0" 
             />
           </div>

@@ -25,7 +25,7 @@ export default function SearchBar() {
             placeholder="Buscar productos..."
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors shadow-sm"
+            className="w-full pl-10 pr-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors shadow-sm"
           />
         </div>
         <button
