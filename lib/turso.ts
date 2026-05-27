@@ -1,7 +1,6 @@
-// lib/turso.ts
 import { createClient } from '@libsql/client';
 
-export const isTursoConfigured = !!(process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN);
+const isTursoConfigured = !!(process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN);
 
 export const turso = isTursoConfigured 
   ? createClient({
@@ -10,4 +9,6 @@ export const turso = isTursoConfigured
     })
   : {
       execute: async () => ({ rows: [] }),
-    };
+    } as ReturnType<typeof createClient>;
+
+export { isTursoConfigured };

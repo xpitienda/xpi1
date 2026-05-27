@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} font-sans bg-[#1a0a2e]`}>
+      <body className={`${inter.variable} font-sans`}>
         <CartProvider>
           <ToastProvider>
             {children}

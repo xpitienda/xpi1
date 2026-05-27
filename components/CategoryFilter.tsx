@@ -1,9 +1,8 @@
-// components/CategoryFilter.tsx
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const categories = ['Todas', 'Ropa', 'Tecnologia', 'Hogar', 'Deportes', 'Accesorios'];
+const categories = ['Todas', 'Ropa', 'Tecnologia', 'Deportes', 'Hogar', 'Accesorios'];
 
 export default function CategoryFilter() {
   const router = useRouter();
@@ -13,15 +12,8 @@ export default function CategoryFilter() {
 
   const handleCategoryChange = (category: string) => {
     const params = new URLSearchParams();
-    
-    if (category !== 'Todas') {
-      params.set('category', category);
-    }
-    
-    if (currentSearch) {
-      params.set('q', currentSearch);
-    }
-    
+    if (category !== 'Todas') params.set('category', category);
+    if (currentSearch) params.set('q', currentSearch);
     router.push(`/catalog?${params.toString()}`);
   };
 
@@ -33,8 +25,8 @@ export default function CategoryFilter() {
           onClick={() => handleCategoryChange(cat)}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
             currentCategory === cat
-              ? 'bg-xpi-green text-white shadow-lg shadow-xpi-green/30'
-              : 'bg-[#2d1b4e]/50 text-gray-400 border border-[#6b3fa0]/30 hover:border-xpi-green/50 hover:text-white'
+              ? 'bg-xpi-green text-white'
+              : 'bg-[#2d1b4e]/50 text-gray-400 border border-[#6b3fa0]/30 hover:border-xpi-green/50'
           }`}
         >
           {cat}
