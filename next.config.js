@@ -10,11 +10,6 @@ const nextConfig = {
     },
   },
   
-  // Evita errores de TypeScript durante el build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
   typescript: {
     ignoreBuildErrors: true,
   },
