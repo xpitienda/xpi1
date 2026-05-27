@@ -91,14 +91,14 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Image
-                src="/logo-xpitienda.png"
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo_XpiTienda_sin_Fondo-removebg-preview-yVgQmLAPvivdFeznsaVzvVQlE2Y1zE.png"
                 alt="XPI Tienda"
                 width={120}
                 height={50}
                 className="object-contain"
               />
               <div className="hidden sm:block">
-                <div className="flex items-center gap-2 text-xpi-green">
+                <div className="flex items-center gap-2 text-[#00FF41]">
                   <Shield className="w-5 h-5" />
                   <span className="font-semibold">Super Administrador</span>
                 </div>

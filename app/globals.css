@@ -62,3 +62,69 @@
 .animate-scaleIn {
   animation: scaleIn 0.3s ease-out;
 }
+
+/* Rotating Border Lines - Clockwise */
+@keyframes spin-clockwise {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Rotating Border Lines - Counter Clockwise */
+@keyframes spin-counter {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-spin-clockwise {
+  animation: spin-clockwise 4s linear infinite;
+}
+
+.animate-spin-counter {
+  animation: spin-counter 4s linear infinite;
+}
+
+/* Background Color Cycle - 4 solid colors */
+@keyframes bg-color-cycle {
+  0%, 100% {
+    background-color: #6B2D8B; /* Morado */
+  }
+  25% {
+    background-color: #1B8A3B; /* Verde */
+  }
+  50% {
+    background-color: #9B4DCA; /* Morado citrico */
+  }
+  75% {
+    background-color: #7FFF00; /* Citrico */
+  }
+}
+
+.animate-bg-cycle {
+  animation: bg-color-cycle 8s ease-in-out infinite;
+}
+
+/* Dashed Border Animation */
+@keyframes dash-rotate {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 1000;
+  }
+}
+
+.animate-dash {
+  animation: dash-rotate 20s linear infinite;
+}
+
+.animate-dash-reverse {
+  animation: dash-rotate 20s linear infinite reverse;
+}

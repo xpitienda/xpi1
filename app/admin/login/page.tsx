@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Image
-            src="/logo-xpitienda.png"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo_XpiTienda_sin_Fondo-removebg-preview-yVgQmLAPvivdFeznsaVzvVQlE2Y1zE.png"
             alt="XPI Tienda"
             width={200}
             height={90}
@@ -69,7 +69,7 @@ export default function AdminLoginPage() {
           />
           <h1 className="text-2xl font-bold">
             <span className="text-white">Panel de </span>
-            <span className="text-xpi-green">Administrador</span>
+            <span className="text-[#00FF41]">Administrador</span>
           </h1>
         </div>
 
