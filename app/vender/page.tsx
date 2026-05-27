@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Header from '@/components/Header';
-import { Upload, Package, Tag, FileText, DollarSign, Rocket } from 'lucide-react';
+import { Upload, Package, Tag, FileText, DollarSign, Rocket, ImageIcon } from 'lucide-react';
 
 export default function VenderPage() {
   const [loading, setLoading] = useState(false);
@@ -90,136 +90,162 @@ export default function VenderPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#1a0a2e]">
       <Header />
       
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center">
           <span className="text-white">Publicar </span>
-          <span className="text-xpi-green">Producto</span>
+          <span className="text-[#00FF41]">Producto</span>
         </h1>
         <p className="text-gray-400 text-center mb-8">Sube fotos y detalles de tu producto</p>
 
         {mensaje && (
-          <div className={`p-4 rounded-xl mb-6 text-center font-medium ${
+          <div className={`max-w-2xl mx-auto p-4 rounded-xl mb-6 text-center font-medium ${
             mensaje.includes('exito') 
-              ? 'bg-xpi-green/10 text-xpi-green border-2 border-xpi-green/30' 
-              : 'bg-red-50 text-red-500 border-2 border-red-200'
+              ? 'bg-[#00FF41]/10 text-[#00FF41] border-2 border-[#00FF41]/30' 
+              : 'bg-red-500/10 text-red-400 border-2 border-red-500/30'
           }`}>
             {mensaje}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-[#2d1b4e]/80 p-6 rounded-2xl border-2 border-xpi-green/30 space-y-5">
+        {/* Layout de dos columnas */}
+        <div className="grid md:grid-cols-2 gap-6">
           
-          {/* Image Upload */}
-          <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
-              <Upload className="w-4 h-4 text-xpi-green" /> Foto del producto
-            </label>
-            <div className="relative">
+          {/* Columna Izquierda - Preview de Imagen */}
+          <div className="bg-gradient-to-br from-[#00FF41]/10 to-[#BF00FF]/10 p-6 rounded-2xl border-2 border-[#00FF41]/40 shadow-lg shadow-[#00FF41]/10">
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-[#00FF41]" />
+              Vista Previa
+            </h2>
+            
+            {/* Recuadro de Imagen Grande */}
+            <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-[#1a0a2e]/80 border-2 border-[#BF00FF]/30 mb-4">
               {previewUrl ? (
-                <div className="relative w-full h-48 rounded-xl overflow-hidden mb-2 border-2 border-xpi-green/30">
-                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-                </div>
+                <Image src={previewUrl} alt="Preview" fill className="object-cover" />
               ) : (
-                <div className="w-full h-48 rounded-xl border-2 border-dashed border-xpi-green/40 flex items-center justify-center bg-[#1a0a2e]/50 mb-2">
-                  <span className="text-gray-500">Sin imagen</span>
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+                  <ImageIcon className="w-16 h-16 mb-3 text-[#BF00FF]/40" />
+                  <span className="text-sm">La imagen aparecera aqui</span>
                 </div>
               )}
+            </div>
+            
+            {/* Input de archivo */}
+            <label className="block">
+              <div className="flex items-center justify-center w-full py-3 px-4 bg-[#00FF41] hover:bg-[#00CC33] text-black font-bold rounded-xl cursor-pointer transition-all transform hover:scale-[1.02]">
+                <Upload className="w-5 h-5 mr-2" />
+                {previewUrl ? 'Cambiar Imagen' : 'Seleccionar Imagen'}
+              </div>
               <input 
                 type="file" 
                 accept="image/*" 
                 onChange={handleFileChange} 
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-xpi-green/10 file:text-xpi-green hover:file:bg-xpi-green/20 cursor-pointer" 
+                className="hidden" 
+              />
+            </label>
+            
+            {previewUrl && formData.nombre && (
+              <div className="mt-4 p-3 bg-[#1a0a2e]/60 rounded-xl border border-[#00FF41]/20">
+                <p className="text-white font-medium truncate">{formData.nombre}</p>
+                {formData.precio && (
+                  <p className="text-[#00FF41] font-bold text-xl mt-1">
+                    ${Number(formData.precio).toLocaleString('es-CO')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Columna Derecha - Formulario */}
+          <form onSubmit={handleSubmit} className="bg-[#2d1b4e]/80 p-6 rounded-2xl border-2 border-[#BF00FF]/30 shadow-lg shadow-[#BF00FF]/10 space-y-4">
+            
+            {/* Name */}
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+                <Package className="w-4 h-4 text-[#00FF41]" /> Nombre del producto
+              </label>
+              <input 
+                type="text" 
+                name="nombre" 
+                value={formData.nombre} 
+                onChange={handleInputChange} 
+                required 
+                className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-[#BF00FF]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#00FF41] focus:ring-1 focus:ring-[#00FF41] transition-colors" 
+                placeholder="Ej: Zapatillas deportivas" 
               />
             </div>
-          </div>
 
-          {/* Name */}
-          <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
-              <Package className="w-4 h-4 text-xpi-green" /> Nombre del producto
-            </label>
-            <input 
-              type="text" 
-              name="nombre" 
-              value={formData.nombre} 
-              onChange={handleInputChange} 
-              required 
-              className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
-              placeholder="Ej: Zapatillas deportivas" 
-            />
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-xpi-green" /> Categoria
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.value}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, categoria: cat.value })}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    formData.categoria === cat.value
-                      ? 'bg-xpi-green text-white'
-                      : 'bg-[#1a0a2e]/50 text-gray-300 border-2 border-xpi-green/30 hover:border-xpi-green'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
+            {/* Category */}
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-[#00FF41]" /> Categoria
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, categoria: cat.value })}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      formData.categoria === cat.value
+                        ? 'bg-[#00FF41] text-black'
+                        : 'bg-[#1a0a2e]/50 text-gray-300 border border-[#BF00FF]/30 hover:border-[#00FF41]'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-xpi-green" /> Descripcion
-            </label>
-            <textarea 
-              name="descripcion" 
-              value={formData.descripcion} 
-              onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors resize-none" 
-              placeholder="Detalles, estado, medidas, etc." 
-              rows={4} 
-            />
-          </div>
+            {/* Description */}
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#00FF41]" /> Descripcion
+              </label>
+              <textarea 
+                name="descripcion" 
+                value={formData.descripcion} 
+                onChange={handleInputChange} 
+                className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-[#BF00FF]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#00FF41] focus:ring-1 focus:ring-[#00FF41] transition-colors resize-none" 
+                placeholder="Detalles, estado, medidas, etc." 
+                rows={3} 
+              />
+            </div>
 
-          {/* Price */}
-          <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-xpi-green" /> Precio (COP)
-            </label>
-            <input 
-              type="number" 
-              name="precio" 
-              value={formData.precio} 
-              onChange={handleInputChange} 
-              required 
-              min="0"
-              className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
-              placeholder="0" 
-            />
-          </div>
+            {/* Price */}
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-[#00FF41]" /> Precio (COP)
+              </label>
+              <input 
+                type="number" 
+                name="precio" 
+                value={formData.precio} 
+                onChange={handleInputChange} 
+                required 
+                min="0"
+                className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-[#BF00FF]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#00FF41] focus:ring-1 focus:ring-[#00FF41] transition-colors" 
+                placeholder="0" 
+              />
+            </div>
 
-          {/* Submit Button */}
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 bg-xpi-green hover:bg-xpi-green-dark disabled:opacity-50 transition-colors"
-          >
-            {loading ? (
-              <span>Subiendo...</span>
-            ) : (
-              <>
-                <Rocket className="w-5 h-5" />
-                Publicar Producto
-              </>
-            )}
-          </button>
-        </form>
+            {/* Submit Button */}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full py-4 rounded-xl font-bold text-black flex items-center justify-center gap-2 bg-gradient-to-r from-[#00FF41] to-[#00CC33] hover:from-[#00CC33] hover:to-[#00FF41] disabled:opacity-50 transition-all transform hover:scale-[1.02] shadow-lg shadow-[#00FF41]/30"
+            >
+              {loading ? (
+                <span>Subiendo...</span>
+              ) : (
+                <>
+                  <Rocket className="w-5 h-5" />
+                  Publicar Producto
+                </>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
