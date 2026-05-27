@@ -1,20 +1,16 @@
 import { turso, isTursoConfigured } from '@/lib/turso';
+import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import CategoryFilter from '@/components/CategoryFilter';
-import Header from '@/components/Header';
-import { ShoppingBag } from 'lucide-react';
 
-// Datos mock para preview
 const MOCK_PRODUCTS = [
-  { id: '1', name: 'Jean Slim Fit Premium', description: 'Jean de alta calidad con corte moderno', price: 89900, image_url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400', category: 'Ropa' },
-  { id: '2', name: 'Camiseta Algodon Organico', description: 'Camiseta suave y ecologica', price: 45000, image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400', category: 'Ropa' },
-  { id: '3', name: 'Zapatillas Running Pro', description: 'Maximo rendimiento y comodidad', price: 180000, image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400', category: 'Deportes' },
-  { id: '4', name: 'Smartwatch Fitness', description: 'Monitor de salud y notificaciones', price: 299000, image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400', category: 'Tecnologia' },
-  { id: '5', name: 'Lampara LED Moderna', description: 'Iluminacion elegante para tu hogar', price: 75000, image_url: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400', category: 'Hogar' },
-  { id: '6', name: 'Auriculares Bluetooth', description: 'Sonido premium inalambrico', price: 120000, image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400', category: 'Tecnologia' },
-  { id: '7', name: 'Mochila Urban', description: 'Resistente al agua, multiples compartimentos', price: 95000, image_url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400', category: 'Deportes' },
-  { id: '8', name: 'Set de Cocina Premium', description: 'Utensilios de acero inoxidable', price: 150000, image_url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400', category: 'Hogar' },
+  { id: 1, name: 'Jean Clasico Azul', price: 89900, image_url: '/images/jeans1.jpg', category: 'Ropa', description: 'Jean de alta calidad' },
+  { id: 2, name: 'Camiseta Sport', price: 45000, image_url: '/images/shirt1.jpg', category: 'Deportes', description: 'Camiseta deportiva' },
+  { id: 3, name: 'Laptop Pro 15', price: 2500000, image_url: '/images/laptop1.jpg', category: 'Tecnologia', description: 'Laptop de alto rendimiento' },
+  { id: 4, name: 'Zapatillas Running', price: 180000, image_url: '/images/shoes1.jpg', category: 'Deportes', description: 'Zapatillas para correr' },
+  { id: 5, name: 'Vestido Elegante', price: 120000, image_url: '/images/dress1.jpg', category: 'Ropa', description: 'Vestido para ocasiones especiales' },
+  { id: 6, name: 'Audifonos Bluetooth', price: 95000, image_url: '/images/headphones1.jpg', category: 'Tecnologia', description: 'Audifonos inalambricos' },
 ];
 
 export default async function CatalogPage(props: { 
@@ -63,101 +59,44 @@ export default async function CatalogPage(props: {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 50%, #2d1b4e 100%)" }}>
+    <div className="min-h-screen bg-gradient-to-b from-[#2d1b4e] via-[#1a0a2e] to-[#2d1b4e]">
       <Header />
       
-      {/* Hero Section */}
-      <div 
-        className="text-white py-12 px-4"
-        style={{ 
-          background: "linear-gradient(90deg, rgba(45, 27, 78, 0.5), rgba(107, 63, 160, 0.3))",
-          borderBottom: "1px solid rgba(107, 63, 160, 0.3)"
-        }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "#00d4aa" }}>
-              <ShoppingBag className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="text-white">Catalogo de </span>
-              <span style={{ color: "#00d4aa" }}>Productos</span>
-            </h1>
-          </div>
-          
-          <p className="text-gray-300 text-lg max-w-2xl">
-            Explora nuestra seleccion de productos de calidad. Encuentra lo que necesitas al mejor precio.
-          </p>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div 
-        className="sticky top-[73px] z-40 backdrop-blur-md shadow-lg"
-        style={{ 
-          background: "rgba(26, 10, 46, 0.95)",
-          borderBottom: "1px solid rgba(107, 63, 160, 0.3)"
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="w-full md:w-96">
-              <SearchBar />
-            </div>
-            <div className="w-full md:flex-1 overflow-x-auto">
-              <CategoryFilter />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Results Info */}
-      {(query || (category && category !== 'Todas')) && (
-        <div className="max-w-6xl mx-auto px-4 pt-6">
-          <div 
-            className="rounded-lg px-4 py-3 flex flex-wrap items-center gap-2"
-            style={{ 
-              background: "rgba(45, 27, 78, 0.3)",
-              border: "1px solid rgba(107, 63, 160, 0.3)"
-            }}
-          >
-            <span className="text-gray-300">Resultados para:</span>
-            {query && (
-              <span className="text-white px-3 py-1 rounded-full text-sm font-medium" style={{ background: "#3b82f6" }}>
-                &quot;{query}&quot;
-              </span>
-            )}
-            {category && category !== 'Todas' && (
-              <span className="text-white px-3 py-1 rounded-full text-sm font-medium" style={{ background: "#00d4aa" }}>
-                {category}
-              </span>
-            )}
-            <span className="text-gray-400 ml-auto">
-              {products.length} producto{products.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Products Grid */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {products.length === 0 ? (
-          <div className="text-center py-16">
-            <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ background: "rgba(45, 27, 78, 0.5)" }}
-            >
-              <ShoppingBag className="w-10 h-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              No se encontraron productos
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Intenta con otros filtros o terminos de busqueda
+        {/* Title */}
+        <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
+          <span className="text-white">Catalogo de </span>
+          <span className="text-xpi-green">Productos</span>
+        </h1>
+        
+        {/* Search */}
+        <div className="max-w-xl mx-auto mb-6">
+          <SearchBar />
+        </div>
+        
+        {/* Category Filter */}
+        <CategoryFilter />
+
+        {/* Search Results Info */}
+        {(query || (category && category !== 'Todas')) && (
+          <div className="text-center mb-6">
+            <p className="text-gray-400">
+              {query && <span>Buscando: <strong className="text-xpi-green">&quot;{query}&quot;</strong></span>}
+              {query && category && category !== 'Todas' && <span> | </span>}
+              {category && category !== 'Todas' && <span>Categoria: <strong className="text-xpi-green">{category}</strong></span>}
+              <span className="text-gray-500 ml-2">({products.length} productos)</span>
             </p>
           </div>
+        )}
+
+        {/* Products Grid */}
+        {products.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-lg text-gray-400 mb-2">No se encontraron productos.</p>
+            <p className="text-gray-500">Intenta con otros filtros.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}

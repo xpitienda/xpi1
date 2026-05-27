@@ -11,11 +11,16 @@ const config: Config = {
       colors: {
         xpi: {
           purple: '#6B2D8B',
-          'purple-dark': '#5A1D7B',
+          'purple-dark': '#2d1b4e',
+          'purple-darker': '#1a0a2e',
           'purple-light': '#8B45B3',
-          green: '#1B8A3B',
-          'green-dark': '#147330',
-          'green-light': '#22A84A',
+          'purple-glow': '#6b3fa0',
+          green: '#00d4aa',
+          'green-dark': '#00b894',
+          'green-light': '#00f5c4',
+          blue: '#3b82f6',
+          orange: '#f97316',
+          cyan: '#06b6d4',
         }
       },
     },

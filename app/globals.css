@@ -1,20 +1,7 @@
-@import "tailwindcss";
-
-@theme {
-  /* New color palette based on splash design */
-  --color-xpi-purple: #1a0a2e;
-  --color-xpi-purple-dark: #0d0518;
-  --color-xpi-purple-light: #2d1b4e;
-  --color-xpi-purple-glow: #6b3fa0;
-  --color-xpi-green: #00d26a;
-  --color-xpi-green-dark: #00b85c;
-  --color-xpi-green-light: #00ff7f;
-  --color-xpi-blue: #3b82f6;
-  --color-xpi-orange: #f97316;
-  --color-xpi-cyan: #06b6d4;
-}
-
-/* Toast Animation */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Animación para Toasts */
 @keyframes slide-in {
   from {
     transform: translateX(100%);
@@ -26,45 +13,36 @@
   }
 }
 
-@keyframes slide-out {
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+/* Animación para Toasts */
+@keyframes slide-in {
   from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
     transform: translateX(100%);
     opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s ease-out forwards;
+  animation: slide-in 0.3s ease-out;
 }
-
-.animate-slide-out {
-  animation: slide-out 0.3s ease-in forwards;
-}
-
-/* Glow effect */
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(107, 63, 160, 0.5), 0 0 40px rgba(107, 63, 160, 0.3);
+/* Animación para Toasts */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
-  50% {
-    box-shadow: 0 0 30px rgba(107, 63, 160, 0.7), 0 0 60px rgba(107, 63, 160, 0.4);
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
-.animate-glow {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
-  min-height: 100vh;
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
 }

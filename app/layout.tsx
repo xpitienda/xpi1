@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: 'XPI Essentials - Tu Marketplace',
+  title: 'XPI Tienda - Tu Marketplace',
   description: 'Compra y vende productos de forma segura',
 };
 
@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="bg-xpi-purple-dark">
-      <body className={`${inter.variable} font-sans`}>
+    <html lang="es">
+      <body className={`${inter.variable} font-sans bg-[#1a0a2e]`}>
         <CartProvider>
           <ToastProvider>
             {children}

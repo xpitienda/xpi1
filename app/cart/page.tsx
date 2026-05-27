@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import { useCart } from "@/context/CartContext";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Header from "@/components/Header";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, MessageCircle } from "lucide-react";
+import { useCart } from '@/context/CartContext';
+import { useState, useEffect } from 'react';
+import Header from '@/components/Header';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Trash2, ShoppingBag, MessageCircle, Minus, Plus } from 'lucide-react';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, clearCart, total } = useCart();
+  const { cart, removeFromCart, clearCart, updateQuantity, total } = useCart();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -16,214 +17,139 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     const message = `Hola! Quiero finalizar mi compra:\n\n${cart
-      .map((item) => `- ${item.name} (x${item.quantity}): $${(item.price * item.quantity).toLocaleString("es-CO")}`)
-      .join("\n")}\n\n*Total: $${total.toLocaleString("es-CO")}*`;
+      .map((item) => `- ${item.name} (x${item.quantity}): $${(item.price * item.quantity).toLocaleString('es-CO')}`)
+      .join('\n')}\n\n*Total: $${total.toLocaleString('es-CO')}*`;
     
     const encodedMessage = encodeURIComponent(message);
     window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
   };
 
   if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 50%, #2d1b4e 100%)" }}>
-        <div className="animate-pulse text-gray-400">Cargando...</div>
-      </div>
-    );
-  }
-
-  if (cart.length === 0) {
-    return (
-      <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 50%, #2d1b4e 100%)" }}>
-        <Header />
-        <div className="flex items-center justify-center p-4 min-h-[calc(100vh-73px)]">
-          <div className="text-center max-w-md">
-            <div 
-              className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
-              style={{ 
-                background: "rgba(45, 27, 78, 0.5)",
-                border: "1px solid rgba(107, 63, 160, 0.5)"
-              }}
-            >
-              <ShoppingCart className="w-12 h-12" style={{ color: "#00d4aa" }} />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-3">
-              Tu carrito esta vacio
-            </h1>
-            <p className="text-gray-400 mb-8">
-              Explora nuestro catalogo y encuentra productos increibles
-            </p>
-            <Link
-              href="/catalog"
-              className="inline-flex items-center gap-2 text-white px-8 py-4 rounded-full font-semibold transition-all hover:opacity-90"
-              style={{ background: "#f97316" }}
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Ver Catalogo
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 50%, #2d1b4e 100%)" }}>
+    <div className="min-h-screen bg-gradient-to-b from-[#2d1b4e] via-[#1a0a2e] to-[#2d1b4e]">
       <Header />
       
-      <div className="py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <Link 
-                href="/catalog" 
-                className="inline-flex items-center gap-2 text-gray-400 mb-2 transition-colors text-sm hover:opacity-80"
-                style={{ color: "#00d4aa" }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Seguir comprando
-              </Link>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                <ShoppingCart className="w-8 h-8" style={{ color: "#00d4aa" }} />
-                <span className="text-white">Carrito de </span>
-                <span style={{ color: "#00d4aa" }}>Compras</span>
-              </h1>
-            </div>
-            <span className="text-gray-400">
-              {cart.length} {cart.length === 1 ? "producto" : "productos"}
-            </span>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Title */}
+        <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
+          <span className="text-white">Carrito de </span>
+          <span className="text-xpi-green">Compras</span>
+        </h1>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Products List */}
-            <div className="lg:col-span-2 space-y-4">
-              {cart.map((item) => (
+        {cart.length === 0 ? (
+          <div 
+            className="bg-[#1a0a2e]/80 backdrop-blur-sm rounded-2xl p-12 border border-[#6b3fa0]/30 text-center"
+            style={{ boxShadow: '0 0 40px rgba(107, 63, 160, 0.2)' }}
+          >
+            <ShoppingBag className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">Tu carrito esta vacio</h2>
+            <p className="text-gray-400 mb-6">Agrega productos desde el catalogo</p>
+            <Link
+              href="/catalog"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all"
+              style={{ background: 'linear-gradient(to right, #00d4aa, #06b6d4)' }}
+            >
+              Ver Catalogo
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Cart Items */}
+            <div 
+              className="bg-[#1a0a2e]/80 backdrop-blur-sm rounded-2xl border border-[#6b3fa0]/30 overflow-hidden mb-6"
+              style={{ boxShadow: '0 0 40px rgba(107, 63, 160, 0.2)' }}
+            >
+              {cart.map((item, index) => (
                 <div
                   key={item.id}
-                  className="backdrop-blur-sm rounded-xl p-4 flex items-center gap-4 transition-all"
-                  style={{ 
-                    background: "rgba(26, 10, 46, 0.8)",
-                    border: "1px solid rgba(107, 63, 160, 0.3)"
-                  }}
+                  className={`flex items-center gap-4 p-4 ${index !== cart.length - 1 ? 'border-b border-[#6b3fa0]/20' : ''}`}
                 >
                   {/* Product Image - 48x48px */}
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                    style={{ border: "1px solid rgba(107, 63, 160, 0.3)" }}
-                  />
-                  
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#2d1b4e] flex-shrink-0">
+                    <Image
+                      src={item.image || '/images/placeholder.jpg'}
+                      alt={item.name}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-white truncate">{item.name}</h3>
-                    <p className="font-bold" style={{ color: "#00d4aa" }}>
-                      ${item.price.toLocaleString("es-CO")}
-                    </p>
+                    <p className="text-xpi-green text-sm">${item.price.toLocaleString('es-CO')}</p>
                   </div>
 
                   {/* Quantity Controls */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
-                      style={{ background: "#3b82f6" }}
-                      aria-label="Disminuir cantidad"
+                      className="w-8 h-8 rounded-full bg-[#2d1b4e] border border-[#6b3fa0]/30 text-white flex items-center justify-center hover:bg-[#6b3fa0]/30 transition-colors"
                     >
-                      <Minus className="w-4 h-4 text-white" />
+                      <Minus className="w-4 h-4" />
                     </button>
-                    
-                    <span className="w-8 text-center font-semibold text-white">
-                      {item.quantity}
-                    </span>
-                    
+                    <span className="text-white w-8 text-center">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
-                      style={{ background: "#f97316" }}
-                      aria-label="Aumentar cantidad"
+                      className="w-8 h-8 rounded-full bg-[#2d1b4e] border border-[#6b3fa0]/30 text-white flex items-center justify-center hover:bg-[#6b3fa0]/30 transition-colors"
                     >
-                      <Plus className="w-4 h-4 text-white" />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* Subtotal */}
-                  <div className="text-right min-w-[100px]">
+                  <div className="text-right">
                     <p className="font-bold text-white">
-                      ${(item.price * item.quantity).toLocaleString("es-CO")}
+                      ${(item.price * item.quantity).toLocaleString('es-CO')}
                     </p>
                   </div>
 
-                  {/* Delete */}
+                  {/* Remove Button */}
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
-                    aria-label="Eliminar producto"
+                    className="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-colors"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
 
-            {/* Summary Card */}
-            <div className="lg:col-span-1">
-              <div 
-                className="backdrop-blur-sm rounded-xl p-6 sticky top-24"
-                style={{ 
-                  background: "rgba(26, 10, 46, 0.8)",
-                  border: "1px solid rgba(107, 63, 160, 0.3)"
-                }}
-              >
-                <h2 className="text-lg font-bold text-white mb-4">
-                  Resumen del Pedido
-                </h2>
-                
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-400">
-                    <span>Subtotal</span>
-                    <span className="text-white">${total.toLocaleString("es-CO")}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-400">
-                    <span>Envio</span>
-                    <span className="font-medium" style={{ color: "#00d4aa" }}>Gratis</span>
-                  </div>
-                  <div className="pt-3" style={{ borderTop: "1px solid rgba(107, 63, 160, 0.3)" }}>
-                    <div className="flex justify-between">
-                      <span className="text-lg font-bold text-white">Total</span>
-                      <span className="text-xl font-bold" style={{ color: "#00d4aa" }}>
-                        ${total.toLocaleString("es-CO")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            {/* Cart Summary */}
+            <div 
+              className="bg-[#1a0a2e]/80 backdrop-blur-sm rounded-2xl p-6 border border-[#6b3fa0]/30"
+              style={{ boxShadow: '0 0 40px rgba(107, 63, 160, 0.2)' }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-lg text-gray-400">Total:</span>
+                <span className="text-3xl font-bold text-xpi-green">
+                  ${total.toLocaleString('es-CO')}
+                </span>
+              </div>
 
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={clearCart}
+                  className="flex-1 py-3 rounded-lg font-semibold text-white bg-[#2d1b4e] border border-[#6b3fa0]/30 hover:bg-[#6b3fa0]/30 transition-colors"
+                >
+                  Vaciar Carrito
+                </button>
                 <button
                   onClick={handleCheckout}
-                  className="w-full text-white py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                  style={{ 
-                    background: "linear-gradient(90deg, #00d4aa 0%, #00a896 100%)",
-                    boxShadow: "0 4px 15px rgba(0, 212, 170, 0.3)"
-                  }}
+                  className="flex-1 py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-xpi-green/20"
+                  style={{ background: 'linear-gradient(to right, #00d4aa, #06b6d4)' }}
                 >
                   <MessageCircle className="w-5 h-5" />
                   Finalizar por WhatsApp
                 </button>
-                
-                <button
-                  onClick={clearCart}
-                  className="w-full mt-3 text-gray-400 py-3 rounded-xl font-medium transition-colors text-sm hover:bg-white/5"
-                >
-                  Vaciar carrito
-                </button>
-                
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  Al finalizar seras redirigido a WhatsApp para completar tu pedido
-                </p>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
