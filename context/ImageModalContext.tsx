@@ -69,7 +69,7 @@ export function ImageModalProvider({ children }: { children: ReactNode }) {
           onClick={closeModal}
         >
           <div 
-            className="relative max-w-3xl w-full animate-scaleIn"
+            className="relative max-w-4xl w-full animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}

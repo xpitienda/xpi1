@@ -1,162 +1,122 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShieldCheck, Eye, EyeOff, LogIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingBag, DollarSign, Truck, CreditCard, Star, ChevronRight } from 'lucide-react';
 
-export default function SplashPage() {
+export default function HomePage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push('/catalog');
-  };
-
-  const handleRetroceso = () => {
-    if (window.history.length > 1) {
-      router.back();
-    }
-  };
-
-  const handleAvance = () => {
-    router.push('/catalog');
-  };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%)' }}>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-        {/* Logo */}
-        <div className="mb-6">
-          <Image
-            src="/logo-xpitienda.png"
-            alt="XPI Tienda"
-            width={180}
-            height={80}
-            className="object-contain"
-            priority
-          />
-        </div>
-
-        {/* Title */}
-        <h1 className="text-3xl font-bold mb-8 text-center">
-          <span className="text-white">Iniciar </span>
-          <span style={{ color: '#00d4aa' }}>Sesion</span>
-        </h1>
-
-        {/* Login Card */}
+    <div className="min-h-screen flex flex-col overflow-hidden">
+      {/* Hero Section with Gradient Background */}
+      <div 
+        className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative"
+        style={{ 
+          background: 'linear-gradient(135deg, #6B2D8B 0%, #4a1f61 40%, #1B8A3B 100%)'
+        }}
+      >
+        {/* Decorative Pattern Overlay */}
         <div 
-          className="rounded-2xl p-6 sm:p-8 bg-[#1a0a2e]/95 border-2 border-purple-500/50 shadow-[0_0_40px_rgba(147,51,234,0.3)]"
-          style={{ width: '100%', maxWidth: '400px' }}
-        >
-          {/* Shield Icon */}
-          <div className="flex justify-center mb-4">
-            <div 
-              className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(0, 212, 170, 0.15)' }}
-            >
-              <ShieldCheck className="w-7 h-7" style={{ color: '#00d4aa' }} />
-            </div>
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 text-center animate-fadeIn">
+          {/* Logo */}
+          <div className="mb-8 animate-scaleIn">
+            <Image
+              src="/logo-xpitienda.png"
+              alt="XPI Tienda"
+              width={220}
+              height={100}
+              className="object-contain mx-auto drop-shadow-2xl"
+              priority
+            />
           </div>
 
-          {/* Subtitle */}
-          <p className="text-gray-400 text-center text-sm mb-6">
-            Ingresa con tu correo registrado
+          {/* Tagline */}
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            Tu Marketplace
+          </h1>
+          <p className="text-2xl sm:text-3xl font-semibold text-white/90 mb-8">
+            de Confianza
           </p>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email Field */}
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">
-                Correo electronico
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@correo.com"
-                className="w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 bg-[#2d1b4e]/50 border border-purple-500/30"
-              />
-            </div>
+          <p className="text-white/80 text-lg mb-10 max-w-md mx-auto">
+            Compra y vende productos de forma segura, rapida y confiable
+          </p>
 
-            {/* Password Field */}
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">
-                Contrasena
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="********"
-                  className="w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 pr-12 bg-[#2d1b4e]/50 border border-purple-500/30"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <button
+              onClick={() => router.push('/catalog')}
+              className="group px-8 py-4 bg-[#6B2D8B] hover:bg-[#4a1f61] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
+            >
+              <ShoppingBag className="w-6 h-6" />
+              Ver Catalogo
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            
+            <button
+              onClick={() => router.push('/vender')}
+              className="group px-8 py-4 bg-[#1B8A3B] hover:bg-[#156b2e] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
+            >
+              <DollarSign className="w-6 h-6" />
+              Vender Productos
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="bg-white py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-center text-[#6B2D8B] mb-10">
+            Por que elegirnos?
+          </h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Feature 1 */}
+            <div className="bg-gradient-to-br from-[#F3E8FF] to-[#EDE9FE] p-6 rounded-xl text-center hover:shadow-lg transition-shadow border border-[#6B2D8B]/20">
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#6B2D8B] rounded-full flex items-center justify-center">
+                <Truck className="w-8 h-8 text-white" />
               </div>
+              <h3 className="font-bold text-[#6B2D8B] text-lg mb-2">Envio Rapido</h3>
+              <p className="text-gray-600 text-sm">Recibe tus productos en tiempo record</p>
             </div>
 
-            {/* Login Button */}
-            <button
-              type="submit"
-              className="w-full py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 bg-gradient-to-r from-[#00d4aa] to-[#00b894]"
-            >
-              <LogIn className="w-5 h-5" />
-              Ingresar
-            </button>
-          </form>
+            {/* Feature 2 */}
+            <div className="bg-gradient-to-br from-[#F3E8FF] to-[#EDE9FE] p-6 rounded-xl text-center hover:shadow-lg transition-shadow border border-[#6B2D8B]/20">
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#1B8A3B] rounded-full flex items-center justify-center">
+                <CreditCard className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-bold text-[#1B8A3B] text-lg mb-2">Pago Seguro</h3>
+              <p className="text-gray-600 text-sm">Transacciones 100% protegidas</p>
+            </div>
 
-          {/* Footer Text */}
-          <p className="text-gray-500 text-xs text-center mt-4">
-            Ingresa con tu correo registrado en el sistema
-          </p>
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="pb-8 px-4">
-        {/* Page Indicators */}
-        <div className="flex justify-center gap-2 mb-6">
-          <div className="w-3 h-3 rounded-full bg-[#00d4aa]" />
-          <div className="w-3 h-3 rounded-full bg-[#6b3fa0]" />
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-center gap-6">
-          {/* Retroceso Button */}
-          <div className="flex flex-col items-center">
-            <button
-              onClick={handleRetroceso}
-              className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105 bg-[#3b82f6]"
-            >
-              <ChevronLeft className="w-7 h-7 text-white" />
-            </button>
-            <span className="text-sm mt-2 text-[#3b82f6]">Retroceso</span>
-          </div>
-
-          {/* Avance Button */}
-          <div className="flex flex-col items-center">
-            <button
-              onClick={handleAvance}
-              className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105 bg-[#f97316]"
-            >
-              <ChevronRight className="w-7 h-7 text-white" />
-            </button>
-            <span className="text-sm mt-2 text-[#f97316]">Avance</span>
+            {/* Feature 3 */}
+            <div className="bg-gradient-to-br from-[#F3E8FF] to-[#EDE9FE] p-6 rounded-xl text-center hover:shadow-lg transition-shadow border border-[#6B2D8B]/20">
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#22A84A] rounded-full flex items-center justify-center">
+                <Star className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-bold text-[#22A84A] text-lg mb-2">Mejores Precios</h3>
+              <p className="text-gray-600 text-sm">Ofertas exclusivas todos los dias</p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-[#6B2D8B] py-6 px-4 text-center">
+        <p className="text-white/80 text-sm">
+          2024 XPI Tienda. Todos los derechos reservados.
+        </p>
+      </footer>
     </div>
   );
 }
