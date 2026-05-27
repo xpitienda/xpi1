@@ -30,7 +30,7 @@ export default function SearchBar() {
         </div>
         <button
           type="submit"
-          className="bg-xpi-orange text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+          className="bg-xpi-green text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
         >
           Buscar
         </button>

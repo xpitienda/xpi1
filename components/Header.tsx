@@ -16,7 +16,7 @@ export default function Header() {
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-full bg-xpi-blue flex items-center justify-center hover:opacity-90 transition-opacity"
+            className="w-10 h-10 rounded-full bg-[#6b3fa0] flex items-center justify-center hover:opacity-90 transition-opacity"
           >
             <ChevronLeft className="w-6 h-6 text-white" />
           </button>
@@ -44,7 +44,7 @@ export default function Header() {
             
             <Link 
               href="/vender" 
-              className="bg-xpi-orange text-white px-4 py-2 rounded-full font-medium hover:opacity-90 transition-opacity text-sm"
+              className="bg-xpi-green text-white px-4 py-2 rounded-full font-medium hover:opacity-90 transition-opacity text-sm"
             >
               + Vender
             </Link>

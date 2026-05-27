@@ -88,7 +88,7 @@ export default async function CatalogPage(props: {
             <p className="text-gray-500">Intenta con otros filtros.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-6 gap-2">
             {products.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
