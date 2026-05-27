@@ -56,12 +56,12 @@ export default async function CatalogPage(props: {
   }
 
   return (
-    <div className="min-h-screen bg-[#F3E8FF]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#1a0a2e]">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
-          <span className="text-xpi-purple">Catalogo de </span>
+          <span className="text-white">Catalogo de </span>
           <span className="text-xpi-green">Productos</span>
         </h1>
         
@@ -73,10 +73,10 @@ export default async function CatalogPage(props: {
 
         {(query || (category && category !== 'Todas')) && (
           <div className="text-center mb-6">
-            <p className="text-gray-600">
-              {query && <span>Buscando: <strong className="text-xpi-purple">{'"'}{query}{'"'}</strong></span>}
+            <p className="text-gray-300">
+              {query && <span>Buscando: <strong className="text-xpi-green">{'"'}{query}{'"'}</strong></span>}
               {query && category && category !== 'Todas' && <span> | </span>}
-              {category && category !== 'Todas' && <span>Categoria: <strong className="text-xpi-purple">{category}</strong></span>}
+              {category && category !== 'Todas' && <span>Categoria: <strong className="text-xpi-green">{category}</strong></span>}
               <span className="text-gray-400 ml-2">({products.length} productos)</span>
             </p>
           </div>
@@ -84,8 +84,8 @@ export default async function CatalogPage(props: {
 
         {products.length === 0 ? (
           <div className="text-center py-16">
-            <div className="bg-white/80 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
-              <p className="text-lg text-gray-500 mb-2">No se encontraron productos.</p>
+            <div className="bg-[#2d1b4e]/80 rounded-2xl p-8 max-w-md mx-auto border border-xpi-green/30">
+              <p className="text-lg text-gray-300 mb-2">No se encontraron productos.</p>
               <p className="text-gray-400">Intenta con otros filtros.</p>
             </div>
           </div>

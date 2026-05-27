@@ -29,19 +29,19 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F3E8FF]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#1a0a2e]">
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
-          <span className="text-xpi-purple">Carrito de </span>
+          <span className="text-white">Carrito de </span>
           <span className="text-xpi-green">Compras</span>
         </h1>
 
         {cart.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border-2 border-xpi-green/30 shadow-sm text-center">
-            <ShoppingCart className="w-16 h-16 text-xpi-green/40 mx-auto mb-4" />
-            <p className="text-xl text-gray-500 mb-6">Tu carrito esta vacio</p>
+          <div className="bg-[#2d1b4e]/80 rounded-2xl p-12 border-2 border-xpi-green/30 text-center">
+            <ShoppingCart className="w-16 h-16 text-xpi-green/60 mx-auto mb-4" />
+            <p className="text-xl text-gray-300 mb-6">Tu carrito esta vacio</p>
             <Link
               href="/catalog"
               className="inline-block bg-xpi-purple text-white px-8 py-3 rounded-xl font-semibold hover:bg-xpi-purple-dark transition-colors"

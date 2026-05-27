@@ -87,15 +87,15 @@ export default function VenderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3E8FF]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#1a0a2e]">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center">
-          <span className="text-xpi-purple">Publicar </span>
+          <span className="text-white">Publicar </span>
           <span className="text-xpi-green">Producto</span>
         </h1>
-        <p className="text-gray-500 text-center mb-8">Sube fotos y detalles de tu producto</p>
+        <p className="text-gray-400 text-center mb-8">Sube fotos y detalles de tu producto</p>
 
         {mensaje && (
           <div className={`p-4 rounded-xl mb-6 text-center font-medium ${
@@ -107,12 +107,12 @@ export default function VenderPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border-2 border-xpi-green/30 shadow-sm space-y-5">
+        <form onSubmit={handleSubmit} className="bg-[#2d1b4e]/80 p-6 rounded-2xl border-2 border-xpi-green/30 space-y-5">
           
           {/* Image Upload */}
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
-              <Upload className="w-4 h-4 text-xpi-purple" /> Foto del producto
+            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+              <Upload className="w-4 h-4 text-xpi-green" /> Foto del producto
             </label>
             <div className="relative">
               {previewUrl ? (
@@ -120,8 +120,8 @@ export default function VenderPage() {
                   <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                 </div>
               ) : (
-                <div className="w-full h-48 rounded-xl border-2 border-dashed border-xpi-green/40 flex items-center justify-center bg-xpi-green/5 mb-2">
-                  <span className="text-gray-400">Sin imagen</span>
+                <div className="w-full h-48 rounded-xl border-2 border-dashed border-xpi-green/40 flex items-center justify-center bg-[#1a0a2e]/50 mb-2">
+                  <span className="text-gray-500">Sin imagen</span>
                 </div>
               )}
               <input 
@@ -135,8 +135,8 @@ export default function VenderPage() {
 
           {/* Name */}
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
-              <Package className="w-4 h-4 text-xpi-purple" /> Nombre del producto
+            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+              <Package className="w-4 h-4 text-xpi-green" /> Nombre del producto
             </label>
             <input 
               type="text" 
@@ -144,15 +144,15 @@ export default function VenderPage() {
               value={formData.nombre} 
               onChange={handleInputChange} 
               required 
-              className="w-full px-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
+              className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
               placeholder="Ej: Zapatillas deportivas" 
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-xpi-purple" /> Categoria
+            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-xpi-green" /> Categoria
             </label>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (
@@ -162,8 +162,8 @@ export default function VenderPage() {
                   onClick={() => setFormData({ ...formData, categoria: cat.value })}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                     formData.categoria === cat.value
-                      ? 'bg-xpi-purple text-white'
-                      : 'bg-xpi-green/10 text-gray-600 border-2 border-xpi-green/30 hover:border-xpi-green'
+                      ? 'bg-xpi-green text-white'
+                      : 'bg-[#1a0a2e]/50 text-gray-300 border-2 border-xpi-green/30 hover:border-xpi-green'
                   }`}
                 >
                   {cat.label}
@@ -174,14 +174,14 @@ export default function VenderPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-xpi-purple" /> Descripcion
+            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-xpi-green" /> Descripcion
             </label>
             <textarea 
               name="descripcion" 
               value={formData.descripcion} 
               onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors resize-none" 
+              className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors resize-none" 
               placeholder="Detalles, estado, medidas, etc." 
               rows={4} 
             />
@@ -189,8 +189,8 @@ export default function VenderPage() {
 
           {/* Price */}
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-xpi-purple" /> Precio (COP)
+            <label className="block text-gray-300 text-sm font-medium mb-2 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-xpi-green" /> Precio (COP)
             </label>
             <input 
               type="number" 
@@ -199,7 +199,7 @@ export default function VenderPage() {
               onChange={handleInputChange} 
               required 
               min="0"
-              className="w-full px-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
+              className="w-full px-4 py-3 bg-[#1a0a2e]/50 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors" 
               placeholder="0" 
             />
           </div>
@@ -208,7 +208,7 @@ export default function VenderPage() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 bg-xpi-purple hover:bg-xpi-purple-dark disabled:opacity-50 transition-colors"
+            className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 bg-xpi-green hover:bg-xpi-green-dark disabled:opacity-50 transition-colors"
           >
             {loading ? (
               <span>Subiendo...</span>

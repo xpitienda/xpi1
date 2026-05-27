@@ -41,10 +41,10 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border-2 border-xpi-green/30 shadow-sm hover:shadow-lg hover:border-xpi-green/60 transition-all group">
+    <div className="bg-gradient-to-b from-xpi-green/20 to-xpi-green/10 rounded-2xl overflow-hidden border-2 border-xpi-green/40 shadow-lg hover:shadow-xl hover:border-xpi-green transition-all group">
       {/* Image - Click to open modal */}
       <div 
-        className="relative aspect-square overflow-hidden bg-xpi-green/5 cursor-pointer"
+        className="relative aspect-square overflow-hidden bg-[#1a0a2e]/30 cursor-pointer"
         onClick={() => openModal(product)}
       >
         <img 
@@ -60,10 +60,10 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       {/* Content */}
-      <div className="p-3 bg-gradient-to-b from-white to-xpi-green/5">
-        <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">{product.name}</h3>
+      <div className="p-3 bg-[#1a0a2e]/60">
+        <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">{product.name}</h3>
         {product.description && (
-          <p className="text-gray-500 text-xs mb-2 line-clamp-2">{product.description}</p>
+          <p className="text-gray-400 text-xs mb-2 line-clamp-2">{product.description}</p>
         )}
         
         <div className="flex items-center justify-between">
@@ -72,7 +72,7 @@ export default function ProductCard({ product }: { product: Product }) {
           </span>
           <button
             onClick={handleAddToCart}
-            className="w-9 h-9 rounded-xl bg-xpi-purple text-white flex items-center justify-center hover:bg-xpi-purple-dark transition-colors"
+            className="w-9 h-9 rounded-xl bg-xpi-green text-white flex items-center justify-center hover:bg-xpi-green-dark transition-colors"
           >
             <ShoppingCart className="w-4 h-4" />
           </button>

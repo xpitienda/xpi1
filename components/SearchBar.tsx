@@ -25,12 +25,12 @@ export default function SearchBar() {
             placeholder="Buscar productos..."
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border-2 border-xpi-green/30 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors shadow-sm"
+            className="w-full pl-10 pr-4 py-3 bg-[#2d1b4e]/80 border-2 border-xpi-green/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-xpi-green focus:ring-1 focus:ring-xpi-green transition-colors"
           />
         </div>
         <button
           type="submit"
-          className="bg-xpi-purple text-white px-6 py-3 rounded-xl font-medium hover:bg-xpi-purple-dark transition-colors shadow-sm"
+          className="bg-xpi-green text-white px-6 py-3 rounded-xl font-medium hover:bg-xpi-green-dark transition-colors"
         >
           Buscar
         </button>
