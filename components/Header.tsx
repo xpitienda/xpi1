@@ -10,15 +10,15 @@ export default function Header() {
   const router = useRouter();
   
   return (
-    <header className="bg-gradient-to-r from-[#2d1b4e] to-[#1a0a2e] sticky top-0 z-50 border-b border-[#6b3fa0]/30">
+    <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100 shadow-sm">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-full bg-[#6b3fa0] flex items-center justify-center hover:opacity-90 transition-opacity"
+            className="w-10 h-10 rounded-xl bg-xpi-purple text-white flex items-center justify-center hover:bg-xpi-purple-dark transition-colors"
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
+            <ChevronLeft className="w-6 h-6" />
           </button>
 
           {/* Logo */}
@@ -26,8 +26,8 @@ export default function Header() {
             <Image 
               src="/logo-xpitienda.png" 
               alt="XPI Tienda"
-              width={120}
-              height={48}
+              width={100}
+              height={40}
               className="object-contain"
               priority
             />
@@ -37,14 +37,14 @@ export default function Header() {
           <nav className="flex items-center gap-3">
             <Link 
               href="/catalog" 
-              className="text-xpi-green hover:text-xpi-green/80 font-medium transition-colors hidden md:block"
+              className="text-xpi-purple hover:text-xpi-purple-dark font-medium transition-colors hidden md:block"
             >
               Catalogo
             </Link>
             
             <Link 
               href="/vender" 
-              className="bg-xpi-green text-white px-4 py-2 rounded-full font-medium hover:opacity-90 transition-opacity text-sm"
+              className="bg-xpi-green text-white px-4 py-2 rounded-xl font-medium hover:bg-xpi-green-dark transition-colors text-sm"
             >
               + Vender
             </Link>

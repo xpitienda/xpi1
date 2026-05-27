@@ -87,56 +87,56 @@ export default function VenderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2d1b4e] via-[#1a0a2e] to-[#2d1b4e]">
+    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-green-50">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center">
-          <span className="text-white">Publicar </span>
+          <span className="text-xpi-purple">Publicar </span>
           <span className="text-xpi-green">Producto</span>
         </h1>
-        <p className="text-gray-400 text-center mb-8">Sube fotos y detalles de tu producto</p>
+        <p className="text-gray-500 text-center mb-8">Sube fotos y detalles de tu producto</p>
 
         {mensaje && (
-          <div className={`p-4 rounded-lg mb-6 text-center font-medium ${
+          <div className={`p-4 rounded-xl mb-6 text-center font-medium ${
             mensaje.includes('exito') 
-              ? 'bg-xpi-green/20 text-xpi-green border border-xpi-green/30' 
-              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              ? 'bg-green-50 text-xpi-green border border-xpi-green/30' 
+              : 'bg-red-50 text-red-500 border border-red-200'
           }`}>
             {mensaje}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-[#1a0a2e]/80 p-6 rounded-2xl border border-[#6b3fa0]/30 shadow-[0_0_30px_rgba(107,63,160,0.2)] space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-5">
           
           {/* Image Upload */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2 flex items-center gap-2">
-              <Upload className="w-4 h-4 text-xpi-green" /> Foto del producto
+            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <Upload className="w-4 h-4 text-xpi-purple" /> Foto del producto
             </label>
             <div className="relative">
               {previewUrl ? (
-                <div className="relative w-full h-48 rounded-lg overflow-hidden mb-2">
+                <div className="relative w-full h-48 rounded-xl overflow-hidden mb-2">
                   <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                 </div>
               ) : (
-                <div className="w-full h-48 rounded-lg border-2 border-dashed border-[#6b3fa0]/50 flex items-center justify-center bg-[#2d1b4e]/30 mb-2">
-                  <span className="text-gray-500">Sin imagen</span>
+                <div className="w-full h-48 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 mb-2">
+                  <span className="text-gray-400">Sin imagen</span>
                 </div>
               )}
               <input 
                 type="file" 
                 accept="image/*" 
                 onChange={handleFileChange} 
-                className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-xpi-green/20 file:text-xpi-green hover:file:bg-xpi-green/30 cursor-pointer" 
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-xpi-purple/10 file:text-xpi-purple hover:file:bg-xpi-purple/20 cursor-pointer" 
               />
             </div>
           </div>
 
           {/* Name */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2 flex items-center gap-2">
-              <Package className="w-4 h-4 text-xpi-green" /> Nombre del producto
+            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <Package className="w-4 h-4 text-xpi-purple" /> Nombre del producto
             </label>
             <input 
               type="text" 
@@ -144,15 +144,15 @@ export default function VenderPage() {
               value={formData.nombre} 
               onChange={handleInputChange} 
               required 
-              className="w-full px-4 py-3 bg-[#2d1b4e]/50 border border-[#6b3fa0]/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green/50 transition-colors" 
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors" 
               placeholder="Ej: Zapatillas deportivas" 
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-xpi-green" /> Categoria
+            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-xpi-purple" /> Categoria
             </label>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (
@@ -160,10 +160,10 @@ export default function VenderPage() {
                   key={cat.value}
                   type="button"
                   onClick={() => setFormData({ ...formData, categoria: cat.value })}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                     formData.categoria === cat.value
-                      ? 'bg-xpi-green text-white'
-                      : 'bg-[#2d1b4e]/50 text-gray-400 border border-[#6b3fa0]/30 hover:border-xpi-green/50'
+                      ? 'bg-xpi-purple text-white'
+                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:border-xpi-purple/50'
                   }`}
                 >
                   {cat.label}
@@ -174,14 +174,14 @@ export default function VenderPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-xpi-green" /> Descripcion
+            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-xpi-purple" /> Descripcion
             </label>
             <textarea 
               name="descripcion" 
               value={formData.descripcion} 
               onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-[#2d1b4e]/50 border border-[#6b3fa0]/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green/50 transition-colors resize-none" 
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors resize-none" 
               placeholder="Detalles, estado, medidas, etc." 
               rows={4} 
             />
@@ -189,8 +189,8 @@ export default function VenderPage() {
 
           {/* Price */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-xpi-green" /> Precio (COP)
+            <label className="block text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-xpi-purple" /> Precio (COP)
             </label>
             <input 
               type="number" 
@@ -199,7 +199,7 @@ export default function VenderPage() {
               onChange={handleInputChange} 
               required 
               min="0"
-              className="w-full px-4 py-3 bg-[#2d1b4e]/50 border border-[#6b3fa0]/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green/50 transition-colors" 
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-xpi-purple/50 focus:ring-1 focus:ring-xpi-purple/50 transition-colors" 
               placeholder="0" 
             />
           </div>
@@ -208,7 +208,7 @@ export default function VenderPage() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2 bg-gradient-to-r from-xpi-green to-xpi-cyan hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 bg-xpi-purple hover:bg-xpi-purple-dark disabled:opacity-50 transition-colors"
           >
             {loading ? (
               <span>Subiendo...</span>

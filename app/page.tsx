@@ -1,135 +1,93 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Shield, Eye, EyeOff, LogIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingBag, Tag, Sparkles, Shield, Zap } from 'lucide-react';
 
-export default function SplashPage() {
+export default function HomePage() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push('/catalog');
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2d1b4e] via-[#1a0a2e] to-[#2d1b4e] flex flex-col items-center justify-between px-4 py-8">
-      {/* Logo */}
-      <div className="w-full flex justify-center pt-4">
-        <Image
-          src="/logo-xpitienda.png"
-          alt="XPI Tienda"
-          width={200}
-          height={80}
-          className="object-contain"
-          priority
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
-        {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center">
-          <span className="text-white">Iniciar </span>
-          <span className="text-xpi-green">Sesion</span>
-        </h1>
-
-        {/* Login Card */}
-        <div className="w-full bg-[#1a0a2e]/80 backdrop-blur-sm rounded-2xl p-8 border border-[#6b3fa0]/30 shadow-[0_0_30px_rgba(107,63,160,0.3)]">
-          {/* Shield Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-[#6b3fa0]/20 flex items-center justify-center border border-xpi-green/50">
-              <Shield className="w-8 h-8 text-xpi-green" />
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-green-50">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-xpi-purple/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-xpi-green/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/logo-xpitienda.png"
+              alt="XPI Tienda"
+              width={280}
+              height={120}
+              className="object-contain drop-shadow-lg"
+              priority
+            />
           </div>
 
-          <p className="text-gray-400 text-center mb-6">Ingresa con tu correo registrado</p>
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">Correo electronico</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@correo.com"
-                className="w-full px-4 py-3 bg-[#2d1b4e]/50 border border-[#6b3fa0]/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green/50 focus:ring-1 focus:ring-xpi-green/50 transition-colors"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">Contrasena</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="********"
-                  className="w-full px-4 py-3 bg-[#2d1b4e]/50 border border-[#6b3fa0]/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-xpi-green/50 focus:ring-1 focus:ring-xpi-green/50 transition-colors pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              className="w-full py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2 bg-gradient-to-r from-xpi-green via-xpi-green to-xpi-cyan hover:opacity-90 transition-opacity"
-            >
-              <LogIn className="w-5 h-5" />
-              Ingresar
-            </button>
-          </form>
-
-          <p className="text-gray-500 text-sm text-center mt-4">
-            Ingresa con tu correo registrado en el sistema.
+          {/* Tagline */}
+          <h1 className="text-3xl md:text-5xl font-bold text-center mb-4">
+            <span className="text-xpi-purple">Tu Marketplace</span>{' '}
+            <span className="text-xpi-green">de Confianza</span>
+          </h1>
+          <p className="text-gray-600 text-center text-lg md:text-xl mb-12 max-w-2xl mx-auto">
+            Compra y vende productos de forma segura y rapida
           </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <button
+              onClick={() => router.push('/catalog')}
+              className="w-full sm:w-auto px-8 py-4 bg-xpi-purple text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-3 hover:bg-xpi-purple-dark transition-colors shadow-lg shadow-xpi-purple/30"
+            >
+              <ShoppingBag className="w-6 h-6" />
+              Ver Catalogo
+            </button>
+            <button
+              onClick={() => router.push('/vender')}
+              className="w-full sm:w-auto px-8 py-4 bg-xpi-green text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-3 hover:bg-xpi-green-dark transition-colors shadow-lg shadow-xpi-green/30"
+            >
+              <Tag className="w-6 h-6" />
+              Vender Producto
+            </button>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-xpi-purple/10 rounded-xl flex items-center justify-center mb-4">
+                <Shield className="w-6 h-6 text-xpi-purple" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Seguro</h3>
+              <p className="text-gray-500 text-sm">Transacciones protegidas y verificadas</p>
+            </div>
+            
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-xpi-green/10 rounded-xl flex items-center justify-center mb-4">
+                <Zap className="w-6 h-6 text-xpi-green" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Rapido</h3>
+              <p className="text-gray-500 text-sm">Publica y compra en minutos</p>
+            </div>
+            
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-xpi-purple/10 rounded-xl flex items-center justify-center mb-4">
+                <Sparkles className="w-6 h-6 text-xpi-purple" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Variedad</h3>
+              <p className="text-gray-500 text-sm">Miles de productos disponibles</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="w-full flex flex-col items-center gap-4 pb-4">
-        {/* Page Indicators */}
-        <div className="flex gap-2">
-          <div className="w-3 h-3 rounded-full bg-xpi-green"></div>
-          <div className="w-3 h-3 rounded-full bg-[#6b3fa0]"></div>
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex gap-6">
-          <button
-            onClick={() => router.back()}
-            className="flex flex-col items-center gap-1"
-          >
-            <div className="w-14 h-14 rounded-full bg-xpi-blue flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg">
-              <ChevronLeft className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-xpi-blue text-sm font-medium">Retroceso</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/catalog')}
-            className="flex flex-col items-center gap-1"
-          >
-            <div className="w-14 h-14 rounded-full bg-xpi-orange flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg">
-              <ChevronRight className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-xpi-orange text-sm font-medium">Avance</span>
-          </button>
-        </div>
-      </div>
+      {/* Footer */}
+      <footer className="text-center py-8 text-gray-500 text-sm">
+        <p>&copy; 2024 XPI Tienda. Todos los derechos reservados.</p>
+      </footer>
     </div>
   );
 }

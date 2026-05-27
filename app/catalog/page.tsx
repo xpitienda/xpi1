@@ -56,12 +56,12 @@ export default async function CatalogPage(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2d1b4e] via-[#1a0a2e] to-[#2d1b4e]">
+    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-green-50">
       <Header />
       
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
-          <span className="text-white">Catalogo de </span>
+          <span className="text-xpi-purple">Catalogo de </span>
           <span className="text-xpi-green">Productos</span>
         </h1>
         
@@ -73,22 +73,27 @@ export default async function CatalogPage(props: {
 
         {(query || (category && category !== 'Todas')) && (
           <div className="text-center mb-6">
-            <p className="text-gray-400">
-              {query && <span>Buscando: <strong className="text-white">{'"'}{query}{'"'}</strong></span>}
+            <p className="text-gray-600">
+              {query && <span>Buscando: <strong className="text-xpi-purple">{'"'}{query}{'"'}</strong></span>}
               {query && category && category !== 'Todas' && <span> | </span>}
-              {category && category !== 'Todas' && <span>Categoria: <strong className="text-white">{category}</strong></span>}
-              <span className="text-gray-500 ml-2">({products.length} productos)</span>
+              {category && category !== 'Todas' && <span>Categoria: <strong className="text-xpi-purple">{category}</strong></span>}
+              <span className="text-gray-400 ml-2">({products.length} productos)</span>
             </p>
           </div>
         )}
 
         {products.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-lg text-gray-400 mb-2">No se encontraron productos.</p>
-            <p className="text-gray-500">Intenta con otros filtros.</p>
+            <p className="text-lg text-gray-500 mb-2">No se encontraron productos.</p>
+            <p className="text-gray-400">Intenta con otros filtros.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-6 gap-2">
+          <div 
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))'
+            }}
+          >
             {products.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
