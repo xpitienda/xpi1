@@ -153,6 +153,40 @@
   border: 2px solid #BF00FF;
 }
 
+/* Button Neon Pulse - Blue */
+@keyframes neon-pulse-blue {
+  0%, 100% {
+    box-shadow: 0 0 5px #00BFFF, 0 0 10px #00BFFF, 0 0 20px #00BFFF, 0 0 40px #00BFFF;
+    border-color: #00BFFF;
+  }
+  50% {
+    box-shadow: 0 0 10px #00BFFF, 0 0 20px #00BFFF, 0 0 40px #00BFFF, 0 0 80px #00BFFF;
+    border-color: #0099CC;
+  }
+}
+
+.animate-neon-blue {
+  animation: neon-pulse-blue 1.5s ease-in-out infinite;
+  border: 2px solid #00BFFF;
+}
+
+/* Button Neon Pulse - Orange */
+@keyframes neon-pulse-orange {
+  0%, 100% {
+    box-shadow: 0 0 5px #FF6B00, 0 0 10px #FF6B00, 0 0 20px #FF6B00, 0 0 40px #FF6B00;
+    border-color: #FF6B00;
+  }
+  50% {
+    box-shadow: 0 0 10px #FF6B00, 0 0 20px #FF6B00, 0 0 40px #FF6B00, 0 0 80px #FF6B00;
+    border-color: #CC5500;
+  }
+}
+
+.animate-neon-orange {
+  animation: neon-pulse-orange 1.5s ease-in-out infinite;
+  border: 2px solid #FF6B00;
+}
+
 /* Fade in up animation */
 @keyframes fade-in-up {
   from {

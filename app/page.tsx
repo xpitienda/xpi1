@@ -93,7 +93,7 @@ export default function SplashPage() {
         {/* Texto Bienvenidos - aparece despues de 5 segundos - TRES VECES MAS GRANDE */}
         {showText && (
           <div className="animate-fade-in-up text-center">
-            <h1 className="text-[8rem] md:text-[12rem] lg:text-[16rem] font-extrabold mb-6 tracking-wider leading-none">
+            <h1 className="text-[8rem] md:text-[12rem] lg:text-[16rem] font-extrabold mb-4 tracking-wider leading-none">
               {'Bienvenidos'.split('').map((letter, index) => (
                 <span 
                   key={index} 
@@ -103,7 +103,7 @@ export default function SplashPage() {
                 </span>
               ))}
             </h1>
-            <p className="text-2xl md:text-3xl font-light tracking-wide">
+            <p className="text-4xl md:text-5xl lg:text-6xl font-light tracking-wide">
               <span className="text-[#00FF41] font-semibold drop-shadow-lg">Xpi Tienda</span>
               <span className="text-white mx-3">Una Alternativa</span>
               <span className="text-[#E879F9] font-semibold drop-shadow-lg">Inteligente</span>
@@ -111,22 +111,22 @@ export default function SplashPage() {
           </div>
         )}
 
-        {/* Botones con intermitencia neon */}
+        {/* Botones azul y naranja - uno al lado del otro */}
         {showButtons && (
-          <div className="animate-fade-in-up flex flex-col gap-5 items-center mt-12">
+          <div className="animate-fade-in-up flex flex-row gap-6 items-center mt-6">
             
-            {/* Boton Explorar - Verde Neon */}
+            {/* Boton Explorar - Azul Neon */}
             <button
               onClick={() => router.push('/catalog')}
-              className="px-12 py-4 bg-[#00FF41]/20 hover:bg-[#00FF41]/40 text-[#00FF41] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[220px] animate-neon-green border border-[#00FF41]/50"
+              className="px-10 py-4 bg-[#00BFFF]/20 hover:bg-[#00BFFF]/40 text-[#00BFFF] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[180px] animate-neon-blue border-2 border-[#00BFFF]/60"
             >
               Explorar
             </button>
 
-            {/* Boton Super Administrador - Morado Neon - mas abajo */}
+            {/* Boton Super Administrador - Naranja Neon */}
             <button
               onClick={() => router.push('/admin/login')}
-              className="px-8 py-3 bg-[#E879F9]/20 hover:bg-[#E879F9]/40 text-[#E879F9] font-bold text-sm rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[200px] animate-neon-purple mt-4 border border-[#E879F9]/50"
+              className="px-10 py-4 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/40 text-[#FF6B00] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[220px] animate-neon-orange border-2 border-[#FF6B00]/60"
             >
               Super Administrador
             </button>
