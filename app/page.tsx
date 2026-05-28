@@ -57,22 +57,23 @@ export default function SplashPage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden">
       
-      {/* Fondo crema con visos verde y morado */}
-      <div className="absolute inset-0 bg-[#FDF6E3]">
-        {/* Viso verde superior izquierdo */}
-        <div className="absolute top-0 left-0 w-[60%] h-[50%] bg-gradient-to-br from-[#00FF41]/15 via-[#00CC33]/10 to-transparent rounded-full blur-3xl transform -translate-x-1/4 -translate-y-1/4"></div>
-        {/* Viso morado superior derecho */}
-        <div className="absolute top-0 right-0 w-[50%] h-[60%] bg-gradient-to-bl from-[#BF00FF]/15 via-[#9900CC]/10 to-transparent rounded-full blur-3xl transform translate-x-1/4 -translate-y-1/4"></div>
-        {/* Viso morado inferior izquierdo */}
-        <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-gradient-to-tr from-[#BF00FF]/12 via-[#9900CC]/8 to-transparent rounded-full blur-3xl transform -translate-x-1/4 translate-y-1/4"></div>
-        {/* Viso verde inferior derecho */}
-        <div className="absolute bottom-0 right-0 w-[60%] h-[50%] bg-gradient-to-tl from-[#00FF41]/12 via-[#00CC33]/8 to-transparent rounded-full blur-3xl transform translate-x-1/4 translate-y-1/4"></div>
-        {/* Viso central suave */}
-        <div className="absolute top-1/2 left-1/2 w-[40%] h-[40%] bg-gradient-to-r from-[#00FF41]/5 to-[#BF00FF]/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
-      </div>
+      {/* Video de fondo - se reproduce automaticamente */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      >
+        <source src="/video-splash.mov" type="video/quicktime" />
+        <source src="/video-splash.mov" type="video/mp4" />
+      </video>
+
+      {/* Overlay morado medio semi-transparente */}
+      <div className="absolute inset-0 bg-[#6B21A8]/60 z-10"></div>
 
       {/* Contenido principal */}
-      <div className="relative z-10 flex flex-col items-center justify-center gap-8 p-8">
+      <div className="relative z-20 flex flex-col items-center justify-center gap-8 p-8">
         
         {/* Logo giratorio sobre su propio eje */}
         <div 
@@ -82,17 +83,17 @@ export default function SplashPage() {
           <Image
             src={logoUrl}
             alt="XPI Tienda"
-            width={350}
-            height={160}
+            width={400}
+            height={180}
             className="object-contain drop-shadow-2xl"
             priority
           />
         </div>
 
-        {/* Texto Bienvenidos - aparece despues de 5 segundos */}
+        {/* Texto Bienvenidos - aparece despues de 5 segundos - TRES VECES MAS GRANDE */}
         {showText && (
           <div className="animate-fade-in-up text-center">
-            <h1 className="text-7xl md:text-9xl font-extrabold mb-6 tracking-wider">
+            <h1 className="text-[8rem] md:text-[12rem] lg:text-[16rem] font-extrabold mb-6 tracking-wider leading-none">
               {'Bienvenidos'.split('').map((letter, index) => (
                 <span 
                   key={index} 
@@ -102,10 +103,10 @@ export default function SplashPage() {
                 </span>
               ))}
             </h1>
-            <p className="text-xl md:text-2xl font-light tracking-wide">
-              <span className="text-[#00CC33] font-semibold">Xpi Tienda</span>
-              <span className="text-gray-600 mx-2">Una Alternativa</span>
-              <span className="text-[#9900CC] font-semibold">Inteligente</span>
+            <p className="text-2xl md:text-3xl font-light tracking-wide">
+              <span className="text-[#00FF41] font-semibold drop-shadow-lg">Xpi Tienda</span>
+              <span className="text-white mx-3">Una Alternativa</span>
+              <span className="text-[#E879F9] font-semibold drop-shadow-lg">Inteligente</span>
             </p>
           </div>
         )}
@@ -117,7 +118,7 @@ export default function SplashPage() {
             {/* Boton Explorar - Verde Neon */}
             <button
               onClick={() => router.push('/catalog')}
-              className="px-12 py-4 bg-[#00FF41]/10 hover:bg-[#00FF41]/30 text-[#00CC33] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[220px] animate-neon-green"
+              className="px-12 py-4 bg-[#00FF41]/20 hover:bg-[#00FF41]/40 text-[#00FF41] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[220px] animate-neon-green border border-[#00FF41]/50"
             >
               Explorar
             </button>
@@ -125,7 +126,7 @@ export default function SplashPage() {
             {/* Boton Super Administrador - Morado Neon - mas abajo */}
             <button
               onClick={() => router.push('/admin/login')}
-              className="px-8 py-3 bg-[#BF00FF]/10 hover:bg-[#BF00FF]/30 text-[#9900CC] font-bold text-sm rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[200px] animate-neon-purple mt-4"
+              className="px-8 py-3 bg-[#E879F9]/20 hover:bg-[#E879F9]/40 text-[#E879F9] font-bold text-sm rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[200px] animate-neon-purple mt-4 border border-[#E879F9]/50"
             >
               Super Administrador
             </button>
