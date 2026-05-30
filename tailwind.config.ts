@@ -10,18 +10,18 @@ const config: Config = {
     extend: {
       colors: {
         xpi: {
-          // Fondos morado pastel
-          'pastel': '#F3E8FF',
-          'pastel-dark': '#E9D5FF',
-          // Botones y acentos morado
-          'purple': '#6B2D8B',
-          'purple-dark': '#4a1f61',
-          'purple-light': '#8B45B3',
-          // Verde para tarjetas y precios
-          'green': '#1B8A3B',
-          'green-dark': '#156b2e',
-          'green-light': '#22A84A',
-          'green-vibrant': '#22A84A',
+          // Fondos calidos crema
+          'pastel': '#FAF3E6',
+          'pastel-dark': '#F0E4CE',
+          // Botones y acentos morado calido (ciruela)
+          'purple': '#9A5B7D',
+          'purple-dark': '#7C4562',
+          'purple-light': '#B57498',
+          // Verde calido (oliva) para tarjetas y precios
+          'green': '#6E8B3D',
+          'green-dark': '#566E2E',
+          'green-light': '#86A552',
+          'green-vibrant': '#7B9C42',
         }
       },
     },
