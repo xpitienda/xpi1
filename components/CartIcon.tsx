@@ -17,9 +17,9 @@ export default function CartIcon() {
 
   return (
     <Link href="/cart" className="relative p-2 hover:opacity-80 transition-opacity">
-      <ShoppingCart className="w-6 h-6 text-xpi-purple" />
+      <ShoppingCart className="w-6 h-6 text-[#7B2D5B]" />
       {mounted && count > 0 && (
-        <span className="absolute -top-1 -right-1 bg-xpi-green text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 bg-[#E07A5F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
           {count}
         </span>
       )}
