@@ -103,33 +103,34 @@ export default function SplashPage() {
                 </span>
               ))}
             </h1>
+            
+            {/* Botones debajo de Bienvenidos - ancho reducido a 1/3, alto al doble */}
+            {showButtons && (
+              <div className="animate-fade-in-up flex flex-row gap-8 items-center justify-center mt-4 mb-6">
+                
+                {/* Boton Explorar - Azul Neon */}
+                <button
+                  onClick={() => router.push('/catalog')}
+                  className="px-8 py-16 bg-[#00BFFF]/20 hover:bg-[#00BFFF]/40 text-[#00BFFF] font-bold text-4xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[180px] animate-neon-blue border-4 border-[#00BFFF]/60"
+                >
+                  Explorar
+                </button>
+
+                {/* Boton Super Administrador - Naranja Neon */}
+                <button
+                  onClick={() => router.push('/admin/login')}
+                  className="px-8 py-16 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/40 text-[#FF6B00] font-bold text-3xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[220px] animate-neon-orange border-4 border-[#FF6B00]/60 leading-tight"
+                >
+                  Super Administrador
+                </button>
+              </div>
+            )}
+            
             <p className="text-4xl md:text-5xl lg:text-6xl font-light tracking-wide">
               <span className="text-[#00FF41] font-semibold drop-shadow-lg">Xpi Tienda</span>
               <span className="text-white mx-3">Una Alternativa</span>
               <span className="text-[#E879F9] font-semibold drop-shadow-lg">Inteligente</span>
             </p>
-          </div>
-        )}
-
-        {/* Botones azul y naranja - uno al lado del otro - TRIPLE TAMANO */}
-        {showButtons && (
-          <div className="animate-fade-in-up flex flex-row gap-10 items-center mt-10">
-            
-            {/* Boton Explorar - Azul Neon - Triple tamano */}
-            <button
-              onClick={() => router.push('/catalog')}
-              className="px-20 py-10 bg-[#00BFFF]/20 hover:bg-[#00BFFF]/40 text-[#00BFFF] font-bold text-5xl rounded-3xl transform hover:scale-105 transition-all duration-300 min-w-[350px] animate-neon-blue border-4 border-[#00BFFF]/60"
-            >
-              Explorar
-            </button>
-
-            {/* Boton Super Administrador - Naranja Neon - Triple tamano */}
-            <button
-              onClick={() => router.push('/admin/login')}
-              className="px-20 py-10 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/40 text-[#FF6B00] font-bold text-5xl rounded-3xl transform hover:scale-105 transition-all duration-300 min-w-[500px] animate-neon-orange border-4 border-[#FF6B00]/60"
-            >
-              Super Administrador
-            </button>
           </div>
         )}
       </div>
