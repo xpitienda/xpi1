@@ -111,22 +111,22 @@ export default function SplashPage() {
           </div>
         )}
 
-        {/* Botones azul y naranja - uno al lado del otro */}
+        {/* Botones azul y naranja - uno al lado del otro - TRIPLE TAMANO */}
         {showButtons && (
-          <div className="animate-fade-in-up flex flex-row gap-6 items-center mt-6">
+          <div className="animate-fade-in-up flex flex-row gap-10 items-center mt-10">
             
-            {/* Boton Explorar - Azul Neon */}
+            {/* Boton Explorar - Azul Neon - Triple tamano */}
             <button
               onClick={() => router.push('/catalog')}
-              className="px-10 py-4 bg-[#00BFFF]/20 hover:bg-[#00BFFF]/40 text-[#00BFFF] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[180px] animate-neon-blue border-2 border-[#00BFFF]/60"
+              className="px-20 py-10 bg-[#00BFFF]/20 hover:bg-[#00BFFF]/40 text-[#00BFFF] font-bold text-5xl rounded-3xl transform hover:scale-105 transition-all duration-300 min-w-[350px] animate-neon-blue border-4 border-[#00BFFF]/60"
             >
               Explorar
             </button>
 
-            {/* Boton Super Administrador - Naranja Neon */}
+            {/* Boton Super Administrador - Naranja Neon - Triple tamano */}
             <button
               onClick={() => router.push('/admin/login')}
-              className="px-10 py-4 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/40 text-[#FF6B00] font-bold text-xl rounded-xl transform hover:scale-105 transition-all duration-300 min-w-[220px] animate-neon-orange border-2 border-[#FF6B00]/60"
+              className="px-20 py-10 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/40 text-[#FF6B00] font-bold text-5xl rounded-3xl transform hover:scale-105 transition-all duration-300 min-w-[500px] animate-neon-orange border-4 border-[#FF6B00]/60"
             >
               Super Administrador
             </button>
