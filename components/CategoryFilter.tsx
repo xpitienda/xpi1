@@ -23,10 +23,10 @@ export default function CategoryFilter() {
         <button
           key={cat}
           onClick={() => handleCategoryChange(cat)}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm ${
             currentCategory === cat
-              ? 'bg-xpi-green text-white'
-              : 'bg-[#2d1b4e]/80 text-gray-300 border-2 border-xpi-green/30 hover:border-xpi-green hover:text-white'
+              ? 'bg-[#2E7D32] text-white'
+              : 'bg-white text-[#5D4037] border-2 border-[#2E7D32]/30 hover:border-[#2E7D32] hover:text-[#2E7D32]'
           }`}
         >
           {cat}

@@ -56,13 +56,13 @@ export default async function CatalogPage(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#1a0a2e]">
+    <div className="min-h-screen bg-gradient-to-br from-[#FDF6E3] via-[#FFECD2] to-[#FDF6E3]">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">
-          <span className="text-white">Catalogo de </span>
-          <span className="text-xpi-green">Productos</span>
+          <span className="text-[#5D4037]">Catalogo de </span>
+          <span className="text-[#2E7D32]">Productos</span>
         </h1>
         
         <div className="max-w-xl mx-auto mb-8">
@@ -73,20 +73,20 @@ export default async function CatalogPage(props: {
 
         {(query || (category && category !== 'Todas')) && (
           <div className="text-center mb-6">
-            <p className="text-gray-300">
-              {query && <span>Buscando: <strong className="text-xpi-green">{'"'}{query}{'"'}</strong></span>}
+            <p className="text-[#5D4037]">
+              {query && <span>Buscando: <strong className="text-[#2E7D32]">{'"'}{query}{'"'}</strong></span>}
               {query && category && category !== 'Todas' && <span> | </span>}
-              {category && category !== 'Todas' && <span>Categoria: <strong className="text-xpi-green">{category}</strong></span>}
-              <span className="text-gray-400 ml-2">({products.length} productos)</span>
+              {category && category !== 'Todas' && <span>Categoria: <strong className="text-[#2E7D32]">{category}</strong></span>}
+              <span className="text-[#8D6E63] ml-2">({products.length} productos)</span>
             </p>
           </div>
         )}
 
         {products.length === 0 ? (
           <div className="text-center py-16">
-            <div className="bg-[#2d1b4e]/80 rounded-2xl p-8 max-w-md mx-auto border border-xpi-green/30">
-              <p className="text-lg text-gray-300 mb-2">No se encontraron productos.</p>
-              <p className="text-gray-400">Intenta con otros filtros.</p>
+            <div className="bg-white/80 rounded-2xl p-8 max-w-md mx-auto border border-[#E07A5F]/30 shadow-md">
+              <p className="text-lg text-[#5D4037] mb-2">No se encontraron productos.</p>
+              <p className="text-[#8D6E63]">Intenta con otros filtros.</p>
             </div>
           </div>
         ) : (

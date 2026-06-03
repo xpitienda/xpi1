@@ -10,13 +10,13 @@ export default function Header() {
   const router = useRouter();
   
   return (
-    <header className="bg-[#1a0a2e]/95 backdrop-blur-sm sticky top-0 z-50 border-b border-xpi-green/20 shadow-lg">
+    <header className="bg-[#FDF6E3]/95 backdrop-blur-sm sticky top-0 z-50 border-b border-[#E07A5F]/20 shadow-md">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-xl bg-xpi-green text-white flex items-center justify-center hover:bg-xpi-green-dark transition-colors"
+            className="w-10 h-10 rounded-xl bg-[#2E7D32] text-white flex items-center justify-center hover:bg-[#256025] transition-colors"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
@@ -37,14 +37,14 @@ export default function Header() {
           <nav className="flex items-center gap-3">
             <Link 
               href="/catalog" 
-              className="text-xpi-green hover:text-xpi-green-dark font-medium transition-colors hidden md:block"
+              className="text-[#5D4037] hover:text-[#2E7D32] font-medium transition-colors hidden md:block"
             >
               Catalogo
             </Link>
             
             <Link 
               href="/vender" 
-              className="bg-xpi-green text-white px-4 py-2 rounded-xl font-medium hover:bg-xpi-green-dark transition-colors text-sm"
+              className="bg-[#E07A5F] text-white px-4 py-2 rounded-xl font-medium hover:bg-[#C96A52] transition-colors text-sm"
             >
               + Vender
             </Link>
