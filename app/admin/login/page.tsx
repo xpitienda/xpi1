@@ -36,13 +36,13 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
       style={{ 
-        background: 'linear-gradient(135deg, #FDF6E3 0%, #FFECD2 50%, #FDF6E3 100%)'
+        background: 'linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 50%, #e8e8e8 100%)'
       }}
     >
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-[#E07A5F]/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-80 h-80 bg-[#2E7D32]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-20 left-10 w-64 h-64 bg-[#2E7D32]/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-[#9C27B0]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       {/* Back Button */}
@@ -55,48 +55,55 @@ export default function AdminLoginPage() {
       </button>
 
       {/* Main Content */}
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 flex items-center justify-center w-full px-6">
         
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo_XpiTienda_sin_Fondo-removebg-preview-yVgQmLAPvivdFeznsaVzvVQlE2Y1zE.png"
-            alt="XPI Tienda"
-            width={200}
-            height={90}
-            className="object-contain mx-auto mb-6"
-            priority
-          />
-          <h1 className="text-2xl font-bold">
-            <span className="text-[#5D4037]">Panel de </span>
-            <span className="text-[#2E7D32]">Administrador</span>
-          </h1>
-        </div>
+        {/* Login Card - Neumorphic 3D Style */}
+        <div 
+          className="rounded-3xl p-8 relative w-full"
+          style={{
+            maxWidth: '380px',
+            background: 'linear-gradient(145deg, #f0f0f0, #ffffff)',
+            boxShadow: '20px 20px 60px #bebebe, -20px -20px 60px #ffffff',
+          }}
+        >
+          {/* Decorative Border - Green and Purple dashed */}
+          <div className="absolute inset-[-3px] rounded-3xl pointer-events-none" style={{
+            border: '3px dashed',
+            borderTopColor: '#2E7D32',
+            borderLeftColor: '#2E7D32',
+            borderRightColor: '#9C27B0',
+            borderBottomColor: '#9C27B0',
+          }} />
 
-        {/* Login Card */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 border-2 border-[#E07A5F]/30 shadow-lg">
-          
-          {/* Shield Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2E7D32] to-[#256025] flex items-center justify-center shadow-lg">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
+          {/* Logo and Title */}
+          <div className="text-center mb-6 relative">
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo_XpiTienda_sin_Fondo-removebg-preview-yVgQmLAPvivdFeznsaVzvVQlE2Y1zE.png"
+              alt="XPI Tienda"
+              width={150}
+              height={70}
+              className="object-contain mx-auto mb-4"
+              priority
+            />
+            <h1 className="text-2xl font-bold text-[#2E7D32]">XpiTienda</h1>
+            <p className="text-[#9C27B0] font-semibold">Bienvenidos</p>
           </div>
-
-          <p className="text-[#8D6E63] text-center mb-6">
-            Ingresa tus credenciales de super administrador
-          </p>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-2 text-red-600">
+            <div className="mb-4 p-3 rounded-xl flex items-center gap-2 text-red-600"
+              style={{
+                background: '#f0f0f0',
+                boxShadow: 'inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff'
+              }}
+            >
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Clave Input */}
+            {/* Clave Input - Neumorphic Inset with Green bg and Purple border */}
             <div>
               <label className="block text-[#5D4037] text-sm font-medium mb-2 flex items-center gap-2">
                 <Key className="w-4 h-4 text-[#2E7D32]" />
@@ -107,12 +114,17 @@ export default function AdminLoginPage() {
                 value={clave}
                 onChange={(e) => setClave(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-[#FDF6E3] border-2 border-[#E07A5F]/30 rounded-xl text-[#3D2914] placeholder-[#8D6E63] focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] transition-colors"
+                className="w-full px-5 py-4 rounded-full text-[#3D2914] placeholder-[#6B8E6B] focus:outline-none transition-all"
+                style={{
+                  background: 'linear-gradient(145deg, #d4e8d4, #e8f5e8)',
+                  boxShadow: 'inset 6px 6px 12px #a8c8a8, inset -6px -6px 12px #ffffff',
+                  border: '2px solid #9C27B0'
+                }}
                 placeholder="Ingresa tu clave"
               />
             </div>
 
-            {/* Password Input */}
+            {/* Password Input - Neumorphic Inset with Green bg and Purple border */}
             <div>
               <label className="block text-[#5D4037] text-sm font-medium mb-2 flex items-center gap-2">
                 <Lock className="w-4 h-4 text-[#2E7D32]" />
@@ -124,33 +136,50 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 pr-12 bg-[#FDF6E3] border-2 border-[#E07A5F]/30 rounded-xl text-[#3D2914] placeholder-[#8D6E63] focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] transition-colors"
+                  className="w-full px-5 py-4 pr-12 rounded-full text-[#3D2914] placeholder-[#6B8E6B] focus:outline-none transition-all"
+                  style={{
+                    background: 'linear-gradient(145deg, #d4e8d4, #e8f5e8)',
+                    boxShadow: 'inset 6px 6px 12px #a8c8a8, inset -6px -6px 12px #ffffff',
+                    border: '2px solid #9C27B0'
+                  }}
                   placeholder="********"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8D6E63] hover:text-[#5D4037] transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[#6B8E6B] hover:text-[#2E7D32] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit Button - Neumorphic Raised 3D Effect */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-[#2E7D32] hover:bg-[#256025] text-white font-bold text-lg rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 text-[#2E7D32] font-bold text-lg rounded-full transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: 'linear-gradient(145deg, #ffffff, #e6e6e6)',
+                boxShadow: '8px 8px 16px #bebebe, -8px -8px 16px #ffffff, inset 0 0 0 transparent',
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.boxShadow = 'inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.boxShadow = '8px 8px 16px #bebebe, -8px -8px 16px #ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '8px 8px 16px #bebebe, -8px -8px 16px #ffffff';
+              }}
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-[#2E7D32]/30 border-t-[#2E7D32] rounded-full animate-spin" />
                   Verificando...
                 </>
               ) : (
                 <>
-                  <Shield className="w-5 h-5" />
                   Ingresar
                 </>
               )}
