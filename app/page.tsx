@@ -104,24 +104,24 @@ export default function SplashPage() {
               ))}
             </h1>
             
-            {/* Botones debajo de Bienvenidos - mas grandes y visibles */}
+            {/* Botones separados a los lados - tamano normal */}
             {showButtons && (
-              <div className="animate-fade-in-up flex flex-row gap-12 items-stretch justify-center mt-8 mb-10">
+              <div className="animate-fade-in-up flex flex-row justify-between items-center w-full max-w-4xl mt-8 mb-10 px-4">
                 
-                {/* Boton Explorar - Azul Neon */}
+                {/* Boton Explorar - Azul Neon - Lado izquierdo */}
                 <button
                   onClick={() => router.push('/catalog')}
-                  className="flex items-center justify-center px-16 bg-[#00BFFF]/30 hover:bg-[#00BFFF]/50 text-[#00BFFF] font-bold text-5xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[300px] h-[200px] animate-neon-blue border-4 border-[#00BFFF]/80 shadow-2xl"
+                  className="px-10 py-4 bg-[#00BFFF]/30 hover:bg-[#00BFFF]/50 text-[#00BFFF] font-bold text-2xl rounded-2xl transform hover:scale-105 transition-all duration-300 animate-neon-blue border-3 border-[#00BFFF]/80 shadow-lg"
                 >
                   Explorar
                 </button>
 
-                {/* Boton Super Administrador - Naranja Neon */}
+                {/* Boton Administrador - Naranja Neon - Lado derecho */}
                 <button
                   onClick={() => router.push('/admin/login')}
-                  className="flex items-center justify-center px-10 bg-[#FF6B00]/30 hover:bg-[#FF6B00]/50 text-[#FF6B00] font-bold text-4xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[350px] h-[200px] animate-neon-orange border-4 border-[#FF6B00]/80 leading-tight shadow-2xl text-center"
+                  className="px-10 py-4 bg-[#FF6B00]/30 hover:bg-[#FF6B00]/50 text-[#FF6B00] font-bold text-2xl rounded-2xl transform hover:scale-105 transition-all duration-300 animate-neon-orange border-3 border-[#FF6B00]/80 shadow-lg"
                 >
-                  Super Administrador
+                  Administrador
                 </button>
               </div>
             )}
