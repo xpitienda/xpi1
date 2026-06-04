@@ -104,14 +104,14 @@ export default function SplashPage() {
               ))}
             </h1>
             
-            {/* Botones debajo de Bienvenidos - ancho reducido a 1/3, alto al doble */}
+            {/* Botones debajo de Bienvenidos - mas grandes y visibles */}
             {showButtons && (
-              <div className="animate-fade-in-up flex flex-row gap-8 items-center justify-center mt-4 mb-6">
+              <div className="animate-fade-in-up flex flex-row gap-12 items-stretch justify-center mt-8 mb-10">
                 
                 {/* Boton Explorar - Azul Neon */}
                 <button
                   onClick={() => router.push('/catalog')}
-                  className="px-8 py-16 bg-[#00BFFF]/20 hover:bg-[#00BFFF]/40 text-[#00BFFF] font-bold text-4xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[180px] animate-neon-blue border-4 border-[#00BFFF]/60"
+                  className="flex items-center justify-center px-16 bg-[#00BFFF]/30 hover:bg-[#00BFFF]/50 text-[#00BFFF] font-bold text-5xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[300px] h-[200px] animate-neon-blue border-4 border-[#00BFFF]/80 shadow-2xl"
                 >
                   Explorar
                 </button>
@@ -119,7 +119,7 @@ export default function SplashPage() {
                 {/* Boton Super Administrador - Naranja Neon */}
                 <button
                   onClick={() => router.push('/admin/login')}
-                  className="px-8 py-16 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/40 text-[#FF6B00] font-bold text-3xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[220px] animate-neon-orange border-4 border-[#FF6B00]/60 leading-tight"
+                  className="flex items-center justify-center px-10 bg-[#FF6B00]/30 hover:bg-[#FF6B00]/50 text-[#FF6B00] font-bold text-4xl rounded-3xl transform hover:scale-105 transition-all duration-300 w-[350px] h-[200px] animate-neon-orange border-4 border-[#FF6B00]/80 leading-tight shadow-2xl text-center"
                 >
                   Super Administrador
                 </button>
