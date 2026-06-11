@@ -1,18 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Evita que Next.js intente generar páginas estáticas durante el build
-  output: 'standalone',
-  
-  // Deshabilita la generación estática
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'hebbkx1anhila5yf.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.r2.cloudflarestorage.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
-  
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-};
+}
 
-export default nextConfig;
+module.exports = nextConfig

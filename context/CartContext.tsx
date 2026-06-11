@@ -14,7 +14,9 @@ type CartContextType = {
   cart: CartItem[];
   addToCart: (product: any) => void;
   removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  isInCart: (productId: string) => boolean;
   total: number;
 };
 
@@ -50,8 +52,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
+  const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+  };
+
   const clearCart = () => {
     setCart([]);
+  };
+
+  const isInCart = (productId: string) => {
+    return cart.some((item) => item.id === productId);
   };
 
   // Calcular el total
@@ -63,7 +81,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cart,
         addToCart,
         removeFromCart,
+        updateQuantity,
         clearCart,
+        isInCart,
         total,
       }}
     >
