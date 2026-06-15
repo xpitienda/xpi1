@@ -13,6 +13,7 @@ type Product = {
   image_url: string;
   category?: string;
   stock?: number;
+  is_featured?: number;
   offer_type?: string | null;
   offer_price?: number | null;
 };
@@ -26,6 +27,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const inCart = isInCart(product.id);
   const hasOffer = product.offer_type && product.offer_price;
+  const isFeatured = product.is_featured === 1;
   const discount = hasOffer ? Math.round(((product.price - (product.offer_price || 0)) / product.price) * 100) : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -61,8 +63,8 @@ export default function ProductCard({ product }: { product: Product }) {
         background: 'white',
         borderRadius: '0.75rem',
         overflow: 'hidden',
-        border: '2px solid rgba(46,125,50,0.3)',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+        border: isFeatured ? '2px solid #F59E0B' : '2px solid rgba(46,125,50,0.3)',
+        boxShadow: isFeatured ? '0 4px 12px rgba(245,158,11,0.3)' : '0 4px 6px -1px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative'
@@ -84,6 +86,28 @@ export default function ProductCard({ product }: { product: Product }) {
             animation: 'pulse 2s infinite'
           }}>
             🔥 -{discount}%
+          </div>
+        )}
+
+        {/* Badge de destacado */}
+        {isFeatured && (
+          <div style={{
+            position: 'absolute',
+            top: '0.5rem',
+            left: '0.5rem',
+            background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
+            color: 'white',
+            padding: '0.25rem 0.75rem',
+            borderRadius: '1rem',
+            fontWeight: 'bold',
+            fontSize: '0.75rem',
+            zIndex: 10,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem'
+          }}>
+            ⭐ Destacado
           </div>
         )}
 
@@ -114,7 +138,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <span style={{
               position: 'absolute',
               top: '0.5rem',
-              left: '0.5rem',
+              left: isFeatured ? '6rem' : '0.5rem',
               background: getCategoryColor(product.category),
               color: 'white',
               padding: '0.25rem 0.5rem',
@@ -205,7 +229,7 @@ export default function ProductCard({ product }: { product: Product }) {
               color: '#8D6E63',
               marginTop: '0.5rem'
             }}>
-               Stock: {product.stock}
+              Stock: {product.stock}
             </p>
           )}
         </div>
@@ -296,20 +320,34 @@ export default function ProductCard({ product }: { product: Product }) {
                 flexDirection: 'column',
                 gap: '1rem'
               }}>
-                {product.category && (
-                  <span style={{
-                    display: 'inline-block',
-                    background: getCategoryColor(product.category),
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '2rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 'bold',
-                    alignSelf: 'flex-start'
-                  }}>
-                    {product.category}
-                  </span>
-                )}
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {product.category && (
+                    <span style={{
+                      display: 'inline-block',
+                      background: getCategoryColor(product.category),
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '2rem',
+                      fontSize: '0.875rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {product.category}
+                    </span>
+                  )}
+                  {isFeatured && (
+                    <span style={{
+                      display: 'inline-block',
+                      background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '2rem',
+                      fontSize: '0.875rem',
+                      fontWeight: 'bold'
+                    }}>
+                      ⭐ Destacado
+                    </span>
+                  )}
+                </div>
 
                 <h2 style={{
                   fontSize: '1.75rem',
@@ -390,7 +428,7 @@ export default function ProductCard({ product }: { product: Product }) {
                     color: product.stock > 0 ? '#2E7D32' : '#dc2626',
                     margin: 0
                   }}>
-                     Stock: {product.stock} {product.stock === 0 ? '(Agotado)' : 'disponibles'}
+                    Stock: {product.stock} {product.stock === 0 ? '(Agotado)' : 'disponibles'}
                   </p>
                 )}
 
