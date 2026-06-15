@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -23,7 +23,8 @@ export default function AdminDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
+  const [imagePreview, setImagePreview] = useState('');  const [categories, setCategories] = useState<Array<{id: string, name: string, parent_id: string | null}>>([]);
+
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
@@ -53,9 +54,23 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/admin/categories', {
+        headers: { 'Authorization': Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD} }
+      });
+      const data = await res.json();
+      setCategories(data);
+    } catch (err) {
+      console.error('Error cargando categorías:', err);
+    }
+  };
+
+
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const handleDelete = async (id: string, name: string) => {
@@ -279,9 +294,14 @@ export default function AdminDashboard() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Gestion de Productos</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              onClick={() => router.push('/admin/featured')}
+          <div style={{ display: 'flex', gap: '1rem' }}>            <button
+              onClick={() => router.push('/admin/categories')}
+              style={{ background: '#3b82f6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+            >
+              Categorías
+            </button>
+
+            <button onClick={() => router.push('/admin/featured')}
               style={{ background: '#fbbf24', color: '#1f2937', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
               Destacados y Ofertas
@@ -605,7 +625,7 @@ export default function AdminDashboard() {
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>
                     Categoria
                   </label>
-                  <select
+                                    <select
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                     style={{
@@ -619,11 +639,16 @@ export default function AdminDashboard() {
                     }}
                   >
                     <option value="General">General</option>
-                    <option value="Ropa">Ropa</option>
-                    <option value="Tecnologia">Tecnologia</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="Deportes">Deportes</option>
-                    <option value="Accesorios">Accesorios</option>
+                    {categories.filter(c => !c.parent_id).map((cat) => (
+                      <optgroup key={cat.id} label={cat.name}>
+                        <option value={cat.name}>{cat.name}</option>
+                        {categories.filter(sub => sub.parent_id === cat.id).map((subcat) => (
+                          <option key={subcat.id} value={subcat.name}>
+                            └ {subcat.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
 
@@ -765,3 +790,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
