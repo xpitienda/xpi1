@@ -4,12 +4,18 @@ import { turso } from '@/lib/turso';
 function verifyAdmin(request: Request) {
   const authHeader = request.headers.get('Authorization');
   const adminPass = process.env.ADMIN_PASSWORD;
-  return adminPass && authHeader === `Bearer ${adminPass}`;
+  const publicAdminPass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  
+  if (!authHeader) return false;
+  
+  return (adminPass && authHeader === `Bearer ${adminPass}`) ||
+         (publicAdminPass && authHeader === `Bearer ${publicAdminPass}`);
 }
 
 // GET: Obtener productos destacados y ofertas
 export async function GET(request: Request) {
   if (!verifyAdmin(request)) {
+    console.error('❌ No autorizado - Headers:', request.headers.get('Authorization'));
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -21,7 +27,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(JSON.parse(JSON.stringify(result.rows || [])));
   } catch (error: any) {
-    console.error('Error:', error);
+    console.error('❌ Error en GET:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -29,6 +35,7 @@ export async function GET(request: Request) {
 // PUT: Actualizar destacado/oferta de un producto
 export async function PUT(request: Request) {
   if (!verifyAdmin(request)) {
+    console.error('❌ No autorizado en PUT');
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -36,9 +43,9 @@ export async function PUT(request: Request) {
     const { id, is_featured, offer_type, offer_price } = await request.json();
 
     await turso.execute({
-      sql: `UPDATE catalog SET 
-        is_featured = ?, 
-        offer_type = ?, 
+      sql: `UPDATE catalog SET
+        is_featured = ?,
+        offer_type = ?,
         offer_price = ?,
         updated_at = CURRENT_TIMESTAMP
         WHERE id = ?`,
@@ -52,7 +59,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true, message: 'Producto actualizado' });
   } catch (error: any) {
-    console.error('Error:', error);
+    console.error('❌ Error en PUT:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

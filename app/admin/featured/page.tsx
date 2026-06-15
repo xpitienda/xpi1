@@ -18,6 +18,7 @@ interface Product {
 export default function FeaturedManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const router = useRouter();
 
@@ -25,13 +26,31 @@ export default function FeaturedManagement() {
 
   const fetchProducts = async () => {
     try {
+      setError(null);
       const res = await fetch('/api/admin/featured', {
         headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
       });
+      
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+      }
+      
       const data = await res.json();
-      setProducts(data);
+      
+      // Asegurar que data sea un array
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else if (data && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        console.error('La respuesta no es un array:', data);
+        setProducts([]);
+        setError('Formato de datos inesperado del servidor');
+      }
     } catch (error) {
       console.error('Error:', error);
+      setError(error instanceof Error ? error.message : 'Error al cargar productos');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -68,7 +87,6 @@ export default function FeaturedManagement() {
   };
 
   const toggleFeatured = (product: Product) => {
-    // Verificar límite de 5 destacados por categoría
     const categoryCount = products.filter(p => 
       p.category === product.category && p.is_featured === 1 && p.id !== product.id
     ).length;
@@ -88,7 +106,6 @@ export default function FeaturedManagement() {
     let offerPrice = product.offer_price;
     
     if (newOffer && !offerPrice) {
-      // Si se activa oferta y no hay precio, usar 80% del precio original
       offerPrice = Math.round(product.price * 0.8);
     }
     
@@ -106,9 +123,12 @@ export default function FeaturedManagement() {
     updateProduct(product, { offer_price: price });
   };
 
-  const filteredProducts = selectedCategory === 'Todas' 
-    ? products 
-    : products.filter(p => p.category === selectedCategory);
+  // Asegurar que filteredProducts siempre sea un array
+  const filteredProducts = Array.isArray(products)
+    ? (selectedCategory === 'Todas' 
+        ? products 
+        : products.filter(p => p.category === selectedCategory))
+    : [];
 
   if (loading) {
     return (
@@ -134,6 +154,19 @@ export default function FeaturedManagement() {
             ← Volver al Panel
           </button>
         </div>
+
+        {/* Mensaje de error */}
+        {error && (
+          <div style={{ marginBottom: '1rem', padding: '1rem', background: '#fee2e2', border: '1px solid #ef4444', borderRadius: '0.5rem', color: '#991b1b' }}>
+            ⚠️ Error: {error}
+            <button 
+              onClick={fetchProducts}
+              style={{ marginLeft: '1rem', background: '#ef4444', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
 
         {/* Filtro por categoría */}
         <div style={{ marginBottom: '2rem', background: 'white', padding: '1rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
@@ -300,7 +333,7 @@ export default function FeaturedManagement() {
           })}
         </div>
 
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length === 0 && !error && (
           <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', marginTop: '2rem' }}>
             <p style={{ color: '#6b7280' }}>No hay productos en esta categoría</p>
           </div>
