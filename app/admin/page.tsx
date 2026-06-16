@@ -23,8 +23,7 @@ export default function AdminDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');  const [categories, setCategories] = useState<Array<{id: string, name: string, parent_id: string | null}>>([]);
-
+  const [imagePreview, setImagePreview] = useState('');
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
@@ -54,23 +53,9 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch('/api/admin/categories', {
-        headers: { 'Authorization': Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD} }
-      });
-      const data = await res.json();
-      setCategories(data);
-    } catch (err) {
-      console.error('Error cargando categorías:', err);
-    }
-  };
-
-
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
   }, []);
 
   const handleDelete = async (id: string, name: string) => {
@@ -259,6 +244,33 @@ export default function AdminDashboard() {
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Panel de Control</h1>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              onClick={() => router.push('/admin/categories')}
+              style={{ 
+                background: 'linear-gradient(135deg, #9333ea 0%, #16a34a 100%)', 
+                color: 'white', 
+                padding: '0.5rem 1.5rem', 
+                borderRadius: '0.5rem', 
+                fontWeight: 'bold', 
+                border: 'none', 
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px -1px rgba(147, 51, 234, 0.3)',
+                transition: 'all 0.3s ease',
+                fontSize: '0.875rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(147, 51, 234, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(147, 51, 234, 0.3)';
+              }}
+            >
+              📂 Gestionar Categorías
+            </button>
+          </div>
           <button
             onClick={handleLogout}
             style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
@@ -294,14 +306,9 @@ export default function AdminDashboard() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Gestion de Productos</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>            <button
-              onClick={() => router.push('/admin/categories')}
-              style={{ background: '#3b82f6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-            >
-              Categorías
-            </button>
-
-            <button onClick={() => router.push('/admin/featured')}
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              onClick={() => router.push('/admin/featured')}
               style={{ background: '#fbbf24', color: '#1f2937', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
               Destacados y Ofertas
@@ -625,7 +632,7 @@ export default function AdminDashboard() {
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>
                     Categoria
                   </label>
-                                    <select
+                  <select
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                     style={{
@@ -639,16 +646,11 @@ export default function AdminDashboard() {
                     }}
                   >
                     <option value="General">General</option>
-                    {categories.filter(c => !c.parent_id).map((cat) => (
-                      <optgroup key={cat.id} label={cat.name}>
-                        <option value={cat.name}>{cat.name}</option>
-                        {categories.filter(sub => sub.parent_id === cat.id).map((subcat) => (
-                          <option key={subcat.id} value={subcat.name}>
-                            └ {subcat.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
+                    <option value="Ropa">Ropa</option>
+                    <option value="Tecnologia">Tecnologia</option>
+                    <option value="Hogar">Hogar</option>
+                    <option value="Deportes">Deportes</option>
+                    <option value="Accesorios">Accesorios</option>
                   </select>
                 </div>
 
@@ -790,4 +792,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
