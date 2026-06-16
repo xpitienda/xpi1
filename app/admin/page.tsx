@@ -57,7 +57,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchProducts();
   }, []);
-        headers: { 'Authorization': `Bearer `` }
+
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Eliminar "${name}" permanentemente?`)) return;
     try {
@@ -244,33 +244,9 @@ export default function AdminDashboard() {
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Panel de Control</h1>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button
-              onClick={() => router.push('/admin/categories')}
-              style={{ 
-                background: 'linear-gradient(135deg, #9333ea 0%, #16a34a 100%)', 
-                color: 'white', 
-                padding: '0.5rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px -1px rgba(147, 51, 234, 0.3)',
-                transition: 'all 0.3s ease',
-                fontSize: '0.875rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(147, 51, 234, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(147, 51, 234, 0.3)';
-              }}
-            >
-              📂 Gestionar Categorías
-            </button>
-          </div>
+            <div style={{ marginLeft: '1rem' }}>
+              <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #16a34a', cursor: 'pointer' }}>📂 Categorías</button>
+            </div>
           <button
             onClick={handleLogout}
             style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
