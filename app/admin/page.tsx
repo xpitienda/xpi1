@@ -57,7 +57,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchProducts();
   }, []);
-
+        headers: { 'Authorization': `Bearer `` }
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Eliminar "${name}" permanentemente?`)) return;
     try {
