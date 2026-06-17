@@ -36,11 +36,12 @@ export default function AdminDashboard() {
     image_url: '',
     is_active: 1,
   });
+  const [categories, setCategories] = useState<string[]>([]);
 
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/admin/products', {
-        headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
       const data = await res.json();
       const activeProducts = data.filter((p: Product) => p.is_active === 1);
@@ -55,8 +56,22 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchProducts();
+      fetchProducts();
+      fetchCategories();
   }, []);
+
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/admin/categories', {
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
+      const data = await res.json();
+      setCategories(data.map((c: any) => c.name));
+    } catch (err) {
+      console.error('Error cargando categorías:', err);
+    }
+  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Eliminar "${name}" permanentemente?`)) return;
@@ -621,12 +636,9 @@ export default function AdminDashboard() {
                       boxSizing: 'border-box'
                     }}
                   >
-                    <option value="General">General</option>
-                    <option value="Ropa">Ropa</option>
-                    <option value="Tecnologia">Tecnologia</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="Deportes">Deportes</option>
-                    <option value="Accesorios">Accesorios</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
                   </select>
                 </div>
 
@@ -768,3 +780,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
