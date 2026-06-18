@@ -1,14 +1,23 @@
-'use client';
+﻿'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-
-const categories = ['Todas', 'Ropa', 'Tecnologia', 'Deportes', 'Hogar', 'Accesorios'];
+import { useEffect, useState } from 'react';
 
 export default function CategoryFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category') || 'Todas';
   const currentSearch = searchParams.get('q') || '';
+  const [categories, setCategories] = useState<string[]>(['Todas']);
+
+  useEffect(() => {
+    fetch('/api/admin/categories', {
+      headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+    })
+      .then(res => res.json())
+      .then(data => setCategories(['Todas', ...data.map((c: any) => c.name)]))
+      .catch(err => console.error('Error cargando categorías:', err));
+  }, []);
 
   const handleCategoryChange = (category: string) => {
     const params = new URLSearchParams();
