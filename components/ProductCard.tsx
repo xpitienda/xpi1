@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { ShoppingCart, X, Check } from 'lucide-react';
@@ -24,6 +24,11 @@ export default function ProductCard({ product }: { product: Product }) {
   const { addToCart, isInCart } = useCart();
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const inCart = isInCart(product.id);
   const hasOffer = product.offer_type && product.offer_price;
@@ -58,8 +63,8 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <>
-      {/* Tarjeta del producto */}
-      <div style={{
+      {/* Tarjeta del producto con animación y efecto hover 3D */}
+      <div className={`product-card ${isVisible ? 'animate-fade-in-up' : ''}`} style={{
         background: 'white',
         borderRadius: '0.75rem',
         overflow: 'hidden',
@@ -470,6 +475,28 @@ export default function ProductCard({ product }: { product: Product }) {
       )}
 
       <style jsx>{`
+        @keyframes fade-in-up {
+          0% {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out forwards;
+        }
+        .product-card {
+          opacity: 0;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          cursor: pointer;
+        }
+        .product-card:hover {
+          transform: translateY(-8px) scale(1.02) !important;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05) !important;
+        }
         @keyframes pulse {
           0%, 100% {
             opacity: 1;
