@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { ShoppingCart, X, Check } from 'lucide-react';
+import CountdownTimer from './CountdownTimer';
 
 type Product = {
   id: string;
@@ -31,7 +32,8 @@ export default function ProductCard({ product }: { product: Product }) {
   }, []);
 
   const inCart = isInCart(product.id);
-  const hasOffer = product.offer_type && product.offer_price;
+  // Verificar si hay oferta: debe tener offer_type Y offer_price válido
+  const hasOffer = product.offer_type && product.offer_price && product.offer_price > 0 && product.offer_price < product.price;
   const isFeatured = product.is_featured === 1;
   const discount = hasOffer ? Math.round(((product.price - (product.offer_price || 0)) / product.price) * 100) : 0;
 
@@ -227,6 +229,11 @@ export default function ProductCard({ product }: { product: Product }) {
               {inCart ? <Check style={{ width: '1rem', height: '1rem' }} /> : <ShoppingCart style={{ width: '1rem', height: '1rem' }} />}
             </button>
           </div>
+
+          {/* Contador regresivo para ofertas */}
+          {hasOffer && product.offer_type && (
+            <CountdownTimer offerType={product.offer_type as 'day' | 'week'} />
+          )}
 
           {product.stock !== undefined && product.stock !== null && (
             <p style={{
