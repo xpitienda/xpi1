@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 type OfferType = 'day' | 'week';
 
 export default function CountdownTimer({ offerType }: { offerType: OfferType }) {
+  const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ 
     days: 0, 
     hours: 0, 
@@ -13,17 +14,21 @@ export default function CountdownTimer({ offerType }: { offerType: OfferType }) 
   });
 
   useEffect(() => {
+    setMounted(true);
+    
     const calculateTimeLeft = () => {
       const now = new Date();
       let target = new Date();
 
       if (offerType === 'day') {
-        // Próxima medianoche
+        // Próxima medianoche (hora local del usuario)
+        target = new Date(now);
         target.setHours(24, 0, 0, 0);
       } else {
-        // Próximo domingo a medianoche
+        // Próximo domingo a medianoche (hora local del usuario)
         const dayOfWeek = now.getDay();
         const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+        target = new Date(now);
         target.setDate(now.getDate() + daysUntilSunday);
         target.setHours(24, 0, 0, 0);
       }
@@ -46,6 +51,21 @@ export default function CountdownTimer({ offerType }: { offerType: OfferType }) 
   }, [offerType]);
 
   const formatTime = (time: number) => String(time).padStart(2, '0');
+
+  // No renderizar hasta que esté montado en el cliente
+  if (!mounted) {
+    return (
+      <div style={{
+        marginTop: '0.5rem',
+        padding: '0.35rem 0.5rem',
+        borderRadius: '0.5rem',
+        background: '#f3f4f6',
+        minHeight: '2rem'
+      }}>
+        <span style={{ color: '#9ca3af', fontSize: '0.65rem' }}>Cargando...</span>
+      </div>
+    );
+  }
 
   // Si es oferta del día, mostrar solo horas:minutos:segundos
   if (offerType === 'day') {
