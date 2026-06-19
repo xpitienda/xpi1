@@ -1,8 +1,11 @@
-import { turso } from '@/lib/turso';
+﻿import { turso } from '@/lib/turso';
 import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import CategoryFilter from '@/components/CategoryFilter';
 import Header from '@/components/Header';
+import { Suspense } from 'react';
+import ProductSkeleton from '@/components/ProductSkeleton';
+import ProductGrid from '@/components/ProductGrid';
 
 export default async function CatalogPage(props: {
   searchParams: Promise<{ q?: string; category?: string; filter?: string }>
@@ -28,7 +31,6 @@ export default async function CatalogPage(props: {
       args.push(category);
     }
 
-    // Filtros de destacados y ofertas
     if (filter === 'featured') {
       sql += ' AND is_featured = 1';
     } else if (filter === 'day') {
@@ -49,9 +51,9 @@ export default async function CatalogPage(props: {
   }
 
   const filters = [
-    { key: '', label: '️ Todos', color: '#5D4037' },
+    { key: '', label: '🏪 Todos', color: '#5D4037' },
     { key: 'featured', label: '⭐ Destacados', color: '#F59E0B' },
-    { key: 'day', label: '🔥 Oferta del Día', color: '#10B981' },
+    { key: 'day', label: ' Oferta del Día', color: '#10B981' },
     { key: 'week', label: '📅 Oferta de la Semana', color: '#3B82F6' },
   ];
 
@@ -71,7 +73,6 @@ export default async function CatalogPage(props: {
 
         <CategoryFilter />
 
-        {/* Nuevos filtros de destacados y ofertas */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', margin: '2rem 0' }}>
           {filters.map((f) => {
             const isActive = filter === f.key;
@@ -122,25 +123,20 @@ export default async function CatalogPage(props: {
           </div>
         )}
 
-        {products.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-            <div style={{ background: 'rgba(255,255,255,0.8)', borderRadius: '1rem', padding: '2rem', maxWidth: '28rem', margin: '0 auto', border: '1px solid rgba(224,122,95,0.3)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-              <p style={{ fontSize: '1.125rem', color: '#5D4037', marginBottom: '0.5rem' }}>No se encontraron productos.</p>
-              <p style={{ color: '#8D6E63' }}>Intenta con otros filtros.</p>
-            </div>
-          </div>
-        ) : (
+        <Suspense fallback={
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(5, 1fr)',
             gap: '1.5rem',
             marginTop: '2rem'
           }}>
-            {products.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+            {[...Array(10)].map((_, i) => (
+              <ProductSkeleton key={i} />
             ))}
           </div>
-        )}
+        }>
+          <ProductGrid products={products} />
+        </Suspense>
       </div>
     </div>
   );
