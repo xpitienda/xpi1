@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from 'react';
 
@@ -17,9 +18,11 @@ export default function CartIcon() {
 
   return (
     <Link href="/cart" className="relative p-2 hover:opacity-80 transition-opacity">
-      <img
-        src={hasItems ? '/car1.ico' : '/car2.ico'}
+      <Image
+        src={hasItems ? '/car1.png' : '/car2.png'}
         alt={hasItems ? 'Carrito con productos' : 'Carrito vacío'}
+        width={32}
+        height={32}
         style={{ width: '32px', height: '32px', objectFit: 'contain' }}
       />
       {mounted && hasItems && (
