@@ -1,4 +1,6 @@
-﻿import ProductCard from './ProductCard';
+﻿'use client';
+
+import ProductCard from './ProductCard';
 
 export default function ProductGrid({ products }: { products: any[] }) {
   if (products.length === 0) {
@@ -13,15 +15,32 @@ export default function ProductGrid({ products }: { products: any[] }) {
   }
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(5, 1fr)',
-      gap: '1.5rem',
-      marginTop: '2rem'
-    }}>
-      {products.map((product: any) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      <div className="product-grid">
+        {products.map((product: any) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+      <style jsx>{`
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+          margin-top: 2rem;
+        }
+        @media (min-width: 640px) {
+          .product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+          }
+        }
+        @media (min-width: 1024px) {
+          .product-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+          }
+        }
+      `}</style>
+    </>
   );
 }
