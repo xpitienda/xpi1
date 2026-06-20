@@ -55,8 +55,7 @@ export default function AdminLoginPage() {
           src="/celu.png"
           alt=""
           style={{
-            width: '600px',
-            height: '600px',
+            width: '900px', height: '900px',
             objectFit: 'contain',
             animation: 'spin-clockwise 25s linear infinite',
             filter: 'drop-shadow(0 0 40px rgba(46, 125, 50, 0.5))',
@@ -78,8 +77,7 @@ export default function AdminLoginPage() {
           src="/celu2.png"
           alt=""
           style={{
-            width: '500px',
-            height: '500px',
+            width: '750px', height: '750px',
             objectFit: 'contain',
             animation: 'spin-counterclockwise 20s linear infinite',
             filter: 'drop-shadow(0 0 40px rgba(156, 39, 176, 0.5))',
