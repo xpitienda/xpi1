@@ -32,7 +32,6 @@ export default function ProductCard({ product }: { product: Product }) {
   }, []);
 
   const inCart = isInCart(product.id);
-  // Verificar si hay oferta: debe tener offer_type Y offer_price válido
   const hasOffer = product.offer_type && product.offer_price && product.offer_price > 0 && product.offer_price < product.price;
   const isFeatured = product.is_featured === 1;
   const discount = hasOffer ? Math.round(((product.price - (product.offer_price || 0)) / product.price) * 100) : 0;
@@ -65,7 +64,6 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <>
-      {/* Tarjeta del producto con animación y efecto hover 3D */}
       <div className={`product-card ${isVisible ? 'animate-fade-in-up' : ''}`} style={{
         background: 'white',
         borderRadius: '0.75rem',
@@ -76,7 +74,6 @@ export default function ProductCard({ product }: { product: Product }) {
         flexDirection: 'column',
         position: 'relative'
       }}>
-        {/* Banner de oferta */}
         {hasOffer && (
           <div style={{
             position: 'absolute',
@@ -84,19 +81,19 @@ export default function ProductCard({ product }: { product: Product }) {
             right: '0.5rem',
             background: 'linear-gradient(135deg, #10b981 0%, #dc2626 100%)',
             color: 'white',
-            padding: '0.25rem 0.75rem',
+            padding: '0.25rem 0.5rem',
             borderRadius: '1rem',
             fontWeight: 'bold',
-            fontSize: '0.75rem',
+            fontSize: '0.65rem',
             zIndex: 10,
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-            animation: 'pulse 2s infinite'
+            animation: 'pulse 2s infinite',
+            whiteSpace: 'nowrap'
           }}>
             🔥 -{discount}%
           </div>
         )}
 
-        {/* Badge de destacado */}
         {isFeatured && (
           <div style={{
             position: 'absolute',
@@ -104,15 +101,16 @@ export default function ProductCard({ product }: { product: Product }) {
             left: '0.5rem',
             background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
             color: 'white',
-            padding: '0.25rem 0.75rem',
+            padding: '0.25rem 0.5rem',
             borderRadius: '1rem',
             fontWeight: 'bold',
-            fontSize: '0.75rem',
+            fontSize: '0.65rem',
             zIndex: 10,
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.25rem'
+            gap: '0.15rem',
+            whiteSpace: 'nowrap'
           }}>
             ⭐ Destacado
           </div>
@@ -145,31 +143,33 @@ export default function ProductCard({ product }: { product: Product }) {
             <span style={{
               position: 'absolute',
               top: '0.5rem',
-              left: isFeatured ? '6rem' : '0.5rem',
+              left: isFeatured ? '5.5rem' : '0.5rem',
               background: getCategoryColor(product.category),
               color: 'white',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.5rem',
-              fontSize: '0.75rem',
-              fontWeight: 'bold'
+              padding: '0.15rem 0.4rem',
+              borderRadius: '0.35rem',
+              fontSize: '0.6rem',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
             }}>
               {product.category}
             </span>
           )}
         </div>
 
-        <div style={{ padding: '0.75rem' }}>
+        <div style={{ padding: '0.5rem 0.5rem 0.75rem' }}>
           <h3 style={{
             fontWeight: 'bold',
             color: '#3D2914',
-            fontSize: '0.875rem',
+            fontSize: '0.75rem',
             marginBottom: '0.25rem',
-            height: '2.5rem',
+            height: '2rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: '-webkit-box',
             WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical'
+            WebkitBoxOrient: 'vertical',
+            lineHeight: '1.2'
           }}>
             {product.name}
           </h3>
@@ -178,21 +178,21 @@ export default function ProductCard({ product }: { product: Product }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginTop: '0.5rem'
+            marginTop: '0.25rem'
           }}>
             <div>
               {hasOffer ? (
                 <>
                   <span style={{
-                    fontSize: '0.875rem',
+                    fontSize: '0.65rem',
                     color: '#6b7280',
                     textDecoration: 'line-through',
-                    marginRight: '0.5rem'
+                    marginRight: '0.25rem'
                   }}>
                     ${product.price.toLocaleString('es-CO')}
                   </span>
                   <span style={{
-                    fontSize: '1.125rem',
+                    fontSize: '0.9rem',
                     fontWeight: 'bold',
                     color: '#2E7D32'
                   }}>
@@ -201,7 +201,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 </>
               ) : (
                 <span style={{
-                  fontSize: '1.125rem',
+                  fontSize: '0.9rem',
                   fontWeight: 'bold',
                   color: '#2E7D32'
                 }}>
@@ -212,9 +212,9 @@ export default function ProductCard({ product }: { product: Product }) {
             <button
               onClick={handleAddToCart}
               style={{
-                width: '2.25rem',
-                height: '2.25rem',
-                borderRadius: '0.5rem',
+                width: '1.75rem',
+                height: '1.75rem',
+                borderRadius: '0.35rem',
                 background: inCart ? '#2E7D32' : '#E07A5F',
                 color: 'white',
                 display: 'flex',
@@ -226,20 +226,19 @@ export default function ProductCard({ product }: { product: Product }) {
               }}
               title={inCart ? 'Ya está en el carrito' : 'Agregar al carrito'}
             >
-              {inCart ? <Check style={{ width: '1rem', height: '1rem' }} /> : <ShoppingCart style={{ width: '1rem', height: '1rem' }} />}
+              {inCart ? <Check style={{ width: '0.85rem', height: '0.85rem' }} /> : <ShoppingCart style={{ width: '0.85rem', height: '0.85rem' }} />}
             </button>
           </div>
 
-          {/* Contador regresivo para ofertas */}
           {hasOffer && product.offer_type && (
             <CountdownTimer offerType={product.offer_type as 'day' | 'week'} />
           )}
 
           {product.stock !== undefined && product.stock !== null && (
             <p style={{
-              fontSize: '0.75rem',
+              fontSize: '0.6rem',
               color: '#8D6E63',
-              marginTop: '0.5rem'
+              marginTop: '0.35rem'
             }}>
               Stock: {product.stock}
             </p>
@@ -247,7 +246,6 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </div>
 
-      {/* Modal de producto */}
       {showModal && (
         <div
           onClick={() => setShowModal(false)}
@@ -301,11 +299,11 @@ export default function ProductCard({ product }: { product: Product }) {
               ×
             </button>
 
-            <div style={{
+            <div className="modal-grid" style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '1.5rem',
-              padding: '1.5rem'
+              gridTemplateColumns: '1fr',
+              gap: '1rem',
+              padding: '1rem'
             }}>
               <div style={{
                 aspectRatio: '1/1',
@@ -330,7 +328,7 @@ export default function ProductCard({ product }: { product: Product }) {
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem'
+                gap: '0.75rem'
               }}>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {product.category && (
@@ -338,9 +336,9 @@ export default function ProductCard({ product }: { product: Product }) {
                       display: 'inline-block',
                       background: getCategoryColor(product.category),
                       color: 'white',
-                      padding: '0.5rem 1rem',
+                      padding: '0.35rem 0.75rem',
                       borderRadius: '2rem',
-                      fontSize: '0.875rem',
+                      fontSize: '0.75rem',
                       fontWeight: 'bold'
                     }}>
                       {product.category}
@@ -351,9 +349,9 @@ export default function ProductCard({ product }: { product: Product }) {
                       display: 'inline-block',
                       background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
                       color: 'white',
-                      padding: '0.5rem 1rem',
+                      padding: '0.35rem 0.75rem',
                       borderRadius: '2rem',
-                      fontSize: '0.875rem',
+                      fontSize: '0.75rem',
                       fontWeight: 'bold'
                     }}>
                       ⭐ Destacado
@@ -362,7 +360,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 </div>
 
                 <h2 style={{
-                  fontSize: '1.75rem',
+                  fontSize: '1.25rem',
                   fontWeight: 'bold',
                   color: '#3D2914',
                   margin: 0
@@ -374,15 +372,15 @@ export default function ProductCard({ product }: { product: Product }) {
                   {hasOffer ? (
                     <>
                       <span style={{
-                        fontSize: '1.25rem',
+                        fontSize: '1rem',
                         color: '#6b7280',
                         textDecoration: 'line-through',
-                        marginRight: '1rem'
+                        marginRight: '0.75rem'
                       }}>
                         ${product.price.toLocaleString('es-CO')}
                       </span>
                       <span style={{
-                        fontSize: '2rem',
+                        fontSize: '1.5rem',
                         fontWeight: 'bold',
                         color: '#2E7D32'
                       }}>
@@ -390,12 +388,12 @@ export default function ProductCard({ product }: { product: Product }) {
                       </span>
                       <span style={{
                         display: 'inline-block',
-                        marginLeft: '1rem',
+                        marginLeft: '0.75rem',
                         background: '#dc2626',
                         color: 'white',
-                        padding: '0.25rem 0.75rem',
+                        padding: '0.25rem 0.5rem',
                         borderRadius: '1rem',
-                        fontSize: '0.875rem',
+                        fontSize: '0.75rem',
                         fontWeight: 'bold'
                       }}>
                         -{discount}%
@@ -403,7 +401,7 @@ export default function ProductCard({ product }: { product: Product }) {
                     </>
                   ) : (
                     <p style={{
-                      fontSize: '2rem',
+                      fontSize: '1.5rem',
                       fontWeight: 'bold',
                       color: '#2E7D32',
                       margin: 0
@@ -416,17 +414,18 @@ export default function ProductCard({ product }: { product: Product }) {
                 {product.description && (
                   <div>
                     <h3 style={{
-                      fontSize: '1rem',
+                      fontSize: '0.875rem',
                       fontWeight: 'bold',
                       color: '#5D4037',
-                      marginBottom: '0.5rem'
+                      marginBottom: '0.25rem'
                     }}>
                       Descripción:
                     </h3>
                     <p style={{
                       color: '#8D6E63',
-                      lineHeight: '1.6',
-                      margin: 0
+                      lineHeight: '1.5',
+                      margin: 0,
+                      fontSize: '0.875rem'
                     }}>
                       {product.description}
                     </p>
@@ -435,7 +434,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
                 {product.stock !== undefined && product.stock !== null && (
                   <p style={{
-                    fontSize: '1rem',
+                    fontSize: '0.875rem',
                     fontWeight: 'bold',
                     color: product.stock > 0 ? '#2E7D32' : '#dc2626',
                     margin: 0
@@ -450,10 +449,10 @@ export default function ProductCard({ product }: { product: Product }) {
                     marginTop: 'auto',
                     background: inCart ? '#2E7D32' : '#E07A5F',
                     color: 'white',
-                    padding: '1rem',
+                    padding: '0.75rem',
                     borderRadius: '0.75rem',
                     fontWeight: 'bold',
-                    fontSize: '1.125rem',
+                    fontSize: '1rem',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -465,12 +464,12 @@ export default function ProductCard({ product }: { product: Product }) {
                 >
                   {inCart ? (
                     <>
-                      <Check style={{ width: '1.25rem', height: '1.25rem' }} />
+                      <Check style={{ width: '1.1rem', height: '1.1rem' }} />
                       Agregar otra unidad
                     </>
                   ) : (
                     <>
-                      <ShoppingCart style={{ width: '1.25rem', height: '1.25rem' }} />
+                      <ShoppingCart style={{ width: '1.1rem', height: '1.1rem' }} />
                       Agregar al Carrito
                     </>
                   )}
@@ -512,6 +511,13 @@ export default function ProductCard({ product }: { product: Product }) {
           50% {
             opacity: 0.8;
             transform: scale(1.05);
+          }
+        }
+        @media (min-width: 768px) {
+          .modal-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 1.5rem !important;
+            padding: 1.5rem !important;
           }
         }
       `}</style>
