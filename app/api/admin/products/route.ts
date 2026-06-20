@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 
-// Inicializar base de datos ANTES de cualquier operación
 async function ensureDatabase() {
   try {
     await turso.execute(`
@@ -26,7 +25,6 @@ async function ensureDatabase() {
   }
 }
 
-// Llamar una vez al cargar el módulo
 ensureDatabase();
 
 function verifyAdmin(request: Request) {
@@ -44,9 +42,10 @@ export async function GET(request: Request) {
     await ensureDatabase();
     const result = await turso.execute('SELECT * FROM catalog ORDER BY created_at DESC');
     return NextResponse.json(result.rows || []);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error fetching products:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -57,7 +56,7 @@ export async function POST(request: Request) {
 
   try {
     await ensureDatabase();
-    const body = await request.json();
+    const body = await request.json() as Record<string, unknown>;
 
     const name = String(body.name || '');
     const description = String(body.description || '');
@@ -73,73 +72,90 @@ export async function POST(request: Request) {
 
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
-    await turso.execute(
-      `INSERT INTO catalog (id, name, description, price, image_url, category, stock, is_active)
+    await turso.execute({
+      sql: `INSERT INTO catalog (id, name, description, price, image_url, category, stock, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, description, price, image_url, category, stock, is_active]
-    );
+      args: [id, name, description, price, image_url, category, stock, is_active]
+    });
 
     return NextResponse.json({ message: 'Producto creado exitosamente', id }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error creating product:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function PUT(request: Request) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   try {
     await ensureDatabase();
-    const params = await context.params;
-    const body = await request.json();
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+    }
 
-    await turso.execute(
-      `UPDATE catalog SET 
-       name = ?, 
-       description = ?, 
-       price = ?, 
-       image_url = ?, 
-       category = ?, 
-       stock = ?, 
+    const body = await request.json() as Record<string, unknown>;
+
+    await turso.execute({
+      sql: `UPDATE catalog SET
+       name = ?,
+       description = ?,
+       price = ?,
+       image_url = ?,
+       category = ?,
+       stock = ?,
        is_active = ?,
        updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [
-        body.name,
-        body.description,
-        body.price,
-        body.image_url,
-        body.category,
-        body.stock,
-        body.is_active !== undefined ? body.is_active : 1,
-        params.id
+      args: [
+        String(body.name || ''),
+        String(body.description || ''),
+        Number(body.price || 0),
+        String(body.image_url || ''),
+        String(body.category || 'General'),
+        Number(body.stock || 0),
+        Number(body.is_active !== undefined ? body.is_active : 1),
+        id
       ]
-    );
+    });
 
     return NextResponse.json({ message: 'Producto actualizado' });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error updating product:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request) {
   if (!verifyAdmin(request)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   try {
     await ensureDatabase();
-    const params = await context.params;
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
     
-    await turso.execute('DELETE FROM catalog WHERE id = ?', [params.id]);
-    
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+    }
+
+    await turso.execute({
+      sql: 'DELETE FROM catalog WHERE id = ?',
+      args: [id]
+    });
+
     return NextResponse.json({ message: 'Producto eliminado' });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error deleting product:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
