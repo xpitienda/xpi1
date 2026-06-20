@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface CartItem {
   id: string;
@@ -24,6 +24,30 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  // Cargar carrito desde localStorage al montar
+  useEffect(() => {
+    const savedCart = localStorage.getItem('xpitienda-cart');
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          setCart(parsed);
+        }
+      } catch (error) {
+        console.error('Error cargando carrito:', error);
+      }
+    }
+    setMounted(true);
+  }, []);
+
+  // Guardar carrito en localStorage cada vez que cambie
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('xpitienda-cart', JSON.stringify(cart));
+    }
+  }, [cart, mounted]);
 
   const addToCart = (product: any) => {
     setCart((prevCart) => {
@@ -72,7 +96,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return cart.some((item) => item.id === productId);
   };
 
-  // Calcular el total
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
