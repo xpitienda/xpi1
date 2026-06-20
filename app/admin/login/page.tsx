@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
         style={{ zIndex: 0 }}
       >
         <img
-          src="/Celu.png"
+          src="/celu.png"
           alt=""
           className="max-w-[700px] max-h-[700px] w-full h-auto"
           style={{
@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
         style={{ zIndex: 0 }}
       >
         <img
-          src="/Celu2.png"
+          src="/celu2.png"
           alt=""
           className="max-w-[600px] max-h-[600px] w-full h-auto"
           style={{
