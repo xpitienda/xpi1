@@ -22,7 +22,7 @@ type Product = {
 const PLACEHOLDER_IMAGE = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="%23e5e7eb" width="200" height="200"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40">📦</text></svg>';
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { addToCart, isInCart } = useCart();
+  const { addToCart, isInCart, cart } = useCart();
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -31,22 +31,33 @@ export default function ProductCard({ product }: { product: Product }) {
     setIsVisible(true);
   }, []);
 
-  const inCart = isInCart(product.id);
+    const inCart = isInCart(product.id);
+  const cartItem = cart.find(item => item.id === product.id);
+  const currentQty = cartItem ? cartItem.quantity : 0;
+  const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+  const isMaxStockReached = product.stock !== undefined && currentQty >= product.stock;
   // Verificar si hay oferta: debe tener offer_type Y offer_price válido
   const hasOffer = product.offer_type && product.offer_price && product.offer_price > 0 && product.offer_price < product.price;
   const isFeatured = product.is_featured === 1;
   const discount = hasOffer ? Math.round(((product.price - (product.offer_price || 0)) / product.price) * 100) : 0;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+    const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) {
+      showToast('Producto agotado', 'error');
+      return;
+    }
+    if (isMaxStockReached) {
+      showToast('Stock máximo alcanzado', 'error');
+      return;
+    }
     const priceToAdd = hasOffer ? product.offer_price! : product.price;
     addToCart({
       id: product.id,
       name: product.name,
       price: priceToAdd,
       image: product.image_url || PLACEHOLDER_IMAGE,
-      quantity: 1,
-    });
+      quantity: 1, stock: product.stock, });
     showToast(`${product.name} agregado al carrito`, 'success');
   };
 
@@ -518,3 +529,6 @@ export default function ProductCard({ product }: { product: Product }) {
     </>
   );
 }
+
+
+
