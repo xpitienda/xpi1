@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from 'react';
@@ -19,7 +19,7 @@ export default function CartPage() {
     setSending(true);
 
     try {
-      // 1. Enviar correo electrónico
+      // 1. Enviar correo electrÃ³nico
       const orderData = {
         items: cart.map(item => ({
           name: item.name,
@@ -41,9 +41,9 @@ export default function CartPage() {
 
       if (!emailResult.success) {
         console.error('Error enviando correo:', emailResult.error);
-        alert('⚠️ Hubo un problema al enviar el correo, pero puedes continuar con WhatsApp');
+        alert('âš ï¸ Hubo un problema al enviar el correo, pero puedes continuar con WhatsApp');
       } else {
-        console.log('✅ Correo enviado correctamente');
+        console.log('âœ… Correo enviado correctamente');
       }
 
       // 2. Preparar mensaje de WhatsApp
@@ -57,7 +57,7 @@ export default function CartPage() {
       window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
     } catch (error) {
       console.error('Error en checkout:', error);
-      alert('❌ Error al procesar el pedido. Intenta de nuevo.');
+      alert('âŒ Error al procesar el pedido. Intenta de nuevo.');
     } finally {
       setSending(false);
     }
@@ -80,17 +80,17 @@ export default function CartPage() {
         {cart.length === 0 ? (
           <div style={{ background: 'rgba(45,27,78,0.8)', borderRadius: '1.5rem', padding: '3rem', textAlign: 'center', border: '3px solid #2E7D32', boxShadow: '0 0 30px rgba(46,125,50,0.3)' }}>
             <ShoppingCart style={{ width: '4rem', height: '4rem', color: '#E07A5F', margin: '0 auto 1rem' }} />
-            <p style={{ fontSize: '1.5rem', color: '#e9d5ff', marginBottom: '1.5rem' }}>Tu carrito está vacío</p>
+            <p style={{ fontSize: '1.5rem', color: '#e9d5ff', marginBottom: '1.5rem' }}>Tu carrito estÃ¡ vacÃ­o</p>
             <Link
               href="/catalog"
               style={{ display: 'inline-block', background: 'linear-gradient(135deg, #2E7D32 0%, #16a34a 100%)', color: 'white', padding: '1rem 2rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: '2px solid #00FF41', textDecoration: 'none' }}
             >
-              Ver Catálogo
+              Ver CatÃ¡logo
             </Link>
           </div>
         ) : (
           <>
-            {/* Grid de imágenes pequeñas */}
+            {/* Grid de imÃ¡genes pequeÃ±as */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
@@ -114,7 +114,7 @@ export default function CartPage() {
                       objectFit: 'cover'
                     }}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23e5e7eb" width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="30">📦</text></svg>';
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23e5e7eb" width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="30">ðŸ“¦</text></svg>';
                     }}
                   />
                 </div>
@@ -219,10 +219,10 @@ export default function CartPage() {
                     ${(item.price * item.quantity).toLocaleString('es-CO')}
                   </div>
 
-                  {/* Botón eliminar */}
+                  {/* BotÃ³n eliminar */}
                   <div style={{ textAlign: 'center' }}>
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => { if (window.confirm("¿Eliminar este producto del carrito?")) { removeFromCart(item.id); } }}
                       style={{
                         width: '2.5rem',
                         height: '2.5rem',
@@ -263,7 +263,7 @@ export default function CartPage() {
 
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <button
-                  onClick={clearCart}
+                  onClick={() => { if (window.confirm("¿Estás seguro de vaciar todo el carrito?")) { clearCart(); } }}
                   style={{
                     flex: 1,
                     minWidth: '200px',
@@ -278,7 +278,7 @@ export default function CartPage() {
                     transition: 'all 0.3s'
                   }}
                 >
-                  🗑️ Vaciar Carrito
+                  ðŸ—‘ï¸ Vaciar Carrito
                 </button>
                 <button
                   onClick={handleCheckout}
@@ -322,12 +322,12 @@ export default function CartPage() {
 
               {sending && (
                 <p style={{ textAlign: 'center', color: '#00FF41', marginTop: '1rem', fontSize: '0.875rem' }}>
-                  ✉️ Enviando correo a xpiesenciales@gmail.com...
+                  âœ‰ï¸ Enviando correo a xpiesenciales@gmail.com...
                 </p>
               )}
             </div>
 
-            {/* Botón volver */}
+            {/* BotÃ³n volver */}
             <div style={{ textAlign: 'center' }}>
               <Link
                 href="/catalog"
@@ -344,7 +344,7 @@ export default function CartPage() {
                   transition: 'all 0.3s'
                 }}
               >
-                ← Seguir comprando
+                â† Seguir comprando
               </Link>
             </div>
           </>
@@ -353,3 +353,4 @@ export default function CartPage() {
     </div>
   );
 }
+
