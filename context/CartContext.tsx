@@ -8,7 +8,6 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
-  stock?: number;
 }
 
 type CartContextType = {
@@ -27,6 +26,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
 
+  // Cargar carrito desde localStorage al montar
   useEffect(() => {
     const savedCart = localStorage.getItem('xpitienda-cart');
     if (savedCart) {
@@ -42,6 +42,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
+  // Guardar carrito en localStorage cada vez que cambie
   useEffect(() => {
     if (mounted) {
       localStorage.setItem('xpitienda-cart', JSON.stringify(cart));
@@ -49,18 +50,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cart, mounted]);
 
   const addToCart = (product: any) => {
-    const availableStock = product.stock;
-    
-    if (availableStock !== undefined && availableStock <= 0) return;
-
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
-        if (availableStock !== undefined && existingItem.quantity >= availableStock) return prevCart;
-        
         return prevCart.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1, stock: availableStock }
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
@@ -72,7 +67,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
           price: product.price,
           image: product.image,
           quantity: 1,
-          stock: availableStock,
         },
       ];
     });
@@ -88,14 +82,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     setCart((prevCart) =>
-      prevCart.map((item) => {
-        if (item.id === productId) {
-          const maxQty = item.stock !== undefined ? item.stock : quantity;
-          const finalQty = Math.min(quantity, maxQty);
-          return { ...item, quantity: finalQty };
-        }
-        return item;
-      })
+      prevCart.map((item) =>
+        item.id === productId ? { ...item, quantity } : item
+      )
     );
   };
 
