@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
-import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User } from 'lucide-react';
+import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User, Mail } from 'lucide-react';
 import Header from '@/components/Header';
 
 export default function CartPage() {
@@ -30,9 +30,27 @@ export default function CartPage() {
 
     setSending(true);
     try {
+      // 1. Enviar email primero
+      const emailResponse = await fetch('/api/send-order-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerInfo,
+          cart,
+          total,
+        }),
+      });
+
+      if (emailResponse.ok) {
+        showToast('✅ Pedido enviado por correo electrónico', 'success');
+      } else {
+        showToast('⚠️ Error al enviar email, pero continuamos con WhatsApp', 'error');
+      }
+
+      // 2. Construir mensaje de WhatsApp
       const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n` +
         `*Datos del Cliente:*\n` +
-        ` Nombre: ${customerInfo.name}\n` +
+        `👤 Nombre: ${customerInfo.name}\n` +
         `📱 Teléfono: ${customerInfo.phone}\n` +
         `📍 Dirección: ${customerInfo.address}\n` +
         `${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}` +
@@ -41,6 +59,8 @@ export default function CartPage() {
         `*TOTAL: $${total.toLocaleString('es-CO')}*`;
 
       const encodedMessage = encodeURIComponent(message);
+      
+      // 3. Redirigir a WhatsApp
       window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
       showToast('Redirigiendo a WhatsApp...', 'success');
     } catch (error) {
@@ -221,7 +241,7 @@ export default function CartPage() {
                   }}>
                     {saveCustomerData 
                       ? '✅ Tus datos se guardarán automáticamente para futuras compras' 
-                      : '️ Tus datos NO se guardarán. Deberás ingresarlos en cada compra.'}
+                      : 'ℹ️ Tus datos NO se guardarán. Deberás ingresarlos en cada compra.'}
                   </p>
                 </div>
               </div>
@@ -285,8 +305,8 @@ export default function CartPage() {
                 Vaciar Carrito
               </button>
               <button onClick={handleCheckout} disabled={sending} style={{ flex: 2, minWidth: '300px', background: 'linear-gradient(135deg, #2E7D32 0%, #00FF41 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,255,65,0.4)' }}>
-                <MessageCircle style={{ width: '1.5rem', height: '1.5rem' }} />
-                {sending ? 'Procesando...' : 'Finalizar por WhatsApp'}
+                <Mail style={{ width: '1.5rem', height: '1.5rem' }} />
+                {sending ? 'Enviando...' : 'Finalizar Pedido'}
               </button>
             </div>
           </div>
