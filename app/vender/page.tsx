@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, CheckCircle, AlertCircle, DollarSign, Package, Tag, Image as ImageIcon, User, Phone } from 'lucide-react';
 import Header from '@/components/Header';
@@ -12,6 +12,26 @@ export default function VenderPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState('');
+  const [categorias, setCategorias] = useState<string[]>(['General', 'Ropa', 'Tecnología', 'Hogar', 'Deportes', 'Accesorios']);
+
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const nombresCategorias = data.map((c: any) => c.name);
+          if (!nombresCategorias.includes('General')) {
+            nombresCategorias.unshift('General');
+          }
+          setCategorias(nombresCategorias);
+        }
+      } catch (error) {
+        console.error('Error cargando categorías:', error);
+      }
+    };
+    cargarCategorias();
+  }, []);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -38,7 +58,7 @@ export default function VenderPage() {
       return;
     }
 
-    // Validar tamaño (max 5MB)
+    // Validar tamaÃ±o (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('La imagen no debe superar los 5MB');
       return;
@@ -74,7 +94,7 @@ export default function VenderPage() {
       }
     } catch (err: any) {
       console.error('Upload error:', err);
-      setError('Error de conexión al subir imagen');
+      setError('Error de conexiÃ³n al subir imagen');
     } finally {
       setUploadingImage(false);
     }
@@ -106,7 +126,7 @@ export default function VenderPage() {
         setError(data.error || 'Error al publicar');
       }
     } catch (err) {
-      setError('Error de conexión. Intenta de nuevo.');
+      setError('Error de conexiÃ³n. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -117,14 +137,14 @@ export default function VenderPage() {
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #1a0b2e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
         <div style={{ background: 'rgba(45,27,78,0.9)', borderRadius: '2rem', padding: '3rem', textAlign: 'center', border: '3px solid #00FF41', boxShadow: '0 0 50px rgba(0,255,65,0.3)', maxWidth: '500px', width: '100%' }}>
           <CheckCircle style={{ width: '5rem', height: '5rem', color: '#00FF41', margin: '0 auto 1.5rem' }} />
-          <h2 style={{ color: '#00FF41', fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>¡Producto Publicado!</h2>
-          <p style={{ color: '#e9d5ff', marginBottom: '2rem', fontSize: '1.1rem' }}>Tu producto ya está disponible en el catálogo.</p>
+          <h2 style={{ color: '#00FF41', fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Â¡Producto Publicado!</h2>
+          <p style={{ color: '#e9d5ff', marginBottom: '2rem', fontSize: '1.1rem' }}>Tu producto ya estÃ¡ disponible en el catÃ¡logo.</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <button 
               onClick={() => router.push('/catalog')} 
               style={{ background: 'linear-gradient(135deg, #2E7D32, #16a34a)', color: 'white', padding: '1rem 2rem', borderRadius: '1rem', fontWeight: 'bold', border: '2px solid #00FF41', cursor: 'pointer' }}
             >
-              Ver Catálogo
+              Ver CatÃ¡logo
             </button>
             <button 
               onClick={() => setSuccess(false)} 
@@ -145,10 +165,44 @@ export default function VenderPage() {
       <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '500px', height: '500px', background: '#2E7D32', filter: 'blur(150px)', opacity: '0.2', borderRadius: '50%' }}></div>
 
       <Header />
+      {/* Botón de Retroceso */}
+      <button
+        onClick={() => router.back()}
+        style={{
+          position: 'fixed',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 100,
+          background: 'linear-gradient(135deg, #2E7D32, #16a34a)',
+          color: 'white',
+          border: '2px solid #00FF41',
+          borderRadius: '0.75rem',
+          padding: '0.75rem 1.5rem',
+          fontWeight: 'bold',
+          fontSize: '1rem',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          boxShadow: '0 4px 12px rgba(0,255,65,0.3)',
+          transition: 'all 0.3s',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,255,65,0.5)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,255,65,0.3)';
+        }}
+      >
+        <span style={{ fontSize: '1.25rem' }}>←</span>
+        <span>Volver</span>
+      </button>
 
       <div style={{ position: 'relative', zIndex: 10, maxWidth: '50rem', margin: '0 auto', padding: '2rem 1rem' }}>
         
-        {/* Título */}
+        {/* TÃ­tulo */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <h1 style={{ fontSize: '3rem', fontWeight: 'bold', background: 'linear-gradient(to right, #00FF41, #00BFFF, #E879F9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
             Publica tu Producto
@@ -214,22 +268,19 @@ export default function VenderPage() {
               />
             </div>
 
-            {/* Categoría */}
+            {/* CategorÃ­a */}
             <div>
-              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem' }}>Categoría</label>
+              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem' }}>CategorÃ­a</label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 style={{ width: '100%', padding: '1rem', background: '#2d1b4e', border: '2px solid #6B21A8', borderRadius: '1rem', color: 'white', fontSize: '1rem', outline: 'none', cursor: 'pointer' }}
               >
-                <option value="General">General</option>
-                <option value="Ropa">Ropa</option>
-                <option value="Tecnologia">Tecnología</option>
-                <option value="Hogar">Hogar</option>
-                <option value="Deportes">Deportes</option>
-                <option value="Accesorios">Accesorios</option>
-              </select>
+                {categorias.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+</select>
             </div>
 
             {/* URL Imagen o Upload */}
@@ -279,13 +330,13 @@ export default function VenderPage() {
                   />
                   {uploadingImage && (
                     <div style={{ color: '#00FF41', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                      ⏳ Subiendo imagen...
+                      â³ Subiendo imagen...
                     </div>
                   )}
                 </div>
                 
                 {/* Separador */}
-                <div style={{ textAlign: 'center', color: '#6B21A8', fontSize: '0.875rem' }}>ó</div>
+                <div style={{ textAlign: 'center', color: '#6B21A8', fontSize: '0.875rem' }}>Ã³</div>
                 
                 {/* URL directa */}
                 <div>
@@ -306,9 +357,9 @@ export default function VenderPage() {
               </div>
             </div>
 
-            {/* Descripción (Full width) */}
+            {/* DescripciÃ³n (Full width) */}
             <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem' }}>Descripción</label>
+              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem' }}>DescripciÃ³n</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -343,7 +394,7 @@ export default function VenderPage() {
               />
             </div>
 
-            {/* Vendedor Teléfono */}
+            {/* Vendedor TelÃ©fono */}
             <div>
               <label style={{ display: 'block', color: '#a78bfa', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Phone style={{ width: '1.25rem' }} /> Tu WhatsApp
@@ -367,7 +418,7 @@ export default function VenderPage() {
               </div>
             )}
 
-            {/* Botón Submit */}
+            {/* BotÃ³n Submit */}
             <button
               type="submit"
               disabled={loading || uploadingImage}
@@ -408,3 +459,7 @@ export default function VenderPage() {
     </div>
   );
 }
+
+
+
+

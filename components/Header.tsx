@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,13 +16,13 @@ export default function Header() {
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-xl bg-[#2E7D32] text-white flex items-center justify-center hover:bg-[#256025] transition-colors"
+            className="w-10 h-10 rounded-xl bg-[#2E7D32] text-white flex items-center justify-center hover:bg-[#256025] transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
             <Image 
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo_XpiTienda_sin_Fondo-removebg-preview-yVgQmLAPvivdFeznsaVzvVQlE2Y1zE.png" 
               alt="XPI Tienda"
@@ -56,3 +56,4 @@ export default function Header() {
     </header>
   );
 }
+
