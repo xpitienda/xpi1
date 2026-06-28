@@ -41,3 +41,7 @@ next-env.d.ts
 # Archivos de backup
 *.backup*
 .env*
+
+# Base de datos local (NUNCA subir)
+dev.db
+*.db
