@@ -8,6 +8,37 @@ import { Suspense } from 'react';
 import ProductSkeleton from '@/components/ProductSkeleton';
 import ProductGrid from '@/components/ProductGrid';
 
+// Cargar categorías desde el servidor
+async function getCategoriesTree() {
+  try {
+    const result = await turso.execute('SELECT * FROM categories ORDER BY parent_id, name');
+    const allCategories = result.rows || [];
+
+    // Construir árbol jerárquico
+    const categoryMap = new Map();
+    const rootCategories: any[] = [];
+
+    allCategories.forEach((cat: any) => {
+      categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    allCategories.forEach((cat: any) => {
+      const categoryNode = categoryMap.get(cat.id);
+      if (cat.parent_id && categoryMap.has(cat.parent_id)) {
+        const parent = categoryMap.get(cat.parent_id);
+        parent.children.push(categoryNode);
+      } else {
+        rootCategories.push(categoryNode);
+      }
+    });
+
+    return rootCategories;
+  } catch (error) {
+    console.error('Error cargando categorías:', error);
+    return [];
+  }
+}
+
 export default async function CatalogPage(props: {
   searchParams: Promise<{ q?: string; category?: string; filter?: string }>
 }) {
@@ -16,6 +47,40 @@ export default async function CatalogPage(props: {
   const category = searchParams?.category || '';
   const filter = searchParams?.filter || '';
   let products: any[] = [];
+
+  // Cargar categorías y productos en paralelo
+  const [categoriesTree] = await Promise.all([
+    getCategoriesTree(),
+    (async () => {
+      try {
+        let sql = 'SELECT * FROM catalog WHERE is_active = 1';
+        let args: (string | number)[] = [];
+        if (query) {
+          sql += ' AND (name LIKE ? OR description LIKE ?)';
+          args.push(`%${query}%`, `%${query}%`);
+        }
+        if (category && category !== 'Todas') {
+          sql += ' AND category = ?';
+          args.push(category);
+        }
+        if (filter === 'featured') {
+          sql += ' AND is_featured = 1';
+        } else if (filter === 'day') {
+          sql += ' AND offer_type = ?';
+          args.push('day');
+        } else if (filter === 'week') {
+          sql += ' AND offer_type = ?';
+          args.push('week');
+        }
+        sql += ' ORDER BY created_at DESC';
+        const result = await turso.execute({ sql, args });
+        return JSON.parse(JSON.stringify(result.rows || []));
+      } catch (error) {
+        console.error('Error cargando productos:', error);
+        return [];
+      }
+    })()
+  ]);
 
   try {
     let sql = 'SELECT * FROM catalog WHERE is_active = 1';
@@ -76,9 +141,8 @@ export default async function CatalogPage(props: {
           </div>
         </div>
 
-        <Suspense fallback={<div style={{ textAlign: 'center', padding: '1rem' }}>Cargando categorías...</div>}>
-          <CategoryFilter />
-        </Suspense>
+        {/* Pasar categorías precargadas al componente cliente */}
+        <CategoryFilter initialCategories={categoriesTree} />
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', margin: '2rem 0' }}>
           {filters.map((f) => {
