@@ -305,6 +305,12 @@ export default function AdminDashboard() {
               Destacados y Ofertas
             </button>
             <button
+              onClick={() => router.push('/admin/add-product')}
+              style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+            >
+              Carga Masiva
+            </button>
+            <button
               onClick={handleAddNew}
               style={{ background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
