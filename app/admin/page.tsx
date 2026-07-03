@@ -311,6 +311,12 @@ export default function AdminDashboard() {
               Carga Masiva
             </button>
             <button
+              onClick={() => router.push('/admin/generate-csv')}
+              style={{ background: '#EC4899', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+            >
+               Generar CSV desde Fotos
+            </button>
+            <button
               onClick={handleAddNew}
               style={{ background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
