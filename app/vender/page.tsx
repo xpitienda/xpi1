@@ -217,7 +217,7 @@ export default function VenderPage() {
             
             {/* Campo Nombre */}
             <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Package style={{ width: '1.25rem' }} /> Nombre del Producto
               </label>
               <input
@@ -234,7 +234,7 @@ export default function VenderPage() {
 
             {/* Campo Precio */}
             <div>
-              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <DollarSign style={{ width: '1.25rem' }} /> Precio
               </label>
               <input
@@ -252,7 +252,7 @@ export default function VenderPage() {
 
             {/* Campo Stock */}
             <div>
-              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Tag style={{ width: '1.25rem' }} /> Stock Disponible
               </label>
               <input
@@ -285,7 +285,7 @@ export default function VenderPage() {
 
             {/* URL Imagen o Upload */}
             <div>
-              <label style={{ display: 'block', color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ color: '#00FF41', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <ImageIcon style={{ width: '1.25rem' }} /> Imagen del Producto
               </label>
               
@@ -379,7 +379,7 @@ export default function VenderPage() {
 
             {/* Vendedor Nombre */}
             <div>
-              <label style={{ display: 'block', color: '#a78bfa', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ color: '#a78bfa', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <User style={{ width: '1.25rem' }} /> Tu Nombre
               </label>
               <input
@@ -396,7 +396,7 @@ export default function VenderPage() {
 
             {/* Vendedor TelÃ©fono */}
             <div>
-              <label style={{ display: 'block', color: '#a78bfa', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ color: '#a78bfa', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Phone style={{ width: '1.25rem' }} /> Tu WhatsApp
               </label>
               <input

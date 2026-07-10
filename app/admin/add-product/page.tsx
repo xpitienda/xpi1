@@ -213,18 +213,20 @@ export default function AddProductPage() {
   };
 
   const handleSaveCsvBatch = async () => {
+  const tempImageUrls: Record<string, string> = {};
+
     setCsvLoading(true);
     setCsvMessage(null);
     try {
       for (const product of csvData) {
         const file = assignedFiles[product.name];
-        let imageUrl = (product.image_url && product.image_url !== '0' && product.image_url.trim() !== '') ? product.image_url : (product.url || tempImageUrls[product.name] || '');
+        let imageUrl = (product.image_url && product.image_url !== '0') ? product.image_url : (product.url || (tempImageUrls ? tempImageUrls[product.name] : '') || '');
         if (file) {
           const imgFormData = new FormData();
           imgFormData.append('file', file);
           const uploadRes = await fetch('/api/upload', { method: 'POST', body: imgFormData });
           const uploadData = await uploadRes.json();
-          if (uploadData.url) imageUrl = uploadData.url;
+          if (uploadData.url) { imageUrl = uploadData.url; }
           else throw new Error(`Error subiendo imagen para ${product.name}`);
         }
         const prodRes = await fetch('/api/admin/batch-products', {
