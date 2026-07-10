@@ -20,7 +20,7 @@ export default function NavBar() {
 
   const [localIndex, setLocalIndex] = useState(getInitialIndex());
 
-  const cartItems = cart?.items?.length || 0;
+  const cartItems = Array.isArray(cart) ? cart.length : (cart?.items?.length || 0);
   const cartIcon = cartItems > 0 ? '/car2.png' : '/car1.png';
 
   const tabs = [
