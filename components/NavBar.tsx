@@ -30,7 +30,7 @@ export default function NavBar() {
     { name: 'Carrito', icon: cartIcon, isImage: true, path: '/cart' },
   ];
 
-  const handleTabClick = (index, path) => {
+  const handleTabClick = (index: number, path: string) => {
     // Mover la esfera PRIMERO
     setLocalIndex(index);
     // Luego navegar
