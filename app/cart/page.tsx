@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
-import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, MapPin, Phone, User, Send } from 'lucide-react';
+import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User, Mail } from 'lucide-react';
 import Header from '@/components/Header';
 
 export default function CartPage() {
@@ -22,96 +22,54 @@ export default function CartPage() {
   }, []);
 
   const handleCheckout = async () => {
-    // 1. Validaciones estrictas
-    if (!cart || cart.length === 0) {
-      showToast('El carrito está vacío', 'error');
-      return;
-    }
-
     if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
-      showToast('Por favor completa todos los datos de envío obligatorios (*)', 'error');
+      showToast('Por favor completa todos los datos de envío', 'error');
       setShowAddressForm(true);
-      document.getElementById('shipping-form')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
     setSending(true);
-    
     try {
-      console.log('🔍 INICIANDO CHECKOUT...');
-      console.log('📦 Carrito:', cart);
-      console.log('👤 Cliente:', customerInfo);
-      console.log(' Total:', total);
+      // 1. Enviar email primero
+      console.log(' DEBUG: Iniciando env?o de email...');
+      console.log('?? Datos cliente:', customerInfo);
+      const emailResponse = await fetch('/api/send-order-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerInfo,
+          cart,
+          total,
+        }),
+      });
 
-      // 2. Intentar enviar email (NO BLOQUEANTE)
-      let emailSent = false;
-      try {
-        console.log('📧 Enviando solicitud a /api/send-order-email...');
-        
-        const emailResponse = await fetch('/api/send-order-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customerInfo,
-            cart,
-            total,
-            subtotal
-          }),
-        });
-
-        console.log(' Respuesta del servidor:', emailResponse.status, emailResponse.statusText);
-        
-        if (emailResponse.ok) {
-          const data = await emailResponse.json();
-          console.log('✅ Email enviado correctamente:', data);
-          emailSent = true;
-          showToast('✅ Confirmación enviada a tu correo', 'success');
-        } else {
-          const errorText = await emailResponse.text();
-          console.error('❌ Error en API de email:', emailResponse.status, errorText);
-          showToast('️ Falló el email, pero continuamos con WhatsApp', 'warning');
-        }
-      } catch (emailError: any) {
-        console.error('❌ Excepción al enviar email:', emailError.message);
-        showToast('️ Error de conexión al enviar email', 'warning');
+      console.log(' Respuesta API:', emailResponse.status);
+      if (emailResponse.ok) {
+        showToast('✅ Pedido enviado por correo electrónico', 'success');
+      } else {
+        showToast('⚠️ Error al enviar email, pero continuamos con WhatsApp', 'error');
       }
 
-      // 3. Construir mensaje de WhatsApp optimizado
-      const date = new Date().toLocaleDateString('es-CO');
-      const message = 
-`* NUEVO PEDIDO - XPI TIENDA*
-📅 Fecha: ${date}
-
-*👤 DATOS DEL CLIENTE:*
-• Nombre: ${customerInfo.name}
-• Tel: ${customerInfo.phone}
-• Dir: ${customerInfo.address}
-${customerInfo.city ? `• Ciudad: ${customerInfo.city}` : ''}
-
-* PRODUCTOS:*
-${cart.map((item: any) => 
-`• *${item.name}*
-  Cant: ${item.quantity} x $${item.price.toLocaleString('es-CO')}
-  Sub: $${(item.price * item.quantity).toLocaleString('es-CO')}`
-).join('\n\n')}
-
-*💰 TOTAL A PAGAR: $${total.toLocaleString('es-CO')}*
-${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo por WhatsApp (falló email)'}`;
+      // 2. Construir mensaje de WhatsApp
+      const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n` +
+        `*Datos del Cliente:*\n` +
+        `👤 Nombre: ${customerInfo.name}\n` +
+        `📱 Teléfono: ${customerInfo.phone}\n` +
+        `📍 Dirección: ${customerInfo.address}\n` +
+        `${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}` +
+        `\n*Productos:*\n\n` +
+        `${cart.map((item) => `• ${item.name}\n  Cantidad: ${item.quantity}\n  Precio: $${(item.price * item.quantity).toLocaleString('es-CO')}`).join('\n\n')}\n\n` +
+        `*TOTAL: $${total.toLocaleString('es-CO')}*`;
 
       const encodedMessage = encodeURIComponent(message);
-      const waUrl = `https://wa.me/573234475311?text=${encodedMessage}`;
       
-      console.log('📱 Redirigiendo a WhatsApp...');
-      showToast('🚀 Abriendo WhatsApp...', 'success');
-      
-      // Delay pequeño para que el usuario vea el toast
-      setTimeout(() => {
-        window.location.href = waUrl;
-      }, 800);
-
-    } catch (error: any) {
-      console.error('💥 ERROR CRÍTICO EN CHECKOUT:', error);
-      showToast('Error al procesar el pedido. Intenta nuevamente.', 'error');
+      // 3. Redirigir a WhatsApp
+      window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
+      showToast('Redirigiendo a WhatsApp...', 'success');
+    } catch (error) {
+      console.error('Error en checkout:', error);
+      showToast('Error al procesar el pedido', 'error');
+    } finally {
       setSending(false);
     }
   };
@@ -124,7 +82,7 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
         <Header />
         <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '2rem', padding: '2rem' }}>
           <ShoppingCart style={{ width: '8rem', height: '8rem', color: '#E07A5F', opacity: 0.5 }} />
-          <p style={{ fontSize: '1.5rem', color: '#e9d5ff', marginBottom: '1.5rem', textAlign: 'center' }}>Tu carrito está vacío</p>
+          <p style={{ fontSize: '1.5rem', color: '#e9d5ff', marginBottom: '1.5rem' }}>Tu carrito está vacío</p>
           <Link href="/catalog" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #2E7D32 0%, #16a34a 100%)', color: 'white', padding: '1rem 2rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: '2px solid #00FF41', textDecoration: 'none' }}>
             Ver Catálogo
           </Link>
@@ -143,7 +101,7 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
           </h1>
 
           {/* Formulario de Datos del Cliente */}
-          <div id="shipping-form" style={{
+          <div style={{
             background: 'rgba(45,27,78,0.8)',
             borderRadius: '1.5rem',
             border: '3px solid #F59E0B',
@@ -153,7 +111,7 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', cursor: 'pointer' }} onClick={() => setShowAddressForm(!showAddressForm)}>
               <h3 style={{ color: '#F59E0B', fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
-                 Datos de Envío
+                📋 Datos de Envío
               </h3>
               <span style={{ color: '#a78bfa', fontSize: '0.9rem' }}>
                 {showAddressForm ? '▲ Ocultar' : '▼ Mostrar'}
@@ -295,7 +253,7 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
 
           {/* Grid de imágenes pequeñas */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-            {cart.map((item: any) => (
+            {cart.map((item) => (
               <div key={item.id} style={{ aspectRatio: '1/1', borderRadius: '1rem', overflow: 'hidden', border: '2px solid #2E7D32', boxShadow: '0 0 15px rgba(46,125,50,0.3)', background: '#FDF6E3' }}>
                 <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40">📦</text></svg>'; }} />
               </div>
@@ -312,7 +270,7 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
               <div></div>
             </div>
 
-            {cart.map((item: any, index: number) => (
+            {cart.map((item, index) => (
               <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 0.5fr', gap: '1rem', padding: '1rem 1.5rem', borderBottom: index !== cart.length - 1 ? '1px solid rgba(46,125,50,0.3)' : 'none', alignItems: 'center', color: '#e9d5ff' }}>
                 <div style={{ fontWeight: '600', color: 'white', fontSize: '1.1rem' }}>{item.name}</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -350,17 +308,8 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
                 Vaciar Carrito
               </button>
               <button onClick={handleCheckout} disabled={sending} style={{ flex: 2, minWidth: '300px', background: 'linear-gradient(135deg, #2E7D32 0%, #00FF41 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,255,65,0.4)' }}>
-                {sending ? (
-                  <>
-                    <div style={{ width: '1.5rem', height: '1.5rem', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <Send style={{ width: '1.5rem', height: '1.5rem' }} />
-                    Finalizar Pedido
-                  </>
-                )}
+                <Mail style={{ width: '1.5rem', height: '1.5rem' }} />
+                {sending ? 'Enviando...' : 'Finalizar Pedido'}
               </button>
             </div>
           </div>
@@ -374,12 +323,6 @@ ${emailSent ? '\n✅ También enviado por correo electrónico' : '\n⚠️ Solo 
           </div>
         </div>
       </div>
-      
-      <style jsx global>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </>
   );
 }
