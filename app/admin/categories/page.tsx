@@ -14,6 +14,10 @@ export default function CategoriesAdmin() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  
+  // Nuevo estado para subcategorías masivas
+  const [subcategoriesInput, setSubcategoriesInput] = useState('');
+  
   const [formData, setFormData] = useState({ name: '', parent_id: '' });
   const router = useRouter();
 
@@ -56,19 +60,23 @@ export default function CategoriesAdmin() {
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
     setFormData({ name: category.name, parent_id: category.parent_id || '' });
+    setSubcategoriesInput(''); // Limpiar input de subcategorías al editar
     setShowModal(true);
   };
 
   const handleAddNew = () => {
     setEditingCategory(null);
     setFormData({ name: '', parent_id: '' });
+    setSubcategoriesInput('');
     setShowModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) { alert('El nombre es obligatorio'); return; }
+    
     try {
+      // 1. Crear/Actualizar la categoría principal
       const url = '/api/admin/categories';
       const method = editingCategory ? 'PUT' : 'POST';
       const bodyData = {
@@ -76,26 +84,50 @@ export default function CategoriesAdmin() {
         name: formData.name.trim(),
         parent_id: formData.parent_id || null,
       };
+      
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD },
         body: JSON.stringify(bodyData),
       });
+      
       const responseData = await res.json();
-      if (res.ok) {
-        if (editingCategory) {
-          setCategories(categories.map(c => c.id === editingCategory.id ? { ...c, ...bodyData } : c));
-          alert('Categoría actualizada');
-        } else {
-          const newCategory: Category = { id: responseData.id, ...bodyData };
-          setCategories([...categories, newCategory]);
-          alert('Categoría creada');
-        }
-        setShowModal(false);
-        fetchCategories();
-      } else {
-        alert('Error: ' + (responseData.error || 'Error al guardar'));
+      
+      if (!res.ok) {
+        alert('Error: ' + (responseData.error || 'Error al guardar categoría principal'));
+        return;
       }
+
+      // Obtener el ID de la categoría recién creada o editada
+      const mainCategoryId = editingCategory ? editingCategory.id : responseData.id;
+
+      // 2. Procesar subcategorías masivas si existen
+      if (subcategoriesInput.trim() && !editingCategory) {
+        const subNames = subcategoriesInput
+          .split(/[\n,]/) // Separar por saltos de línea o comas
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+
+        for (const subName of subNames) {
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD },
+            body: JSON.stringify({
+              name: subName,
+              parent_id: mainCategoryId
+            }),
+          });
+        }
+        alert('Categoría principal y subcategorías creadas exitosamente');
+      } else if (editingCategory) {
+        alert('Categoría actualizada');
+      } else {
+        alert('Categoría creada');
+      }
+
+      setShowModal(false);
+      fetchCategories();
+      
     } catch (err: any) {
       alert('Error de conexión: ' + err.message);
     }
@@ -186,15 +218,30 @@ export default function CategoriesAdmin() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>Nombre *</label>
-                  <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }} placeholder="Ej: Ropa Deportiva" required />
+                  <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }} placeholder="Ej: Calzado" required />
                 </div>
+                
+                {/* NUEVO CAMPO PARA SUBCATEGORÍAS MASIVAS */}
+                {!editingCategory && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>Subcategorías (Opcional)</label>
+                    <textarea 
+                      value={subcategoriesInput} 
+                      onChange={(e) => setSubcategoriesInput(e.target.value)} 
+                      style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none', minHeight: '80px', fontFamily: 'inherit' }} 
+                      placeholder="Escribe cada subcategoría en una nueva línea o sepáralas por comas&#10;Ej: Tennis, Zapatillas, Zapatos Dama" 
+                    />
+                    <p style={{ fontSize: '0.75rem', color: '#006B3C', marginTop: '0.25rem' }}>Estas se crearán automáticamente como hijas de "{formData.name || 'la nueva categoría'}"</p>
+                  </div>
+                )}
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>Categoría Padre (opcional)</label>
                   <select value={formData.parent_id} onChange={(e) => setFormData({...formData, parent_id: e.target.value})} style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', background: 'white', boxSizing: 'border-box', outline: 'none' }}>
                     <option value="">Ninguna (será categoría principal)</option>
                     {categories.filter(c => !editingCategory || c.id !== editingCategory.id).filter(c => !c.parent_id).map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
                   </select>
-                  <p style={{ fontSize: '0.75rem', color: '#006B3C', marginTop: '0.25rem' }}>Selecciona una categoría principal para crear una subcategoría</p>
+                  <p style={{ fontSize: '0.75rem', color: '#006B3C', marginTop: '0.25rem' }}>Si seleccionas una, esta será una subcategoría individual</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '2px solid #006B3C' }}>
