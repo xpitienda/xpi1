@@ -259,9 +259,16 @@ export default function AdminDashboard() {
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Panel de Control</h1>
-            <div style={{ marginLeft: '1rem' }}>
-              <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #16a34a', cursor: 'pointer' }}>📂 Categorías</button>
+            
+            {/* 👇 AQUÍ ESTÁ EL CAMBIO: Se agregaron dos botones nuevos junto a Categorías */}
+            <div style={{ marginLeft: '1rem', display: 'flex', gap: '0.75rem' }}>
+              <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #16a34a', cursor: 'pointer' }}> Categorías</button>
+              
+              {/* NUEVO BOTÓN: Gestión de Factureros */}
+              <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #2E7D32', cursor: 'pointer' }}>🧾 Factureros</button>
             </div>
+            {/* 👆 FIN DEL CAMBIO */}
+
           <button
             onClick={handleLogout}
             style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
@@ -792,5 +799,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-
