@@ -34,7 +34,7 @@ export default function Home() {
 
     fetchProducts();
 
-    const timer = setTimeout(() => setShowConfetti(false), 7000);
+    const timer = setTimeout(() => setShowConfetti(false), 8000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -82,14 +82,14 @@ export default function Home() {
       }} />
 
       {showConfetti && (
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
-          {Array.from({ length: 80 }).map((_, i) => {
-            const angle = (i / 80) * 360;
-            const velocity = Math.random() * 300 + 200;
-            const x = Math.cos((angle * Math.PI) / 180) * velocity;
-            const y = Math.sin((angle * Math.PI) / 180) * velocity - 200;
-            const color = i % 2 === 0 ? '#4B0082' : '#2E7D32';
-            const size = Math.random() * 10 + 5;
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+          {Array.from({ length: 100 }).map((_, i) => {
+            const colors = ['#9333ea', '#22c55e', '#a855f7', '#4ade80', '#c084fc', '#86efac'];
+            const color = colors[i % colors.length];
+            const left = Math.random() * 100;
+            const delay = Math.random() * 3;
+            const duration = 4 + Math.random() * 4;
+            const size = 6 + Math.random() * 8;
             
             return (
               <div
@@ -97,16 +97,15 @@ export default function Home() {
                 style={{
                   position: 'absolute',
                   width: `${size}px`,
-                  height: `${size}px`,
+                  height: `${size * 1.5}px`,
                   background: color,
-                  left: '50%',
-                  top: '50%',
-                  animation: `confettiExplode 7s ease-out forwards`,
-                  animationDelay: `${Math.random() * 0.5}s`,
-                  borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-                  opacity: 0.9,
-                  transform: `translate(-50%, -50%)`,
-                } as React.CSSProperties}
+                  left: `${left}%`,
+                  top: '-20px',
+                  animation: `confettiRain ${duration}s linear ${delay}s forwards`,
+                  borderRadius: '2px',
+                  opacity: 0.95,
+                  boxShadow: `0 0 8px ${color}`
+                }}
               />
             );
           })}
@@ -117,22 +116,17 @@ export default function Home() {
         position: 'relative',
         zIndex: 10,
         marginBottom: '1.5rem',
-        perspective: '1000px'
+        animation: 'logoFloat 6s ease-in-out infinite'
       }}>
-        <div style={{
-          animation: 'spinY 6s linear infinite',
-          transformStyle: 'preserve-3d'
-        }}>
-          <img 
-            src="/logo1.png" 
-            alt="XPI Tienda"
-            style={{
-              width: 'clamp(280px, 45vw, 550px)',
-              height: 'auto',
-              filter: 'drop-shadow(0 0 40px rgba(75, 0, 130, 1)) drop-shadow(0 0 60px rgba(46, 125, 50, 0.8))'
-            }}
-          />
-        </div>
+        <img 
+          src="/logo1.png" 
+          alt="XPI Tienda"
+          style={{
+            width: 'clamp(300px, 50vw, 600px)',
+            height: 'auto',
+            filter: 'drop-shadow(0 0 30px rgba(147, 51, 234, 0.8)) drop-shadow(0 0 50px rgba(34, 197, 94, 0.6))'
+          }}
+        />
       </div>
 
       <h1 style={{ 
@@ -250,9 +244,19 @@ export default function Home() {
       </div>
 
       <style>{`
-        @keyframes spinY {
-          from { transform: rotateY(0deg); }
-          to { transform: rotateY(360deg); }
+        @keyframes logoFloat {
+          0%, 100% { 
+            transform: translateY(0) rotate(0deg) scale(1);
+          }
+          25% {
+            transform: translateY(-10px) rotate(2deg) scale(1.02);
+          }
+          50% { 
+            transform: translateY(-5px) rotate(0deg) scale(1);
+          }
+          75% {
+            transform: translateY(-10px) rotate(-2deg) scale(1.02);
+          }
         }
         
         @keyframes fadeIn {
@@ -266,17 +270,22 @@ export default function Home() {
           100% { background-position: 0% center; }
         }
 
-        @keyframes confettiExplode {
+        @keyframes confettiRain {
           0% {
-            transform: translate(-50%, -50%) scale(0);
+            transform: translateY(0) rotate(0deg) translateX(0);
             opacity: 1;
           }
-          20% {
-            transform: translate(calc(-50% + var(--tx, 100px)), calc(-50% + var(--ty, -200px))) scale(1);
-            opacity: 1;
+          25% {
+            transform: translateY(25vh) rotate(180deg) translateX(30px);
+          }
+          50% {
+            transform: translateY(50vh) rotate(360deg) translateX(-30px);
+          }
+          75% {
+            transform: translateY(75vh) rotate(540deg) translateX(30px);
           }
           100% {
-            transform: translate(calc(-50% + var(--tx, 200px)), calc(-50% + var(--ty, 400px))) scale(0.3);
+            transform: translateY(110vh) rotate(720deg) translateX(-30px);
             opacity: 0;
           }
         }
