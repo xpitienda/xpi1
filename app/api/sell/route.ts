@@ -15,8 +15,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Serie de facturación no asignada' }, { status: 400 });
     }
 
-    // 1. Generar Número de Factura Secuencial (Usando la serie del vendedor)
+    // 1. Generar Número de Factura Secuencial
     let invoiceNumber = 'ERR-000';
+    let sellerName = 'Vendedor';
     try {
       const counterResult = await turso.execute(
         'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE id = ? LIMIT 1',
@@ -34,6 +35,17 @@ export async function POST(request: Request) {
         
         invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
       }
+
+      // Obtener nombre del vendedor
+      if (sellerId) {
+        const sellerResult = await turso.execute({
+          sql: 'SELECT full_name FROM sellers WHERE id = ? LIMIT 1',
+          args: [sellerId]
+        });
+        if (sellerResult.rows.length > 0) {
+          sellerName = (sellerResult.rows[0] as any).full_name;
+        }
+      }
     } catch (dbErr) {
       console.error('Error DB factura:', dbErr);
       return NextResponse.json({ error: 'Error generando factura' }, { status: 500 });
@@ -42,7 +54,30 @@ export async function POST(request: Request) {
     // 2. Calcular Total
     const total = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
-    // 3. Enviar Correo (Mismo diseño profesional)
+    // 3. NUEVO: Guardar venta en la base de datos
+    try {
+      await turso.execute({
+        sql: `INSERT INTO sales (
+          invoice_number, series_id, seller_id, seller_name, 
+          customer_name, customer_phone, items, total_amount, sale_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'seller')`,
+        args: [
+          invoiceNumber,
+          seriesId,
+          sellerId,
+          sellerName,
+          customer.name,
+          customer.phone,
+          JSON.stringify(items),
+          total,
+        ],
+      });
+    } catch (saveErr) {
+      console.error('Error guardando venta:', saveErr);
+      // No retornar error, la factura ya se generó
+    }
+
+    // 4. Enviar Correo
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -55,8 +90,8 @@ export async function POST(request: Request) {
 
     const htmlContent = `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb;">
       <div style="background: linear-gradient(135deg, #1e40af, #7c3aed); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
-        <h1 style="margin: 0; color: white; font-size: 28px;"> Factura de Venta</h1>
-        <p style="margin: 5px 0 0; color: rgba(255,255,255,0.9);">XPI Tienda - Vendedor</p>
+        <h1 style="margin: 0; color: white; font-size: 28px;">🧾 Factura de Venta</h1>
+        <p style="margin: 5px 0 0; color: rgba(255,255,255,0.9);">XPI Tienda - ${sellerName}</p>
       </div>
       <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
@@ -88,7 +123,7 @@ export async function POST(request: Request) {
 
     await transporter.sendMail({
       from: `"XPI Tienda" <${process.env.EMAIL_USER}>`,
-      to: process.env.ORDER_EMAIL_DESTINO, // O usar customer.email si lo tienes
+      to: process.env.ORDER_EMAIL_DESTINO,
       subject: `🧾 Factura ${invoiceNumber} - Venta de ${customer.name}`,
       html: htmlContent,
     });
@@ -96,7 +131,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, invoice: invoiceNumber });
 
   } catch (error: any) {
-    console.error(' ERROR SELL:', error.message);
+    console.error('ERROR SELL:', error.message);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
