@@ -52,7 +52,7 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      {/* Video de fondo */}
+      {/* Video de fondo - SIN overlay oscuro para ver colores originales */}
       <video
         autoPlay
         loop
@@ -71,54 +71,47 @@ export default function Home() {
         <source src="/video-splash.mp4" type="video/mp4" />
       </video>
 
-      {/* Overlay oscuro */}
+      {/* Overlay muy sutil solo para mejorar legibilidad sin opacar colores */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'rgba(0,0,0,0.6)',
+        background: 'rgba(0,0,0,0.15)',
         zIndex: -1
       }} />
 
-      {/* Efecto de confeti */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'radial-gradient(circle at 20% 50%, rgba(120, 0, 255, 0.4) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 255, 100, 0.4) 0%, transparent 50%)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
-
-      {/* Logo giratorio */}
+      {/* Logo grande giratorio */}
       <div style={{
         position: 'relative',
         zIndex: 10,
-        marginBottom: '2rem',
+        marginBottom: '1.5rem',
         animation: 'spin 8s linear infinite'
       }}>
         <img 
           src="/logo1.png" 
           alt="XPI Tienda"
           style={{
-            width: 'clamp(150px, 30vw, 300px)',
+            width: 'clamp(250px, 40vw, 500px)',
             height: 'auto',
-            filter: 'drop-shadow(0 0 20px rgba(75, 0, 130, 0.8))'
+            filter: 'drop-shadow(0 0 30px rgba(75, 0, 130, 0.9))'
           }}
         />
       </div>
 
-      {/* Bienvenidos */}
+      {/* Bienvenidos - DOBLE TAMAÑO con colores nítidos cambiantes */}
       <h1 style={{ 
-        fontSize: 'clamp(2.5rem, 8vw, 5rem)', 
+        fontSize: 'clamp(4rem, 12vw, 8rem)', 
         fontWeight: 'bold',
-        background: 'linear-gradient(90deg, #00CED1 0%, #9370DB 50%, #FF69B4 100%)',
+        background: 'linear-gradient(90deg, #00FF88, #00CED1, #9370DB, #FF69B4, #FF1493, #00FF88)',
+        backgroundSize: '200% auto',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text',
         textAlign: 'center',
-        marginBottom: '3rem',
+        marginBottom: '2rem',
         zIndex: 10,
-        textShadow: '0 0 40px rgba(147, 112, 219, 0.8)',
-        animation: 'fadeIn 2s ease-in'
+        animation: 'gradientShift 3s ease infinite, fadeIn 2s ease-in',
+        textShadow: '0 0 60px rgba(147, 112, 219, 0.9)',
+        letterSpacing: '0.05em'
       }}>
         Bienvenidos
       </h1>
@@ -132,11 +125,11 @@ export default function Home() {
         zIndex: 10,
         marginBottom: '2rem'
       }}>
-        {/* Botón Explorar Catálogo */}
+        {/* Botón Explorar */}
         <Link 
           href="/catalog"
           style={{
-            background: 'rgba(0, 255, 255, 0.2)',
+            background: 'rgba(0, 255, 255, 0.25)',
             color: '#00FFFF',
             padding: '1.25rem 3rem',
             borderRadius: '1rem',
@@ -144,21 +137,21 @@ export default function Home() {
             fontWeight: 'bold',
             fontSize: 'clamp(1rem, 3vw, 1.5rem)',
             border: '3px solid #00FFFF',
-            boxShadow: '0 0 30px rgba(0, 255, 255, 0.8), inset 0 0 20px rgba(0, 255, 255, 0.2)',
+            boxShadow: '0 0 30px rgba(0, 255, 255, 0.9), inset 0 0 20px rgba(0, 255, 255, 0.3)',
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             display: 'inline-block',
             textAlign: 'center'
           }}
         >
-          Explorar Catálogo
+          Explorar
         </Link>
 
         {/* Botón Vendedores (NUEVO) */}
         <Link 
           href="/login-seller"
           style={{
-            background: 'rgba(255, 255, 255, 0.15)',
+            background: 'rgba(255, 255, 255, 0.2)',
             color: '#FFD700',
             padding: '1.25rem 3rem',
             borderRadius: '1rem',
@@ -166,7 +159,7 @@ export default function Home() {
             fontWeight: 'bold',
             fontSize: 'clamp(1rem, 3vw, 1.5rem)',
             border: '3px solid #FFD700',
-            boxShadow: '0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.15)',
+            boxShadow: '0 0 30px rgba(255, 215, 0, 0.8), inset 0 0 20px rgba(255, 215, 0, 0.2)',
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             display: 'inline-block',
@@ -176,11 +169,11 @@ export default function Home() {
           Vendedores
         </Link>
 
-        {/* Botón Administración */}
+        {/* Botón Administrador */}
         <Link 
           href="/admin/login"
           style={{
-            background: 'rgba(255, 165, 0, 0.2)',
+            background: 'rgba(255, 165, 0, 0.25)',
             color: '#FFA500',
             padding: '1.25rem 3rem',
             borderRadius: '1rem',
@@ -188,31 +181,34 @@ export default function Home() {
             fontWeight: 'bold',
             fontSize: 'clamp(1rem, 3vw, 1.5rem)',
             border: '3px solid #FFA500',
-            boxShadow: '0 0 30px rgba(255, 165, 0, 0.8), inset 0 0 20px rgba(255, 165, 0, 0.2)',
+            boxShadow: '0 0 30px rgba(255, 165, 0, 0.9), inset 0 0 20px rgba(255, 165, 0, 0.3)',
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             display: 'inline-block',
             textAlign: 'center'
           }}
         >
-          Administración
+          Administrador
         </Link>
       </div>
 
-      {/* Slogan */}
+      {/* Slogan - DOBLE TAMAÑO con colores cambiantes nítidos */}
       <div style={{ 
         textAlign: 'center', 
         zIndex: 10,
-        marginTop: '2rem'
+        marginTop: '1rem'
       }}>
         <p style={{ 
-          fontSize: 'clamp(1.25rem, 4vw, 2rem)', 
+          fontSize: 'clamp(2rem, 6vw, 3.5rem)', 
           fontWeight: 'bold',
-          background: 'linear-gradient(90deg, #00FF00 0%, #FF00FF 50%, #00FFFF 100%)',
+          background: 'linear-gradient(90deg, #00FF00, #FFD700, #FF69B4, #00FFFF, #9370DB, #00FF00)',
+          backgroundSize: '200% auto',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
-          textShadow: '0 0 20px rgba(255, 255, 255, 0.3)'
+          animation: 'gradientShift 4s ease infinite',
+          textShadow: '0 0 30px rgba(255, 255, 255, 0.5)',
+          letterSpacing: '0.02em'
         }}>
           Xpi Tienda Una Alternativa Inteligente
         </p>
@@ -228,6 +224,12 @@ export default function Home() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes gradientShift {
+          0% { background-position: 0% center; }
+          50% { background-position: 100% center; }
+          100% { background-position: 0% center; }
         }
       `}</style>
     </div>
