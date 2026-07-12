@@ -45,41 +45,70 @@ export default function Home() {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(\'/hero-bg.jpg\') center/cover',
+      position: 'relative',
+      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      overflow: 'hidden'
+      justifyContent: 'center'
     }}>
-      {/* Efecto de confeti (simulado con partículas) */}
+      {/* Video de fondo */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: -2
+        }}
+      >
+        <source src="/video-splash.mp4" type="video/mp4" />
+      </video>
+
+      {/* Overlay oscuro */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'radial-gradient(circle at 20% 50%, rgba(120, 0, 255, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 255, 100, 0.3) 0%, transparent 50%)',
-        pointerEvents: 'none'
+        background: 'rgba(0,0,0,0.6)',
+        zIndex: -1
       }} />
 
-      {/* Logo XPI TIENDA */}
-      <div style={{ textAlign: 'center', zIndex: 10, marginBottom: '2rem' }}>
-        <h1 style={{ 
-          fontSize: 'clamp(3rem, 10vw, 6rem)', 
-          fontWeight: 'bold',
-          background: 'linear-gradient(135deg, #4B0082 0%, #2E7D32 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          textShadow: '0 0 40px rgba(75, 0, 130, 0.5)',
-          marginBottom: '0.5rem'
-        }}>
-          XPI TIENDA
-        </h1>
+      {/* Efecto de confeti */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(circle at 20% 50%, rgba(120, 0, 255, 0.4) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 255, 100, 0.4) 0%, transparent 50%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      {/* Logo giratorio */}
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        marginBottom: '2rem',
+        animation: 'spin 8s linear infinite'
+      }}>
+        <img 
+          src="/logo1.png" 
+          alt="XPI Tienda"
+          style={{
+            width: 'clamp(150px, 30vw, 300px)',
+            height: 'auto',
+            filter: 'drop-shadow(0 0 20px rgba(75, 0, 130, 0.8))'
+          }}
+        />
       </div>
 
       {/* Bienvenidos */}
-      <h2 style={{ 
-        fontSize: 'clamp(2rem, 8vw, 5rem)', 
+      <h1 style={{ 
+        fontSize: 'clamp(2.5rem, 8vw, 5rem)', 
         fontWeight: 'bold',
         background: 'linear-gradient(90deg, #00CED1 0%, #9370DB 50%, #FF69B4 100%)',
         WebkitBackgroundClip: 'text',
@@ -88,10 +117,11 @@ export default function Home() {
         textAlign: 'center',
         marginBottom: '3rem',
         zIndex: 10,
+        textShadow: '0 0 40px rgba(147, 112, 219, 0.8)',
         animation: 'fadeIn 2s ease-in'
       }}>
         Bienvenidos
-      </h2>
+      </h1>
 
       {/* Botones de navegación */}
       <div style={{ 
@@ -114,7 +144,7 @@ export default function Home() {
             fontWeight: 'bold',
             fontSize: 'clamp(1rem, 3vw, 1.5rem)',
             border: '3px solid #00FFFF',
-            boxShadow: '0 0 30px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(0, 255, 255, 0.2)',
+            boxShadow: '0 0 30px rgba(0, 255, 255, 0.8), inset 0 0 20px rgba(0, 255, 255, 0.2)',
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             display: 'inline-block',
@@ -136,7 +166,7 @@ export default function Home() {
             fontWeight: 'bold',
             fontSize: 'clamp(1rem, 3vw, 1.5rem)',
             border: '3px solid #FFD700',
-            boxShadow: '0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.15)',
+            boxShadow: '0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.15)',
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             display: 'inline-block',
@@ -158,7 +188,7 @@ export default function Home() {
             fontWeight: 'bold',
             fontSize: 'clamp(1rem, 3vw, 1.5rem)',
             border: '3px solid #FFA500',
-            boxShadow: '0 0 30px rgba(255, 165, 0, 0.6), inset 0 0 20px rgba(255, 165, 0, 0.2)',
+            boxShadow: '0 0 30px rgba(255, 165, 0, 0.8), inset 0 0 20px rgba(255, 165, 0, 0.2)',
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             display: 'inline-block',
@@ -188,8 +218,13 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Animación CSS */}
+      {/* Animaciones CSS */}
       <style jsx>{`
+        @keyframes spin {
+          from { transform: rotateY(0deg); }
+          to { transform: rotateY(360deg); }
+        }
+        
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
