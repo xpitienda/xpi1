@@ -7,7 +7,6 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN!,
 });
 
-// GET: Listar todos los vendedores + sus series asignadas
 export async function GET() {
   try {
     const result = await turso.execute(`
@@ -23,49 +22,68 @@ export async function GET() {
   }
 }
 
-// POST: Crear nuevo vendedor
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    
+    // Validación estricta de campos
     const { full_name, email, phone, id_number, password, assigned_series_id } = body;
 
     if (!full_name || !email || !phone || !id_number || !password) {
-      return NextResponse.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'Todos los campos son obligatorios: nombre, email, celular, documento y contraseña' 
+      }, { status: 400 });
     }
 
-    // Verificar que email y documento sean únicos
-    const existing = await turso.execute(
-      'SELECT id FROM sellers WHERE email = ? OR id_number = ?',
-      [email.toLowerCase().trim(), id_number.trim()]
-    );
+    // Limpiar y normalizar datos
+    const cleanEmail = String(email).toLowerCase().trim();
+    const cleanId = String(id_number).trim();
+    const cleanPhone = String(phone).trim();
+    const cleanName = String(full_name).trim();
+
+    // Verificar unicidad de email y documento
+    const existing = await turso.execute({
+      sql: 'SELECT id, email, id_number FROM sellers WHERE email = ? OR id_number = ?',
+      args: [cleanEmail, cleanId]
+    });
 
     if (existing.rows.length > 0) {
-      return NextResponse.json({ error: 'El email o documento ya está registrado' }, { status: 409 });
+      const row = existing.rows[0] as any;
+      if (row.email === cleanEmail) {
+        return NextResponse.json({ error: 'El correo electrónico ya está registrado' }, { status: 409 });
+      }
+      if (row.id_number === cleanId) {
+        return NextResponse.json({ error: 'El número de documento ya está registrado' }, { status: 409 });
+      }
     }
 
     // Encriptar contraseña
-    const password_hash = await bcrypt.hash(password, 10);
+    const password_hash = await bcrypt.hash(String(password), 10);
 
+    // Insertar vendedor
     await turso.execute({
-      sql: 'INSERT INTO sellers (full_name, email, phone, id_number, password_hash, assigned_series_id) VALUES (?, ?, ?, ?, ?, ?)',
+      sql: `INSERT INTO sellers (full_name, email, phone, id_number, password_hash, assigned_series_id, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
       args: [
-        full_name.trim(),
-        email.toLowerCase().trim(),
-        phone.trim(),
-        id_number.trim(),
+        cleanName,
+        cleanEmail,
+        cleanPhone,
+        cleanId,
         password_hash,
-        assigned_series_id || null,
+        assigned_series_id || null
       ],
     });
 
     return NextResponse.json({ success: true, message: 'Vendedor creado correctamente' });
-  } catch (error) {
-    console.error('[POST] Error sellers:', error);
-    return NextResponse.json({ error: 'Error al crear vendedor' }, { status: 500 });
+
+  } catch (error: any) {
+    console.error('[POST] Error detallado sellers:', error);
+    // Retornar mensaje de error específico si es posible
+    const errorMsg = error.message || 'Error desconocido al crear vendedor';
+    return NextResponse.json({ error: `Error al crear vendedor: ${errorMsg}` }, { status: 500 });
   }
 }
 
-// PUT: Actualizar vendedor (sin cambiar contraseña)
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
@@ -76,26 +94,32 @@ export async function PUT(request: Request) {
     }
 
     await turso.execute({
-      sql: 'UPDATE sellers SET full_name = ?, email = ?, phone = ?, id_number = ?, assigned_series_id = ?, is_active = ? WHERE id = ?',
+      sql: `UPDATE sellers SET 
+              full_name = COALESCE(?, full_name),
+              email = COALESCE(?, email),
+              phone = COALESCE(?, phone),
+              id_number = COALESCE(?, id_number),
+              assigned_series_id = COALESCE(?, assigned_series_id),
+              is_active = COALESCE(?, is_active)
+            WHERE id = ?`,
       args: [
-        full_name?.trim(),
-        email?.toLowerCase().trim(),
-        phone?.trim(),
-        id_number?.trim(),
+        full_name?.trim() || null,
+        email?.toLowerCase().trim() || null,
+        phone?.trim() || null,
+        id_number?.trim() || null,
         assigned_series_id || null,
-        is_active !== undefined ? (is_active ? 1 : 0) : 1,
-        id,
+        is_active !== undefined ? (is_active ? 1 : 0) : null,
+        id
       ],
     });
 
     return NextResponse.json({ success: true, message: 'Vendedor actualizado' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[PUT] Error sellers:', error);
     return NextResponse.json({ error: 'Error al actualizar vendedor' }, { status: 500 });
   }
 }
 
-// DELETE: Eliminar vendedor
 export async function DELETE(request: Request) {
   try {
     const body = await request.json();
@@ -105,14 +129,17 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
     }
 
-    const result = await turso.execute('DELETE FROM sellers WHERE id = ?', [id]);
+    const result = await turso.execute({
+      sql: 'DELETE FROM sellers WHERE id = ?',
+      args: [String(id)]
+    });
 
     if (result.rowsAffected === 0) {
       return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, message: 'Vendedor eliminado' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[DELETE] Error sellers:', error);
     return NextResponse.json({ error: 'Error al eliminar vendedor' }, { status: 500 });
   }
