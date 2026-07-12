@@ -1,286 +1,240 @@
 ﻿'use client';
 
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import confetti from 'canvas-confetti';
+import Link from 'next/link';
 
-export default function SplashPage() {
-  const router = useRouter();
-  const [showText, setShowText] = useState(false);
-  const [showButtons, setShowButtons] = useState(false);
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  stock: number;
+  is_active: number;
+}
 
-  const logoUrl = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo_XpiTienda_sin_Fondo-removebg-preview-yVgQmLAPvivdFeznsaVzvVQlE2Y1zE.png";
+export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [categories, setCategories] = useState<string[]>(['Todas']);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const duration = 3000;
-      const end = Date.now() + duration;
-
-      const colors = ['#00FF41', '#BF00FF', '#00CC33', '#9900CC'];
-
-      (function frame() {
-        confetti({
-          particleCount: 4,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: colors
-        });
-        confetti({
-          particleCount: 4,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: colors
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      }());
-
-      setShowText(true);
-
-      setTimeout(() => {
-        setShowButtons(true);
-      }, 800);
-    }, 5000);
-
-    return () => clearTimeout(timer);
+    fetchProducts();
+    fetchCategories();
   }, []);
 
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      setProducts(data.filter((p: Product) => p.is_active === 1));
+    } catch (err) {
+      console.error('Error cargando productos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      setCategories(['Todas', ...data.map((c: any) => c.name)]);
+    } catch (err) {
+      console.error('Error cargando categorías:', err);
+    }
+  };
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'Todas' || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Cargando catálogo...</div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      position: 'relative',
-      overflow: 'hidden',
-      margin: 0,
-      padding: 0
-    }}>
-      {/* VIDEO DE FONDO */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          zIndex: 0
-        }}
-      >
-        <source src="/video-splash.mp4" type="video/mp4" />
-      </video>
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      {/* HEADER */}
+      <header style={{ background: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '1rem 2rem', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e40af' }}>XPI Tienda</h1>
+          <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <Link href="/catalog" style={{ color: '#374151', textDecoration: 'none', fontWeight: '500' }}>Catálogo</Link>
+            <Link href="/cart" style={{ color: '#374151', textDecoration: 'none', fontWeight: '500' }}>🛒 Carrito</Link>
+            
+            {/* 👇 NUEVO BOTÓN PARA VENDEDORES 👇 */}
+            <Link 
+              href="/login-seller" 
+              style={{ 
+                background: 'linear-gradient(135deg, #1e40af, #7c3aed)', 
+                color: 'white', 
+                padding: '0.5rem 1rem', 
+                borderRadius: '0.5rem', 
+                textDecoration: 'none', 
+                fontWeight: 'bold',
+                fontSize: '0.875rem'
+              }}
+            >
+              Acceso Vendedores
+            </Link>
+            
+            <Link 
+              href="/admin/login" 
+              style={{ 
+                background: '#4b5563', 
+                color: 'white', 
+                padding: '0.5rem 1rem', 
+                borderRadius: '0.5rem', 
+                textDecoration: 'none', 
+                fontWeight: 'bold',
+                fontSize: '0.875rem'
+              }}
+            >
+              Admin
+            </Link>
+          </nav>
+        </div>
+      </header>
 
-      {/* CAPA OSCURA */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 1,
-        pointerEvents: 'none'
-      }}></div>
-
-      {/* CONTENIDO CENTRADO */}
-      <div style={{
-        position: 'relative',
-        zIndex: 2,
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '2rem',
-        padding: '2rem'
-      }}>
-        
-        {/* LOGO */}
-        <div style={{ perspective: '1000px' }}>
-          <Image
-            src={logoUrl}
-            alt="XPI Tienda"
-            width={400}
-            height={180}
-            style={{
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.8))',
-              animation: 'spin3d 8s linear infinite'
+      {/* HERO SECTION */}
+      <section style={{ background: 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)', color: 'white', padding: '4rem 2rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bienvenido a XPI Tienda</h2>
+          <p style={{ fontSize: '1.25rem', opacity: 0.9, marginBottom: '2rem' }}>Encuentra los mejores productos al mejor precio</p>
+          <Link 
+            href="/catalog" 
+            style={{ 
+              background: 'white', 
+              color: '#1e40af', 
+              padding: '1rem 2rem', 
+              borderRadius: '0.5rem', 
+              textDecoration: 'none', 
+              fontWeight: 'bold',
+              display: 'inline-block'
             }}
-            priority
+          >
+            Ver Catálogo
+          </Link>
+        </div>
+      </section>
+
+      {/* FILTROS Y BÚSQUEDA */}
+      <section style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '2rem' }}>
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              flex: 1,
+              minWidth: '200px',
+              padding: '0.75rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.5rem',
+              fontSize: '1rem'
+            }}
           />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            style={{
+              padding: '0.75rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.5rem',
+              fontSize: '1rem',
+              background: 'white'
+            }}
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
 
-        {showText && (
-          <div style={{
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.5rem',
-            width: '100%',
-            maxWidth: '1200px'
-          }}>
-            
-            {/* BIENVENIDOS */}
-            <h1 style={{
-              fontSize: 'clamp(3rem, 10vw, 8rem)',
-              fontWeight: '900',
-              letterSpacing: '0.05em',
-              lineHeight: 1,
-              margin: 0,
-              background: 'linear-gradient(90deg, #9333EA, #10B981, #7C3AED, #059669, #9333EA)',
-              backgroundSize: '300% 300%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              animation: 'gradientFlow 5s ease infinite',
-              filter: 'drop-shadow(0 0 30px rgba(147,51,234,0.6)) drop-shadow(4px 4px 0 rgba(0,0,0,0.3)) drop-shadow(8px 8px 0 rgba(0,0,0,0.2)) drop-shadow(12px 12px 0 rgba(0,0,0,0.1))'
-            }}>
-              Bienvenidos
-            </h1>
-
-            {/* BOTONES */}
-            {showButtons && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '1.5rem',
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '100%',
-                padding: '0 1rem',
-                marginTop: '0.5rem'
-              }}>
-                <button
-                  onClick={() => router.push('/home')}
-                  style={{
-                    padding: '1.25rem 3rem',
-                    background: 'transparent',
-                    color: '#00BFFF',
-                    fontWeight: 'bold',
-                    fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-                    borderRadius: '1rem',
-                    border: '4px solid #00BFFF',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    backdropFilter: 'blur(15px)',
-                    textShadow: '0 0 20px #00BFFF, 0 0 40px #00BFFF',
-                    animation: 'neonPulseBlue 2s ease-in-out infinite'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.background = 'rgba(0,191,255,0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  Explorar
-                </button>
-
-                <button
-                  onClick={() => router.push('/admin/login')}
-                  style={{
-                    padding: '1.25rem 3rem',
-                    background: 'transparent',
-                    color: '#FF6B00',
-                    fontWeight: 'bold',
-                    fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-                    borderRadius: '1rem',
-                    border: '4px solid #FF6B00',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    backdropFilter: 'blur(15px)',
-                    textShadow: '0 0 20px #FF6B00, 0 0 40px #FF6B00',
-                    animation: 'neonPulseOrange 2s ease-in-out infinite'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.background = 'rgba(255,107,0,0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  Administrador
-                </button>
-              </div>
-            )}
-
-            {/* ESLOGAN */}
-            <div style={{
-              fontSize: 'clamp(1.5rem, 3vw, 3rem)',
-              fontWeight: '300',
-              letterSpacing: '0.05em',
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}>
-              <span style={{
-                color: '#00FF41',
-                fontWeight: '600',
-                textShadow: '0 0 20px rgba(0,255,65,0.8)'
-              }}>
-                Xpi Tienda
-              </span>
-              <span style={{
-                background: 'linear-gradient(90deg, #00BFFF, #FF6B00, #00FFFF, #FF8C00, #00BFFF)',
-                backgroundSize: '300% 300%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                animation: 'gradientFlow 5s ease infinite',
-                fontWeight: '700'
-              }}>
-                Una Alternativa
-              </span>
-              <span style={{
-                color: '#E879F9',
-                fontWeight: '600',
-                textShadow: '0 0 20px rgba(232,121,249,0.8)'
-              }}>
-                Inteligente
-              </span>
-            </div>
+        {/* GRID DE PRODUCTOS */}
+        {filteredProducts.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#6b7280' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>No se encontraron productos</h3>
+            <p>Intenta con otra búsqueda o categoría</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+            {filteredProducts.map(product => (
+              <Link 
+                key={product.id} 
+                href={`/catalog/${product.id}`}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <div style={{ 
+                  background: 'white', 
+                  borderRadius: '0.75rem', 
+                  overflow: 'hidden', 
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  transition: 'transform 0.2s',
+                  cursor: 'pointer'
+                }}>
+                  <div style={{ height: '200px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '3rem', color: '#9ca3af' }}>📷</span>
+                    )}
+                  </div>
+                  <div style={{ padding: '1.5rem' }}>
+                    <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>{product.name}</h3>
+                    <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: '1.4' }}>
+                      {product.description?.substring(0, 80)}{product.description && product.description.length > 80 ? '...' : ''}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1e40af' }}>
+                        ${product.price.toLocaleString('es-CO')}
+                      </span>
+                      <span style={{ 
+                        fontSize: '0.75rem', 
+                        padding: '0.25rem 0.75rem', 
+                        borderRadius: '9999px',
+                        background: product.stock > 0 ? '#dcfce7' : '#fee2e2',
+                        color: product.stock > 0 ? '#166534' : '#991b1b',
+                        fontWeight: 'bold'
+                      }}>
+                        {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* ANIMACIONES CSS */}
-      <style>{`
-        @keyframes spin3d {
-          0% { transform: rotateY(0deg); }
-          100% { transform: rotateY(360deg); }
-        }
-        @keyframes gradientFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes neonPulseBlue {
-          0% { box-shadow: 0 0 10px #00BFFF, 0 0 20px #00BFFF, 0 0 30px #00BFFF, 0 0 40px #00BFFF; }
-          50% { box-shadow: 0 0 15px #00FFFF, 0 0 30px #00FFFF, 0 0 45px #00FFFF, 0 0 60px #00FFFF; }
-          100% { box-shadow: 0 0 10px #00BFFF, 0 0 20px #00BFFF, 0 0 30px #00BFFF, 0 0 40px #00BFFF; }
-        }
-        @keyframes neonPulseOrange {
-          0% { box-shadow: 0 0 10px #FF6B00, 0 0 20px #FF6B00, 0 0 30px #FF6B00, 0 0 40px #FF6B00; }
-          50% { box-shadow: 0 0 15px #FF8C00, 0 0 30px #FF8C00, 0 0 45px #FF8C00, 0 0 60px #FF8C00; }
-          100% { box-shadow: 0 0 10px #FF6B00, 0 0 20px #FF6B00, 0 0 30px #FF6B00, 0 0 40px #FF6B00; }
-        }
-      `}</style>
+      {/* FOOTER */}
+      <footer style={{ background: '#1f2937', color: 'white', padding: '3rem 2rem', marginTop: '4rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>XPI Tienda</h3>
+          <p style={{ opacity: 0.8, marginBottom: '2rem' }}>Línea Alternativas Inteligentes</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+            <Link href="/catalog" style={{ color: 'white', textDecoration: 'none', opacity: 0.8 }}>Catálogo</Link>
+            <Link href="/cart" style={{ color: 'white', textDecoration: 'none', opacity: 0.8 }}>Carrito</Link>
+            <Link href="/login-seller" style={{ color: 'white', textDecoration: 'none', opacity: 0.8 }}>Vendedores</Link>
+            <Link href="/admin/login" style={{ color: 'white', textDecoration: 'none', opacity: 0.8 }}>Administración</Link>
+          </div>
+          <p style={{ marginTop: '2rem', opacity: 0.6, fontSize: '0.875rem' }}>© 2026 XPI Tienda. Todos los derechos reservados.</p>
+        </div>
+      </footer>
     </div>
   );
 }
