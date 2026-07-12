@@ -7,8 +7,32 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN!,
 });
 
+// Función para asegurar que la tabla exista (Autocuración)
+async function ensureSellersTable() {
+  try {
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS sellers (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        phone TEXT NOT NULL,
+        id_number TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        assigned_series_id TEXT,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `);
+    // Crear índice si no existe
+    await turso.execute(`CREATE INDEX IF NOT EXISTS idx_sellers_email ON sellers(email)`);
+  } catch (e) {
+    console.error('Error creando tabla sellers:', e);
+  }
+}
+
 export async function GET() {
   try {
+    await ensureSellersTable(); // Asegurar tabla al leer
     const result = await turso.execute(`
       SELECT s.*, ic.prefix_letter, ic.city_letter 
       FROM sellers s
@@ -24,50 +48,37 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await ensureSellersTable(); // Asegurar tabla al crear
+
     const body = await request.json();
-    
-    // Validación estricta de campos
     const { full_name, email, phone, id_number, password, assigned_series_id } = body;
 
     if (!full_name || !email || !phone || !id_number || !password) {
-      return NextResponse.json({ 
-        error: 'Todos los campos son obligatorios: nombre, email, celular, documento y contraseña' 
-      }, { status: 400 });
+      return NextResponse.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
     }
 
-    // Limpiar y normalizar datos
     const cleanEmail = String(email).toLowerCase().trim();
     const cleanId = String(id_number).trim();
-    const cleanPhone = String(phone).trim();
-    const cleanName = String(full_name).trim();
 
-    // Verificar unicidad de email y documento
+    // Verificar unicidad
     const existing = await turso.execute({
-      sql: 'SELECT id, email, id_number FROM sellers WHERE email = ? OR id_number = ?',
+      sql: 'SELECT id FROM sellers WHERE email = ? OR id_number = ?',
       args: [cleanEmail, cleanId]
     });
 
     if (existing.rows.length > 0) {
-      const row = existing.rows[0] as any;
-      if (row.email === cleanEmail) {
-        return NextResponse.json({ error: 'El correo electrónico ya está registrado' }, { status: 409 });
-      }
-      if (row.id_number === cleanId) {
-        return NextResponse.json({ error: 'El número de documento ya está registrado' }, { status: 409 });
-      }
+      return NextResponse.json({ error: 'El email o documento ya está registrado' }, { status: 409 });
     }
 
-    // Encriptar contraseña
     const password_hash = await bcrypt.hash(String(password), 10);
 
-    // Insertar vendedor
     await turso.execute({
       sql: `INSERT INTO sellers (full_name, email, phone, id_number, password_hash, assigned_series_id, is_active) 
             VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
       args: [
-        cleanName,
+        String(full_name).trim(),
         cleanEmail,
-        cleanPhone,
+        String(phone).trim(),
         cleanId,
         password_hash,
         assigned_series_id || null
@@ -77,10 +88,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: 'Vendedor creado correctamente' });
 
   } catch (error: any) {
-    console.error('[POST] Error detallado sellers:', error);
-    // Retornar mensaje de error específico si es posible
-    const errorMsg = error.message || 'Error desconocido al crear vendedor';
-    return NextResponse.json({ error: `Error al crear vendedor: ${errorMsg}` }, { status: 500 });
+    console.error('[POST] Error sellers:', error);
+    return NextResponse.json({ error: `Error al crear vendedor: ${error.message}` }, { status: 500 });
   }
 }
 
@@ -89,9 +98,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { id, full_name, email, phone, id_number, assigned_series_id, is_active } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
-    }
+    if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
     await turso.execute({
       sql: `UPDATE sellers SET 
@@ -113,10 +120,10 @@ export async function PUT(request: Request) {
       ],
     });
 
-    return NextResponse.json({ success: true, message: 'Vendedor actualizado' });
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('[PUT] Error sellers:', error);
-    return NextResponse.json({ error: 'Error al actualizar vendedor' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 });
   }
 }
 
@@ -124,23 +131,14 @@ export async function DELETE(request: Request) {
   try {
     const body = await request.json();
     const { id } = body;
+    if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
-    }
+    const result = await turso.execute({ sql: 'DELETE FROM sellers WHERE id = ?', args: [String(id)] });
+    if (result.rowsAffected === 0) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
 
-    const result = await turso.execute({
-      sql: 'DELETE FROM sellers WHERE id = ?',
-      args: [String(id)]
-    });
-
-    if (result.rowsAffected === 0) {
-      return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, message: 'Vendedor eliminado' });
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('[DELETE] Error sellers:', error);
-    return NextResponse.json({ error: 'Error al eliminar vendedor' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
   }
 }
