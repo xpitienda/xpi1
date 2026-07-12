@@ -28,6 +28,8 @@ export default function InvoicesAdmin() {
       if (res.ok) {
         const data = await res.json();
         setCounters(data);
+      } else {
+        console.error('Error fetching counters:', await res.text());
       }
     } catch (err) {
       console.error('Error cargando factureros:', err);
@@ -56,6 +58,8 @@ export default function InvoicesAdmin() {
         }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
         alert('✅ Nueva serie activada correctamente');
         setNewPrefix('');
@@ -63,14 +67,13 @@ export default function InvoicesAdmin() {
         setNewStartNumber(0);
         fetchCounters();
       } else {
-        alert('❌ Error al crear la serie');
+        alert('❌ Error: ' + (data.error || 'No se pudo crear la serie'));
       }
     } catch (err) {
-      alert('Error de conexión');
+      alert('Error de conexión al crear serie');
     }
   };
 
-  // NUEVA FUNCIÓN PARA ELIMINAR SERIES
   const handleDeleteSeries = async (id: string, serieName: string) => {
     if (!confirm(`¿Estás seguro de eliminar la serie ${serieName}? Esta acción no se puede deshacer.`)) return;
     
@@ -84,11 +87,14 @@ export default function InvoicesAdmin() {
         body: JSON.stringify({ id }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
         alert('✅ Serie eliminada correctamente');
         fetchCounters();
       } else {
-        alert('❌ Error al eliminar la serie');
+        // Mostrar el error específico que viene del backend
+        alert('❌ Error al eliminar: ' + (data.error || 'Error desconocido'));
       }
     } catch (err) {
       alert('Error de conexión al eliminar');
