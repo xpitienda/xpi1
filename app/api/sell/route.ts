@@ -1,44 +1,102 @@
 import { NextResponse } from 'next/server';
-import { turso } from '@/lib/turso';
+import { createClient } from '@libsql/client';
+import nodemailer from 'nodemailer';
+
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    
-    const { name, description, price, category, stock, image_url, seller_name, seller_phone } = body;
+    const { sellerId, seriesId, customer, items } = await request.json();
 
-    // Validaciones básicas
-    if (!name || !price) {
-      return NextResponse.json({ error: 'Nombre y precio son obligatorios' }, { status: 400 });
+    if (!seriesId) {
+      return NextResponse.json({ error: 'Serie de facturación no asignada' }, { status: 400 });
     }
 
-    // Generar ID único
-    const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    // 1. Generar Número de Factura Secuencial (Usando la serie del vendedor)
+    let invoiceNumber = 'ERR-000';
+    try {
+      const counterResult = await turso.execute(
+        'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE id = ? LIMIT 1',
+        [seriesId]
+      );
+      
+      if (counterResult.rows.length > 0) {
+        const counter = counterResult.rows[0] as any;
+        const newNumber = Number(counter.current_number) + 1;
+        
+        await turso.execute({
+          sql: 'UPDATE invoice_counters SET current_number = ? WHERE id = ?',
+          args: [newNumber, counter.id],
+        });
+        
+        invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
+      }
+    } catch (dbErr) {
+      console.error('Error DB factura:', dbErr);
+      return NextResponse.json({ error: 'Error generando factura' }, { status: 500 });
+    }
 
-    // Insertar en la base de datos
-    // NOTA: is_active = 1 para que aparezca inmediatamente. 
-    // Si prefieres aprobarlos primero, cambia el 1 por 0.
-    await turso.execute(
-      `INSERT INTO catalog (id, name, description, price, image_url, category, stock, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-      [
-        id, 
-        name, 
-        description || '', 
-        parseFloat(price), 
-        image_url || '', 
-        category || 'General', 
-        parseInt(stock) || 0
-      ]
-    );
+    // 2. Calcular Total
+    const total = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
-    return NextResponse.json({ 
-      success: true, 
-      message: '¡Producto publicado exitosamente!' 
-    }, { status: 201 });
+    // 3. Enviar Correo (Mismo diseño profesional)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS?.replace(/\s/g, ''),
+      },
+    });
+
+    const dateStr = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const htmlContent = `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb;">
+      <div style="background: linear-gradient(135deg, #1e40af, #7c3aed); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="margin: 0; color: white; font-size: 28px;"> Factura de Venta</h1>
+        <p style="margin: 5px 0 0; color: rgba(255,255,255,0.9);">XPI Tienda - Vendedor</p>
+      </div>
+      <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+          <div><p style="margin:0; color:#666; font-size:12px">FECHA</p><p style="margin:5px 0 0; font-weight:bold">${dateStr}</p></div>
+          <div style="text-align:right"><p style="margin:0; color:#666; font-size:12px">FACTURA N°</p><p style="margin:5px 0 0; font-weight:bold; color:#1e40af; font-size:18px">${invoiceNumber}</p></div>
+        </div>
+        <div style="margin-bottom: 25px">
+          <p style="margin:0 0 10px; color:#666; font-size:12px">CLIENTE</p>
+          <h3 style="margin:0">${customer.name}</h3>
+          <p style="margin:5px 0">📱 ${customer.phone}</p>
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:25px">
+          <thead><tr style="background:#7c3aed; color:white"><th style="padding:12px; text-align:left">Producto</th><th style="padding:12px; text-align:center">Cant.</th><th style="padding:12px; text-align:right">P. Unit.</th><th style="padding:12px; text-align:right">Subtotal</th></tr></thead>
+          <tbody>
+            ${items.map((item: any) => `<tr style="border-bottom:1px solid #eee">
+              <td style="padding:12px">${item.name}</td>
+              <td style="padding:12px; text-align:center">${item.quantity}</td>
+              <td style="padding:12px; text-align:right">$${Number(item.price).toLocaleString('es-CO')}</td>
+              <td style="padding:12px; text-align:right; font-weight:bold">$${Number(item.price * item.quantity).toLocaleString('es-CO')}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div style="background: linear-gradient(135deg, #1e40af, #7c3aed); padding: 20px; border-radius: 8px; text-align: center;">
+          <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px">TOTAL A PAGAR</p>
+          <p style="margin:5px 0 0; font-size:36px; font-weight:bold; color:#fff">$${Number(total).toLocaleString('es-CO')}</p>
+        </div>
+      </div>
+    </div>`;
+
+    await transporter.sendMail({
+      from: `"XPI Tienda" <${process.env.EMAIL_USER}>`,
+      to: process.env.ORDER_EMAIL_DESTINO, // O usar customer.email si lo tienes
+      subject: `🧾 Factura ${invoiceNumber} - Venta de ${customer.name}`,
+      html: htmlContent,
+    });
+
+    return NextResponse.json({ success: true, invoice: invoiceNumber });
 
   } catch (error: any) {
-    console.error('Error publicando producto:', error);
-    return NextResponse.json({ error: error.message || 'Error interno' }, { status: 500 });
+    console.error(' ERROR SELL:', error.message);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
