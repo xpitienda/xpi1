@@ -16,31 +16,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
     }
 
-    // --- GENERACIÓN DE FACTURA SECUENCIAL DESDE TURSO ---
+    // --- GENERACIÓN DE FACTURA SECUENCIAL ROBUSTA ---
     let invoiceNumber = 'PENDIENTE';
-    try {
-      const counterResult = await turso.execute(
-        'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE is_active = TRUE LIMIT 1'
-      );
-      
-      if (counterResult.rows.length > 0) {
-        const counter = counterResult.rows[0];
-        const newNumber = Number(counter.current_number) + 1;
+    let retries = 3; // Intentar hasta 3 veces si hay conflicto de concurrencia
+    
+    while (retries > 0) {
+      try {
+        // 1. Leer el contador actual
+        const counterResult = await turso.execute(
+          'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE is_active = TRUE LIMIT 1'
+        );
         
-        // Formatear: T-I-00001
-        invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
-        
-        // Actualizar contador en DB
-        await turso.execute({
-          sql: 'UPDATE invoice_counters SET current_number = ? WHERE id = ?',
-          args: [newNumber, counter.id],
-        });
-      } else {
-        invoiceNumber = 'SIN-SERIE';
+        if (counterResult.rows.length > 0) {
+          const counter = counterResult.rows[0];
+          const newNumber = Number(counter.current_number) + 1;
+          
+          // 2. Actualizar SOLO si el número sigue siendo el mismo que leímos (evita duplicados)
+          const updateResult = await turso.execute({
+            sql: 'UPDATE invoice_counters SET current_number = ? WHERE id = ? AND current_number = ?',
+            args: [newNumber, counter.id, counter.current_number],
+          });
+
+          // Si afectó 1 fila, significa que nadie más lo tomó antes. ¡Éxito!
+          if (updateResult.rowsAffected === 1) {
+             invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
+             break; 
+          } else {
+             // Conflicto: alguien más actualizó el número mientras tanto. Reintentar.
+             retries--;
+             await new Promise(r => setTimeout(r, 100)); // Esperar 100ms antes de reintentar
+          }
+        } else {
+          invoiceNumber = 'SIN-SERIE-ACTIVA';
+          break;
+        }
+      } catch (dbError) {
+        console.error('⚠️ Error DB en factura (reintento):', dbError);
+        retries--;
       }
-    } catch (dbError) {
-      console.error('⚠️ Error generando número de factura:', dbError);
-      invoiceNumber = `ERR-${Date.now().toString().slice(-6)}`;
+    }
+
+    // Fallback final si fallaron todos los intentos
+    if (invoiceNumber === 'PENDIENTE') {
+       invoiceNumber = `ERR-${Date.now().toString().slice(-6)}`;
     }
     // ----------------------------------------------------
 
