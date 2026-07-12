@@ -16,49 +16,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
     }
 
-    // --- GENERACIÓN DE FACTURA SECUENCIAL ROBUSTA ---
-    let invoiceNumber = 'PENDIENTE';
-    let retries = 3; // Intentar hasta 3 veces si hay conflicto de concurrencia
+    // --- GENERACIÓN DE FACTURA SECUENCIAL SEGURA ---
+    let invoiceNumber = 'SIN-SERIE';
     
-    while (retries > 0) {
-      try {
-        // 1. Leer el contador actual
-        const counterResult = await turso.execute(
-          'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE is_active = TRUE LIMIT 1'
-        );
+    try {
+      // 1. Obtener la serie activa
+      const counterResult = await turso.execute(
+        'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE is_active = TRUE LIMIT 1'
+      );
+      
+      if (counterResult.rows.length > 0) {
+        const counter = counterResult.rows[0];
+        const newNumber = Number(counter.current_number) + 1;
         
-        if (counterResult.rows.length > 0) {
-          const counter = counterResult.rows[0];
-          const newNumber = Number(counter.current_number) + 1;
-          
-          // 2. Actualizar SOLO si el número sigue siendo el mismo que leímos (evita duplicados)
-          const updateResult = await turso.execute({
-            sql: 'UPDATE invoice_counters SET current_number = ? WHERE id = ? AND current_number = ?',
-            args: [newNumber, counter.id, counter.current_number],
-          });
-
-          // Si afectó 1 fila, significa que nadie más lo tomó antes. ¡Éxito!
-          if (updateResult.rowsAffected === 1) {
-             invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
-             break; 
-          } else {
-             // Conflicto: alguien más actualizó el número mientras tanto. Reintentar.
-             retries--;
-             await new Promise(r => setTimeout(r, 100)); // Esperar 100ms antes de reintentar
-          }
-        } else {
-          invoiceNumber = 'SIN-SERIE-ACTIVA';
-          break;
-        }
-      } catch (dbError) {
-        console.error('⚠️ Error DB en factura (reintento):', dbError);
-        retries--;
+        // 2. Actualizar el contador directamente
+        await turso.execute({
+          sql: 'UPDATE invoice_counters SET current_number = ? WHERE id = ?',
+          args: [newNumber, counter.id],
+        });
+        
+        // 3. Formatear el número de factura
+        invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
+      } else {
+        console.warn('⚠️ No hay serie activa configurada en DB');
+        invoiceNumber = 'PENDIENTE-CONFIG';
       }
-    }
-
-    // Fallback final si fallaron todos los intentos
-    if (invoiceNumber === 'PENDIENTE') {
-       invoiceNumber = `ERR-${Date.now().toString().slice(-6)}`;
+    } catch (dbError) {
+      console.error('❌ Error DB generando factura:', dbError);
+      // Fallback seguro: usar fecha/hora para no perder el pedido
+      invoiceNumber = `TEMP-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
     }
     // ----------------------------------------------------
 
@@ -93,7 +79,7 @@ export async function POST(request: Request) {
         <div style="margin-bottom: 25px;">
           <p style="margin: 0 0 10px; color: #666; font-size: 12px; text-transform: uppercase;">Cliente:</p>
           <h3 style="margin: 0;">${customerInfo.name}</h3>
-          <p style="margin: 5px 0;">📱 ${customerInfo.phone}</p>
+          <p style="margin: 5px 0;"> ${customerInfo.phone}</p>
           ${customerInfo.address ? `<p style="margin: 5px 0;">📍 ${customerInfo.address}</p>` : ''}
           ${customerInfo.city ? `<p style="margin: 5px 0;">🏙️ ${customerInfo.city}</p>` : ''}
         </div>
@@ -136,7 +122,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, invoice: invoiceNumber });
 
   } catch (error: any) {
-    console.error('❌ ERROR EMAIL:', error.message);
+    console.error('❌ ERROR EMAIL GENERAL:', error.message);
     return NextResponse.json({ error: 'Error interno', details: error.message }, { status: 500 });
   }
 }
