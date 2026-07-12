@@ -17,6 +17,7 @@ interface Product {
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,6 +33,9 @@ export default function Home() {
     };
 
     fetchProducts();
+
+    const timer = setTimeout(() => setShowConfetti(false), 7000);
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
@@ -52,7 +56,6 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      {/* Video de fondo - SIN overlay para ver colores 100% originales */}
       <video
         autoPlay
         loop
@@ -71,7 +74,6 @@ export default function Home() {
         <source src="/video-splash.mp4" type="video/mp4" />
       </video>
 
-      {/* Overlay mínimo solo para legibilidad */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -79,47 +81,60 @@ export default function Home() {
         zIndex: -1
       }} />
 
-      {/* LLUVIA DE CONFETTI - Partículas moradas y verdes */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
-        {Array.from({ length: 50 }).map((_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: `${Math.random() * 8 + 4}px`,
-              height: `${Math.random() * 8 + 4}px`,
-              background: i % 2 === 0 ? '#4B0082' : '#2E7D32',
-              left: `${Math.random() * 100}%`,
-              top: `-10px`,
-              animation: `confettiFall ${Math.random() * 3 + 4}s linear infinite`,
-              animationDelay: `${Math.random() * 5}s`,
-              borderRadius: Math.random() > 0.5 ? '50%' : '0',
-              opacity: 0.8
-            }}
-          />
-        ))}
-      </div>
+      {showConfetti && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
+          {Array.from({ length: 80 }).map((_, i) => {
+            const angle = (i / 80) * 360;
+            const velocity = Math.random() * 300 + 200;
+            const x = Math.cos((angle * Math.PI) / 180) * velocity;
+            const y = Math.sin((angle * Math.PI) / 180) * velocity - 200;
+            const color = i % 2 === 0 ? '#4B0082' : '#2E7D32';
+            const size = Math.random() * 10 + 5;
+            
+            return (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  background: color,
+                  left: '50%',
+                  top: '50%',
+                  animation: `confettiExplode 7s ease-out forwards`,
+                  animationDelay: `${Math.random() * 0.5}s`,
+                  borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                  opacity: 0.9,
+                  transform: `translate(-50%, -50%)`,
+                } as React.CSSProperties}
+              />
+            );
+          })}
+        </div>
+      )}
 
-      {/* Logo grande giratorio sobre su eje */}
       <div style={{
         position: 'relative',
         zIndex: 10,
         marginBottom: '1.5rem',
-        animation: 'spin 6s linear infinite',
-        transformStyle: 'preserve-3d'
+        perspective: '1000px'
       }}>
-        <img 
-          src="/logo1.png" 
-          alt="XPI Tienda"
-          style={{
-            width: 'clamp(280px, 45vw, 550px)',
-            height: 'auto',
-            filter: 'drop-shadow(0 0 40px rgba(75, 0, 130, 1)) drop-shadow(0 0 60px rgba(46, 125, 50, 0.8))'
-          }}
-        />
+        <div style={{
+          animation: 'spinY 6s linear infinite',
+          transformStyle: 'preserve-3d'
+        }}>
+          <img 
+            src="/logo1.png" 
+            alt="XPI Tienda"
+            style={{
+              width: 'clamp(280px, 45vw, 550px)',
+              height: 'auto',
+              filter: 'drop-shadow(0 0 40px rgba(75, 0, 130, 1)) drop-shadow(0 0 60px rgba(46, 125, 50, 0.8))'
+            }}
+          />
+        </div>
       </div>
 
-      {/* Bienvenidos - DOBLE TAMAÑO con colores nítidos cambiantes */}
       <h1 style={{ 
         fontSize: 'clamp(4.5rem, 14vw, 9rem)', 
         fontWeight: 'bold',
@@ -138,7 +153,6 @@ export default function Home() {
         Bienvenidos
       </h1>
 
-      {/* Botones de navegación con NEON más brillante */}
       <div style={{ 
         display: 'flex', 
         gap: '2rem', 
@@ -147,7 +161,6 @@ export default function Home() {
         zIndex: 10,
         marginBottom: '2.5rem'
       }}>
-        {/* Botón Explorar - NEON Cian Brillante */}
         <Link 
           href="/catalog"
           style={{
@@ -170,7 +183,6 @@ export default function Home() {
           Explorar
         </Link>
 
-        {/* Botón Vendedores - NEON Dorado Brillante */}
         <Link 
           href="/login-seller"
           style={{
@@ -193,7 +205,6 @@ export default function Home() {
           Vendedores
         </Link>
 
-        {/* Botón Administrador - NEON Naranja Brillante */}
         <Link 
           href="/admin/login"
           style={{
@@ -217,7 +228,6 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* Slogan - DOBLE TAMAÑO con colores cambiantes nítidos */}
       <div style={{ 
         textAlign: 'center', 
         zIndex: 10,
@@ -239,9 +249,8 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Animaciones CSS */}
-      <style jsx>{`
-        @keyframes spin {
+      <style>{`
+        @keyframes spinY {
           from { transform: rotateY(0deg); }
           to { transform: rotateY(360deg); }
         }
@@ -257,14 +266,18 @@ export default function Home() {
           100% { background-position: 0% center; }
         }
 
-        @keyframes confettiFall {
+        @keyframes confettiExplode {
           0% {
-            transform: translateY(0) rotate(0deg);
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 1;
+          }
+          20% {
+            transform: translate(calc(-50% + var(--tx, 100px)), calc(-50% + var(--ty, -200px))) scale(1);
             opacity: 1;
           }
           100% {
-            transform: translateY(100vh) rotate(720deg);
-            opacity: 0.3;
+            transform: translate(calc(-50% + var(--tx, 200px)), calc(-50% + var(--ty, 400px))) scale(0.3);
+            opacity: 0;
           }
         }
       `}</style>
