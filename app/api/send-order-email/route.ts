@@ -18,6 +18,7 @@ export async function POST(request: Request) {
 
     // --- GENERACIÓN DE FACTURA SECUENCIAL SEGURA ---
     let invoiceNumber = 'SIN-SERIE';
+    let seriesId = null; // NUEVO: Para guardar el ID de la serie
     
     try {
       // 1. Obtener la serie activa
@@ -26,7 +27,8 @@ export async function POST(request: Request) {
       );
       
       if (counterResult.rows.length > 0) {
-        const counter = counterResult.rows[0];
+        const counter = counterResult.rows[0] as any;
+        seriesId = counter.id; // NUEVO: Guardamos el ID de la serie
         const newNumber = Number(counter.current_number) + 1;
         
         // 2. Actualizar el contador directamente
@@ -45,6 +47,32 @@ export async function POST(request: Request) {
       console.error('❌ Error DB generando factura:', dbError);
       // Fallback seguro: usar fecha/hora para no perder el pedido
       invoiceNumber = `TEMP-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
+    }
+    // ----------------------------------------------------
+
+    // --- NUEVO: GUARDAR VENTA DEL CARRITO EN LA BASE DE DATOS ---
+    try {
+      await turso.execute({
+        sql: `INSERT INTO sales (
+          invoice_number, series_id, seller_id, seller_name, 
+          customer_name, customer_phone, items, total_amount, sale_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          invoiceNumber,
+          seriesId,
+          null, // seller_id es null para ventas del carrito
+          'Carrito/Web', // seller_name
+          customerInfo.name,
+          customerInfo.phone || '',
+          JSON.stringify(cart),
+          Number(total),
+          'cart'
+        ],
+      });
+      console.log('✅ Venta del carrito guardada en DB:', invoiceNumber);
+    } catch (saveError) {
+      console.error('❌ Error guardando venta del carrito en DB:', saveError);
+      // No lanzamos error para no interrumpir el envío del correo ni el pedido
     }
     // ----------------------------------------------------
 
@@ -79,7 +107,7 @@ export async function POST(request: Request) {
         <div style="margin-bottom: 25px;">
           <p style="margin: 0 0 10px; color: #666; font-size: 12px; text-transform: uppercase;">Cliente:</p>
           <h3 style="margin: 0;">${customerInfo.name}</h3>
-          <p style="margin: 5px 0;"> ${customerInfo.phone}</p>
+          <p style="margin: 5px 0;">📱 ${customerInfo.phone}</p>
           ${customerInfo.address ? `<p style="margin: 5px 0;">📍 ${customerInfo.address}</p>` : ''}
           ${customerInfo.city ? `<p style="margin: 5px 0;">🏙️ ${customerInfo.city}</p>` : ''}
         </div>
