@@ -8,23 +8,18 @@ const turso = createClient({
 
 export async function GET() {
   try {
-    // Obtener todas las ventas con información del vendedor
     const result = await turso.execute(`
-      SELECT 
-        s.*,
-        COALESCE(s.seller_name, 'Carrito/Web') as vendedor_nombre
-      FROM sales s
-      ORDER BY s.created_at DESC
+      SELECT * FROM sales 
+      ORDER BY created_at DESC
     `);
 
     const allSales = Array.from(result.rows);
 
-    // Agrupar por vendedor
     const salesBySeller: any = {};
     let totalGeneral = 0;
 
     allSales.forEach((sale: any) => {
-      const sellerName = sale.vendedor_nombre || 'Sin vendedor';
+      const sellerName = sale.seller_name || 'Carrito/Web';
       
       if (!salesBySeller[sellerName]) {
         salesBySeller[sellerName] = {
@@ -41,7 +36,6 @@ export async function GET() {
       totalGeneral += Number(sale.total_amount);
     });
 
-    // Convertir a array y ordenar por total (mayor a menor)
     const sellersArray = Object.values(salesBySeller).sort((a: any, b: any) => 
       b.totalVendedor - a.totalVendedor
     );
