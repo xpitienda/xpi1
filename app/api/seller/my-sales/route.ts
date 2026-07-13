@@ -11,24 +11,28 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const sellerId = searchParams.get('sellerId');
 
+    console.log('[my-sales] Seller ID recibido:', sellerId);
+
     if (!sellerId) {
       return NextResponse.json({ error: 'Seller ID requerido' }, { status: 400 });
     }
 
     const result = await turso.execute({
-      sql: `SELECT * FROM sales 
-            WHERE seller_id = ? 
-            ORDER BY created_at DESC 
-            LIMIT 50`,
+      sql: `SELECT * FROM sales WHERE seller_id = ? ORDER BY created_at DESC LIMIT 50`,
       args: [sellerId],
     });
 
-    // Convertir rows a array normal
+    console.log('[my-sales] Ventas encontradas:', result.rows.length);
+
     const sales = Array.from(result.rows);
     
     return NextResponse.json(sales);
-  } catch (error) {
-    console.error('[GET] Error my-sales:', error);
-    return NextResponse.json({ error: 'Error al obtener ventas', details: String(error) }, { status: 500 });
+  } catch (error: any) {
+    console.error('[my-sales] Error completo:', error);
+    
+    return NextResponse.json({ 
+      error: 'Error al obtener ventas',
+      details: error.message
+    }, { status: 500 });
   }
 }
