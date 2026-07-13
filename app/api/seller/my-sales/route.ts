@@ -23,9 +23,12 @@ export async function GET(request: Request) {
       args: [sellerId],
     });
 
-    return NextResponse.json(result.rows);
+    // Convertir rows a array normal
+    const sales = Array.from(result.rows);
+    
+    return NextResponse.json(sales);
   } catch (error) {
     console.error('[GET] Error my-sales:', error);
-    return NextResponse.json({ error: 'Error al obtener ventas' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al obtener ventas', details: String(error) }, { status: 500 });
   }
 }
