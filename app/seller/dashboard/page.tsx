@@ -77,12 +77,33 @@ export default function SellerDashboard() {
 
   const fetchMySales = async () => {
     try {
+      setMsg('Cargando ventas...');
       const res = await fetch('/api/seller/my-sales?sellerId=' + seller.id);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al cargar ventas');
+      }
+      
       const data = await res.json();
-      setSales(data);
-      setShowSales(true);
-    } catch (err) {
+      console.log('Ventas cargadas:', data);
+      
+      // Asegurar que sea un array
+      if (Array.isArray(data)) {
+        setSales(data);
+        setShowSales(true);
+        setMsg('');
+      } else {
+        console.error('Los datos no son un array:', data);
+        setSales([]);
+        setShowSales(true);
+        setMsg('No se pudieron cargar las ventas');
+      }
+    } catch (err: any) {
       console.error('Error cargando ventas:', err);
+      setSales([]);
+      setShowSales(true);
+      setMsg('Error: ' + (err?.message || 'No se pudieron cargar las ventas'));
     }
   };
 
@@ -138,8 +159,8 @@ export default function SellerDashboard() {
           
           {msg && (
             <div style={{ 
-              background: msg.includes('exitosa') ? '#dcfce7' : '#fee2e2', 
-              color: msg.includes('exitosa') ? '#166534' : '#991b1b',
+              background: msg.includes('exitosa') || msg.includes('Cargando') ? '#dcfce7' : '#fee2e2', 
+              color: msg.includes('exitosa') || msg.includes('Cargando') ? '#166534' : '#991b1b',
               padding: '1rem', 
               borderRadius: '0.5rem', 
               marginBottom: '1.5rem', 
@@ -179,7 +200,7 @@ export default function SellerDashboard() {
               Historial de Mis Ventas
             </h2>
             
-            {sales.length === 0 ? (
+            {!Array.isArray(sales) || sales.length === 0 ? (
               <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>
                 No has realizado ventas aun
               </p>
@@ -196,10 +217,15 @@ export default function SellerDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sales.map((sale: any) => {
-                      const items = JSON.parse(sale.items || '[]');
+                    {sales.map((sale: any, index: number) => {
+                      let items = [];
+                      try {
+                        items = JSON.parse(sale.items || '[]');
+                      } catch (e) {
+                        items = [];
+                      }
                       return (
-                        <tr key={sale.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        <tr key={sale.id || index} style={{ borderBottom: '1px solid #e5e7eb' }}>
                           <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#1e40af' }}>
                             {sale.invoice_number}
                           </td>
