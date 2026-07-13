@@ -12,6 +12,11 @@ export default function AdminSales() {
     totalVendedores: 0,
     totalVentas: 0
   });
+  
+  // Nuevos estados para filtros
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +50,97 @@ export default function AdminSales() {
     setExpandedSeller(expandedSeller === sellerName ? null : sellerName);
   };
 
+  // Función para filtrar ventas por fecha
+  const getFilteredSales = () => {
+    if (!startDate && !endDate) return sales;
+
+    return sales.map(sellerData => {
+      const filteredVentas = sellerData.ventas.filter((venta: any) => {
+        const ventaDate = new Date(venta.created_at);
+        let include = true;
+
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (ventaDate < start) include = false;
+        }
+
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (ventaDate > end) include = false;
+        }
+
+        return include;
+      });
+
+      const totalVendedor = filteredVentas.reduce((sum: number, v: any) => sum + Number(v.total_amount), 0);
+
+      return {
+        ...sellerData,
+        ventas: filteredVentas,
+        totalVendedor,
+        cantidadVentas: filteredVentas.length
+      };
+    }).filter((sellerData: any) => sellerData.ventas.length > 0);
+  };
+
+  // Función para exportar a CSV
+  const handleExportCSV = () => {
+    const filtered = getFilteredSales();
+    
+    // Encabezados del CSV
+    const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo'];
+    
+    // Filas del CSV
+    const rows: string[] = [];
+    
+    filtered.forEach((sellerData: any) => {
+      sellerData.ventas.forEach((venta: any) => {
+        let items = [];
+        try {
+          items = JSON.parse(venta.items || '[]');
+        } catch (e) {
+          items = [];
+        }
+        
+        const productosStr = items.map((item: any) => `${item.name} (x${item.quantity})`).join(' | ');
+        const fecha = new Date(venta.created_at).toLocaleString('es-CO');
+        const tipo = venta.sale_type === 'cart' ? 'Carrito/Web' : 'Vendedor';
+        
+        rows.push([
+          `"${fecha}"`,
+          `"${venta.invoice_number}"`,
+          `"${sellerData.vendedor}"`,
+          `"${venta.customer_name}"`,
+          `"${venta.customer_phone || 'N/A'}"`,
+          `"${productosStr}"`,
+          `"${Number(venta.total_amount).toLocaleString('es-CO')}"`,
+          `"${tipo}"`
+        ].join(','));
+      });
+    });
+
+    // Crear el contenido del CSV
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    
+    // Crear blob y descargar
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const dateStr = startDate && endDate ? `${startDate}_a_${endDate}` : 'todas_las_fechas';
+    link.setAttribute('download', `reporte_ventas_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredSales = getFilteredSales();
+  const filteredTotalGeneral = filteredSales.reduce((sum: number, s: any) => sum + s.totalVendedor, 0);
+  const filteredTotalVentas = filteredSales.reduce((sum: number, s: any) => sum + s.cantidadVentas, 0);
+
   if (loading) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.25rem' }}>
@@ -57,7 +153,8 @@ export default function AdminSales() {
     <div style={{ minHeight: '100vh', background: '#f3f4f6', padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
             Ventas por Vendedor
           </h1>
@@ -73,10 +170,80 @@ export default function AdminSales() {
               fontWeight: 'bold'
             }}
           >
-            Volver al Admin
+            ← Volver al Admin
           </button>
         </div>
 
+        {/* Filtros y Exportar */}
+        <div style={{ 
+          background: 'white', 
+          padding: '1.5rem', 
+          borderRadius: '0.75rem', 
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          marginBottom: '2rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          alignItems: 'end'
+        }}>
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>
+              Fecha Inicio
+            </label>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>
+              Fecha Fin
+            </label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}
+            />
+          </div>
+          <button
+            onClick={() => { setStartDate(''); setEndDate(''); }}
+            style={{
+              background: '#f3f4f6',
+              color: '#374151',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #d1d5db',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              height: '42px'
+            }}
+          >
+            Limpiar Filtros
+          </button>
+          <button
+            onClick={handleExportCSV}
+            style={{
+              background: 'linear-gradient(135deg, #059669, #10b981)',
+              color: 'white',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.5rem',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              height: '42px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            📥 Descargar CSV
+          </button>
+        </div>
+
+        {/* Stats Generales (Actualizadas con el filtro) */}
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
@@ -90,9 +257,9 @@ export default function AdminSales() {
             color: 'white',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Total General</p>
+            <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Total General (Filtrado)</p>
             <p style={{ margin: '0.5rem 0 0 0', fontSize: '2rem', fontWeight: 'bold' }}>
-              ${stats.totalGeneral.toLocaleString('es-CO')}
+              ${filteredTotalGeneral.toLocaleString('es-CO')}
             </p>
           </div>
           
@@ -103,9 +270,9 @@ export default function AdminSales() {
             color: 'white',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Total Ventas</p>
+            <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Total Ventas (Filtrado)</p>
             <p style={{ margin: '0.5rem 0 0 0', fontSize: '2rem', fontWeight: 'bold' }}>
-              {stats.totalVentas}
+              {filteredTotalVentas}
             </p>
           </div>
           
@@ -116,14 +283,15 @@ export default function AdminSales() {
             color: 'white',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Vendedores</p>
+            <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Vendedores Activos</p>
             <p style={{ margin: '0.5rem 0 0 0', fontSize: '2rem', fontWeight: 'bold' }}>
-              {stats.totalVendedores}
+              {filteredSales.length}
             </p>
           </div>
         </div>
 
-        {sales.length === 0 ? (
+        {/* Lista de Vendedores */}
+        {filteredSales.length === 0 ? (
           <div style={{ 
             background: 'white', 
             padding: '3rem', 
@@ -132,11 +300,11 @@ export default function AdminSales() {
             boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
           }}>
             <p style={{ color: '#6b7280', fontSize: '1.125rem' }}>
-              No hay ventas registradas aun
+              No hay ventas registradas en el periodo seleccionado
             </p>
           </div>
         ) : (
-          sales.map((sellerData: any, index: number) => (
+          filteredSales.map((sellerData: any, index: number) => (
             <div 
               key={index}
               style={{ 
@@ -147,6 +315,7 @@ export default function AdminSales() {
                 overflow: 'hidden'
               }}
             >
+              {/* Header del Vendedor */}
               <div 
                 onClick={() => toggleSeller(sellerData.vendedor)}
                 style={{
@@ -175,11 +344,12 @@ export default function AdminSales() {
                     ${sellerData.totalVendedor.toLocaleString('es-CO')}
                   </p>
                   <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>
-                    {expandedSeller === sellerData.vendedor ? 'Ocultar detalles' : 'Ver detalles'}
+                    {expandedSeller === sellerData.vendedor ? '▲ Ocultar detalles' : '▶ Ver detalles'}
                   </p>
                 </div>
               </div>
 
+              {/* Detalles de Ventas */}
               {expandedSeller === sellerData.vendedor && (
                 <div style={{ padding: '1.5rem' }}>
                   <div style={{ overflowX: 'auto' }}>
