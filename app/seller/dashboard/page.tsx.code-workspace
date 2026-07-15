@@ -34,7 +34,10 @@ export default function SellerDashboard() {
     // Cargar productos activos para el selector
     fetch('/api/products')
       .then(res => res.json())
-      .then(data => setProducts(data.filter((p: any) => p.is_active === 1)))
+      .then(data => {
+        console.log('Productos cargados:', data);
+        setProducts(data);
+      })
       .catch(err => console.error('Error cargando productos:', err));
 
     setLoading(false);
