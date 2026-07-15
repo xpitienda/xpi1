@@ -36,7 +36,6 @@ export async function POST(request: Request) {
         invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
       }
 
-      // Obtener nombre del vendedor
       if (sellerId) {
         const sellerResult = await turso.execute({
           sql: 'SELECT full_name FROM sellers WHERE id = ? LIMIT 1',
@@ -54,7 +53,34 @@ export async function POST(request: Request) {
     // 2. Calcular Total
     const total = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
-    // 3. NUEVO: Guardar venta en la base de datos
+    // 2.5 VERIFICAR Y DESCONTAR INVENTARIO
+    for (const item of items) {
+      if (item.id) {
+        const productResult = await turso.execute({
+          sql: 'SELECT stock, name FROM products WHERE id = ? LIMIT 1',
+          args: [item.id]
+        });
+        
+        if (productResult.rows.length > 0) {
+          const currentStock = Number((productResult.rows[0] as any).stock);
+          const productName = (productResult.rows[0] as any).name;
+          
+          if (currentStock < item.quantity) {
+            return NextResponse.json({ 
+              error: `Stock insuficiente para "${productName}". Stock actual: ${currentStock}, solicitado: ${item.quantity}` 
+            }, { status: 400 });
+          }
+          
+          // Descontar stock
+          await turso.execute({
+            sql: 'UPDATE products SET stock = stock - ? WHERE id = ?',
+            args: [item.quantity, item.id]
+          });
+        }
+      }
+    }
+
+    // 3. Guardar venta en la base de datos
     try {
       await turso.execute({
         sql: `INSERT INTO sales (
@@ -74,7 +100,6 @@ export async function POST(request: Request) {
       });
     } catch (saveErr) {
       console.error('Error guardando venta:', saveErr);
-      // No retornar error, la factura ya se generó
     }
 
     // 4. Enviar Correo
