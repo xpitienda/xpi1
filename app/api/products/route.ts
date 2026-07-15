@@ -9,7 +9,7 @@ const turso = createClient({
 export async function GET() {
   try {
     const result = await turso.execute(
-      'SELECT id, name, price, stock, is_active FROM products WHERE is_active = 1 ORDER BY name'
+      'SELECT id, name, price, stock, is_active FROM catalog WHERE is_active = 1 ORDER BY name'
     );
 
     return NextResponse.json(Array.from(result.rows));
