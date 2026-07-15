@@ -53,11 +53,11 @@ export async function POST(request: Request) {
     // 2. Calcular Total
     const total = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
-    // 2.5 VERIFICAR Y DESCONTAR INVENTARIO
+    // 2.5 VERIFICAR Y DESCONTAR INVENTARIO (USANDO TABLA catalog)
     for (const item of items) {
       if (item.id) {
         const productResult = await turso.execute({
-          sql: 'SELECT stock, name FROM products WHERE id = ? LIMIT 1',
+          sql: 'SELECT stock, name FROM catalog WHERE id = ? LIMIT 1',
           args: [item.id]
         });
         
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
           
           // Descontar stock
           await turso.execute({
-            sql: 'UPDATE products SET stock = stock - ? WHERE id = ?',
+            sql: 'UPDATE catalog SET stock = stock - ? WHERE id = ?',
             args: [item.quantity, item.id]
           });
         }
@@ -157,6 +157,7 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('ERROR SELL:', error.message);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    console.error('ERROR SELL STACK:', error.stack);
+    return NextResponse.json({ error: 'Error interno: ' + error.message }, { status: 500 });
   }
 }
