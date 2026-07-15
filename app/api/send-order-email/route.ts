@@ -18,26 +18,23 @@ export async function POST(request: Request) {
 
     // --- GENERACIÓN DE FACTURA SECUENCIAL SEGURA ---
     let invoiceNumber = 'SIN-SERIE';
-    let seriesId = null; // NUEVO: Para guardar el ID de la serie
+    let seriesId = null;
     
     try {
-      // 1. Obtener la serie activa
       const counterResult = await turso.execute(
         'SELECT id, prefix_letter, city_letter, current_number FROM invoice_counters WHERE is_active = TRUE LIMIT 1'
       );
       
       if (counterResult.rows.length > 0) {
         const counter = counterResult.rows[0] as any;
-        seriesId = counter.id; // NUEVO: Guardamos el ID de la serie
+        seriesId = counter.id;
         const newNumber = Number(counter.current_number) + 1;
         
-        // 2. Actualizar el contador directamente
         await turso.execute({
           sql: 'UPDATE invoice_counters SET current_number = ? WHERE id = ?',
           args: [newNumber, counter.id],
         });
         
-        // 3. Formatear el número de factura
         invoiceNumber = `${counter.prefix_letter}-${counter.city_letter}-${String(newNumber).padStart(5, '0')}`;
       } else {
         console.warn('⚠️ No hay serie activa configurada en DB');
@@ -45,12 +42,35 @@ export async function POST(request: Request) {
       }
     } catch (dbError) {
       console.error('❌ Error DB generando factura:', dbError);
-      // Fallback seguro: usar fecha/hora para no perder el pedido
       invoiceNumber = `TEMP-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
     }
     // ----------------------------------------------------
 
-    // --- NUEVO: GUARDAR VENTA DEL CARRITO EN LA BASE DE DATOS ---
+    // --- NUEVO: DESCONTAR INVENTARIO DEL CARRITO ---
+    try {
+      for (const item of cart) {
+        if (item.id) {
+          const productResult = await turso.execute({
+            sql: 'SELECT stock, name FROM products WHERE id = ? LIMIT 1',
+            args: [item.id]
+          });
+          
+          if (productResult.rows.length > 0) {
+            // Descontar stock directamente (si queda en 0 o negativo, el admin lo ajusta)
+            await turso.execute({
+              sql: 'UPDATE products SET stock = stock - ? WHERE id = ?',
+              args: [item.quantity, item.id]
+            });
+          }
+        }
+      }
+    } catch (stockErr) {
+      console.error('❌ Error descontando inventario del carrito:', stockErr);
+      // No bloqueamos el pedido para no interrumpir la experiencia del cliente, solo registramos el error
+    }
+    // ----------------------------------------------------
+
+    // --- GUARDAR VENTA DEL CARRITO EN LA BASE DE DATOS ---
     try {
       await turso.execute({
         sql: `INSERT INTO sales (
@@ -60,8 +80,8 @@ export async function POST(request: Request) {
         args: [
           invoiceNumber,
           seriesId,
-          null, // seller_id es null para ventas del carrito
-          'Carrito/Web', // seller_name
+          null,
+          'Carrito/Web',
           customerInfo.name,
           customerInfo.phone || '',
           JSON.stringify(cart),
@@ -69,10 +89,8 @@ export async function POST(request: Request) {
           'cart'
         ],
       });
-      console.log('✅ Venta del carrito guardada en DB:', invoiceNumber);
     } catch (saveError) {
       console.error('❌ Error guardando venta del carrito en DB:', saveError);
-      // No lanzamos error para no interrumpir el envío del correo ni el pedido
     }
     // ----------------------------------------------------
 
