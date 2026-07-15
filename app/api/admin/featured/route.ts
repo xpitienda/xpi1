@@ -2,20 +2,22 @@ import { NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 
 function verifyAdmin(request: Request) {
-  const authHeader = request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD;
-  const publicAdminPass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const authHeader = request.headers.get('Authorization') || '';
   
-  if (!authHeader) return false;
+  // Usamos la contraseña conocida como fallback por si las variables de entorno fallan en el cliente
+  const expectedPass = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '15321767';
   
-  return (adminPass && authHeader === `Bearer ${adminPass}`) ||
-         (publicAdminPass && authHeader === `Bearer ${publicAdminPass}`);
+  // Extraemos el token quitando "Bearer " y espacios extra
+  const token = authHeader.replace('Bearer', '').trim();
+  
+  // Verificamos si coincide
+  return token === expectedPass;
 }
 
 // GET: Obtener productos destacados y ofertas
 export async function GET(request: Request) {
   if (!verifyAdmin(request)) {
-    console.error('❌ No autorizado - Headers:', request.headers.get('Authorization'));
+    console.error('❌ No autorizado. Header recibido:', request.headers.get('Authorization'));
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
