@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,8 +10,8 @@ export default function SellerDashboard() {
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [productName, setProductName] = useState('');
-  const [price, setPrice] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [msg, setMsg] = useState('');
   const [sales, setSales] = useState<any[]>([]);
@@ -30,6 +30,15 @@ export default function SellerDashboard() {
         router.push('/login-seller');
       }
     }
+
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        console.log('Productos cargados:', data);
+        setProducts(data);
+      })
+      .catch(err => console.error('Error cargando productos:', err));
+
     setLoading(false);
   }, [router]);
 
@@ -43,7 +52,13 @@ export default function SellerDashboard() {
     setMsg('Procesando...');
     
     if (!seller?.seriesId) {
-      setMsg('Error: No tienes una serie de facturas asignada. Contacta al administrador.');
+      setMsg('❌ Error: No tienes una serie de facturas asignada.');
+      return;
+    }
+
+    const selectedItem = products.find(p => p.id === selectedProductId);
+    if (!selectedItem) {
+      setMsg('❌ Error: Debes seleccionar un producto de la lista.');
       return;
     }
 
@@ -55,23 +70,27 @@ export default function SellerDashboard() {
           sellerId: seller.id,
           seriesId: seller.seriesId,
           customer: { name: customerName, phone: customerPhone },
-          items: [{ name: productName, price: Number(price), quantity: Number(quantity) }]
+          items: [{ 
+            id: selectedItem.id, 
+            name: selectedItem.name, 
+            price: Number(selectedItem.price), 
+            quantity: Number(quantity) 
+          }]
         })
       });
 
       const data = await res.json();
       if (res.ok) {
-        setMsg('Venta exitosa! Factura: ' + data.invoice);
+        setMsg('✅ Venta exitosa! Factura: ' + data.invoice);
         setCustomerName(''); 
         setCustomerPhone(''); 
-        setProductName(''); 
-        setPrice(''); 
+        setSelectedProductId(''); 
         setQuantity('1');
       } else {
-        setMsg('Error: ' + data.error);
+        setMsg('❌ Error: ' + data.error);
       }
     } catch (err) {
-      setMsg('Error de conexion');
+      setMsg('❌ Error de conexion');
     }
   };
 
@@ -86,21 +105,16 @@ export default function SellerDashboard() {
       }
       
       const data = await res.json();
-      console.log('Ventas cargadas:', data);
-      
-      // Asegurar que sea un array
       if (Array.isArray(data)) {
         setSales(data);
         setShowSales(true);
         setMsg('');
       } else {
-        console.error('Los datos no son un array:', data);
         setSales([]);
         setShowSales(true);
         setMsg('No se pudieron cargar las ventas');
       }
     } catch (err: any) {
-      console.error('Error cargando ventas:', err);
       setSales([]);
       setShowSales(true);
       setMsg('Error: ' + (err?.message || 'No se pudieron cargar las ventas'));
@@ -121,20 +135,7 @@ export default function SellerDashboard() {
             <p style={{ color: '#6b7280', margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>{seller.name}</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button 
-              onClick={fetchMySales}
-              style={{ 
-                background: '#7c3aed', 
-                color: 'white', 
-                padding: '0.5rem 1rem', 
-                borderRadius: '0.5rem', 
-                border: 'none', 
-                cursor: 'pointer', 
-                fontWeight: 'bold'
-              }}
-            >
-              Mis Ventas
-            </button>
+            <button onClick={fetchMySales} style={{ background: '#7c3aed', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>📊 Mis Ventas</button>
             <button onClick={handleLogout} style={{ background: '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Cerrar Sesion</button>
           </div>
         </div>
@@ -176,10 +177,29 @@ export default function SellerDashboard() {
               <input type="tel" placeholder="Celular Cliente" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} required style={{ padding: '0.875rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }} />
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem' }}>
-              <input type="text" placeholder="Producto" value={productName} onChange={e => setProductName(e.target.value)} required style={{ padding: '0.875rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }} />
-              <input type="number" placeholder="Precio" value={price} onChange={e => setPrice(e.target.value)} required min="0" style={{ padding: '0.875rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }} />
-              <input type="number" placeholder="Cant." value={quantity} onChange={e => setQuantity(e.target.value)} required min="1" style={{ padding: '0.875rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+              <select 
+                value={selectedProductId} 
+                onChange={e => setSelectedProductId(e.target.value)} 
+                required 
+                style={{ padding: '0.875rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', background: 'white' }}
+              >
+                <option value="">Seleccionar producto...</option>
+                {products.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} - ${Number(p.price).toLocaleString('es-CO')} (Stock: {p.stock})
+                  </option>
+                ))}
+              </select>
+              <input 
+                type="number" 
+                placeholder="Cant." 
+                value={quantity} 
+                onChange={e => setQuantity(e.target.value)} 
+                required 
+                min="1" 
+                style={{ padding: '0.875rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }} 
+              />
             </div>
 
             <button type="submit" style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '1.125rem' }}>
@@ -189,21 +209,10 @@ export default function SellerDashboard() {
         </div>
 
         {showSales && (
-          <div style={{ 
-            background: 'white', 
-            padding: '2rem', 
-            borderRadius: '0.75rem', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-            marginTop: '2rem'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#374151' }}>
-              Historial de Mis Ventas
-            </h2>
-            
+          <div style={{ background: 'white', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginTop: '2rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#374151' }}>Historial de Mis Ventas</h2>
             {!Array.isArray(sales) || sales.length === 0 ? (
-              <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>
-                No has realizado ventas aun
-              </p>
+              <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>No has realizado ventas aun</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -219,26 +228,14 @@ export default function SellerDashboard() {
                   <tbody>
                     {sales.map((sale: any, index: number) => {
                       let items = [];
-                      try {
-                        items = JSON.parse(sale.items || '[]');
-                      } catch (e) {
-                        items = [];
-                      }
+                      try { items = JSON.parse(sale.items || '[]'); } catch (e) { items = []; }
                       return (
                         <tr key={sale.id || index} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                          <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#1e40af' }}>
-                            {sale.invoice_number}
-                          </td>
+                          <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#1e40af' }}>{sale.invoice_number}</td>
                           <td style={{ padding: '0.75rem' }}>{sale.customer_name}</td>
-                          <td style={{ padding: '0.75rem' }}>
-                            {items.map((item: any) => item.name).join(', ')}
-                          </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>
-                            {'$' + Number(sale.total_amount).toLocaleString('es-CO')}
-                          </td>
-                          <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                            {new Date(sale.created_at).toLocaleString('es-CO')}
-                          </td>
+                          <td style={{ padding: '0.75rem' }}>{items.map((item: any) => item.name).join(', ')}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>{'$' + Number(sale.total_amount).toLocaleString('es-CO')}</td>
+                          <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>{new Date(sale.created_at).toLocaleString('es-CO')}</td>
                         </tr>
                       );
                     })}
@@ -248,7 +245,6 @@ export default function SellerDashboard() {
             )}
           </div>
         )}
-
       </div>
     </div>
   );
