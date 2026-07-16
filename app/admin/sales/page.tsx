@@ -14,9 +14,12 @@ export default function AdminSales() {
   const [loading, setLoading] = useState(true);
   const [expandedSeller, setExpandedSeller] = useState<string | null>(null);
   
-  // Nuevos estados para filtros
+  // Estados para filtros
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // NUEVO: Estado para la búsqueda rápida
+  const [searchTerm, setSearchTerm] = useState('');
   
   const router = useRouter();
 
@@ -46,7 +49,7 @@ export default function AdminSales() {
     setExpandedSeller(expandedSeller === sellerName ? null : sellerName);
   };
 
-  // Función para filtrar ventas por fecha
+  // --- LÓGICA DE FILTRADO POR FECHA (INTACTA) ---
   const getFilteredSales = () => {
     if (!startDate && !endDate) return sales;
 
@@ -80,14 +83,35 @@ export default function AdminSales() {
       };
     }).filter((sellerData: any) => sellerData.ventas.length > 0);
   };
+  // ------------------------------------------------
 
-  // Función para exportar a CSV
+  // NUEVO: Aplicar búsqueda sobre el resultado de las fechas
+  const dateFilteredSales = getFilteredSales();
+  
+  const filteredSales = searchTerm ? dateFilteredSales.map(seller => {
+    const term = searchTerm.toLowerCase();
+    const matchingVentas = seller.ventas.filter((v: any) => {
+      const invoice = (v.invoice_number || '').toLowerCase();
+      const customer = (v.customer_name || '').toLowerCase();
+      const phone = (v.customer_phone || '').toLowerCase();
+      return invoice.includes(term) || customer.includes(term) || phone.includes(term);
+    });
+    
+    const totalVendedor = matchingVentas.reduce((sum: number, v: any) => sum + Number(v.total_amount), 0);
+    return { 
+      ...seller, 
+      ventas: matchingVentas, 
+      totalVendedor, 
+      cantidadVentas: matchingVentas.length 
+    };
+  }).filter((s: any) => s.ventas.length > 0) : dateFilteredSales;
+
+  // Función para exportar a CSV (INTACTA)
   const handleExportCSV = () => {
-    const filtered = getFilteredSales();
     const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo'];
     const rows: string[] = [];
     
-    filtered.forEach((sellerData: any) => {
+    filteredSales.forEach((sellerData: any) => {
       sellerData.ventas.forEach((venta: any) => {
         let items = [];
         try { items = JSON.parse(venta.items || '[]'); } catch (e) { items = []; }
@@ -112,11 +136,10 @@ export default function AdminSales() {
     document.body.removeChild(link);
   };
 
-  const filteredSales = getFilteredSales();
   const filteredTotalGeneral = filteredSales.reduce((sum: number, s: any) => sum + s.totalVendedor, 0);
   const filteredTotalVentas = filteredSales.reduce((sum: number, s: any) => sum + s.cantidadVentas, 0);
 
-  // --- DATOS PARA LOS GRÁFICOS (Basados en el filtro actual) ---
+  // --- DATOS PARA LOS GRÁFICOS (INTACTOS) ---
   const pieData = filteredSales.map((s: any) => ({
     name: s.vendedor,
     value: s.totalVendedor
@@ -134,7 +157,7 @@ export default function AdminSales() {
     name: key,
     Total: monthlyDataObj[key]
   }));
-  // -------------------------------------------------------------
+  // ---------------------------------------------
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.25rem' }}>Cargando ventas...</div>;
@@ -152,15 +175,28 @@ export default function AdminSales() {
 
         {/* Filtros y Exportar */}
         <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'end' }}>
-          <div style={{ flex: '1', minWidth: '200px' }}>
+          
+          {/* NUEVO: Buscador */}
+          <div style={{ flex: '2', minWidth: '250px' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>🔍 Buscar (Factura, Cliente o Teléfono)</label>
+            <input 
+              type="text" 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Ej: F-001, Juan Pérez, 300..."
+              style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ flex: '1', minWidth: '150px' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>Fecha Inicio</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
           </div>
-          <div style={{ flex: '1', minWidth: '200px' }}>
+          <div style={{ flex: '1', minWidth: '150px' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>Fecha Fin</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
           </div>
-          <button onClick={() => { setStartDate(''); setEndDate(''); }} style={{ background: '#f3f4f6', color: '#374151', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 'bold', height: '42px' }}>Limpiar</button>
+          <button onClick={() => { setStartDate(''); setEndDate(''); setSearchTerm(''); }} style={{ background: '#f3f4f6', color: '#374151', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 'bold', height: '42px' }}>Limpiar</button>
           <button onClick={handleExportCSV} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', height: '42px' }}>📥 Descargar CSV</button>
         </div>
 
@@ -180,10 +216,8 @@ export default function AdminSales() {
           </div>
         </div>
 
-        {/* --- SECCIÓN DE GRÁFICOS --- */}
+        {/* Sección de Gráficos */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-          
-          {/* Gráfico de Barras: Ventas por Mes */}
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>📈 Tendencia de Ventas por Mes</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -197,7 +231,6 @@ export default function AdminSales() {
             </ResponsiveContainer>
           </div>
 
-          {/* Gráfico de Pastel: Ventas por Vendedor */}
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>🥧 Distribución por Vendedor</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -212,14 +245,14 @@ export default function AdminSales() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-
         </div>
-        {/* --- FIN SECCIÓN DE GRÁFICOS --- */}
 
         {/* Lista de Vendedores (Tabla) */}
         {filteredSales.length === 0 ? (
           <div style={{ background: 'white', padding: '3rem', borderRadius: '0.75rem', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <p style={{ color: '#6b7280', fontSize: '1.125rem' }}>No hay ventas registradas en el periodo seleccionado</p>
+            <p style={{ color: '#6b7280', fontSize: '1.125rem' }}>
+              {searchTerm ? 'No se encontraron ventas con ese criterio de búsqueda' : 'No hay ventas registradas en el periodo seleccionado'}
+            </p>
           </div>
         ) : (
           filteredSales.map((sellerData: any, index: number) => (
