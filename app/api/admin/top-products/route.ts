@@ -45,3 +45,4 @@ export async function GET() {
     return NextResponse.json({ error: 'Error al calcular top productos' }, { status: 500 });
   }
 }
+// Forzar redeploy
