@@ -18,38 +18,49 @@ export default function AdminSales() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
-  // NUEVO: Estado para la búsqueda rápida
+  // Estado para la búsqueda rápida
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // NUEVO: Estado para el top de productos
+  const [topProducts, setTopProducts] = useState<any[]>([]);
   
   const router = useRouter();
 
   useEffect(() => {
-    const fetchSales = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/admin/sales');
-        const data = await res.json();
+        // Cargar ventas
+        const salesRes = await fetch('/api/admin/sales');
+        const salesData = await salesRes.json();
         
-        if (res.ok) {
-          setSales(data.ventas);
+        if (salesRes.ok) {
+          setSales(salesData.ventas);
         } else {
-          alert('Error: ' + data.error);
+          alert('Error: ' + salesData.error);
+        }
+
+        // NUEVO: Cargar top de productos
+        const topRes = await fetch('/api/admin/top-products');
+        if (topRes.ok) {
+          const topData = await topRes.json();
+          setTopProducts(topData);
         }
       } catch (err) {
-        console.error('Error cargando ventas:', err);
+        console.error('Error cargando datos:', err);
         alert('Error de conexion');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSales();
+    fetchData();
   }, []);
 
   const toggleSeller = (sellerName: string) => {
     setExpandedSeller(expandedSeller === sellerName ? null : sellerName);
   };
 
-  // --- LÓGICA DE FILTRADO POR FECHA (INTACTA) ---
+  // Lógica de filtrado por fecha
   const getFilteredSales = () => {
     if (!startDate && !endDate) return sales;
 
@@ -83,9 +94,8 @@ export default function AdminSales() {
       };
     }).filter((sellerData: any) => sellerData.ventas.length > 0);
   };
-  // ------------------------------------------------
 
-  // NUEVO: Aplicar búsqueda sobre el resultado de las fechas
+  // Aplicar búsqueda sobre el resultado de las fechas
   const dateFilteredSales = getFilteredSales();
   
   const filteredSales = searchTerm ? dateFilteredSales.map(seller => {
@@ -106,7 +116,7 @@ export default function AdminSales() {
     };
   }).filter((s: any) => s.ventas.length > 0) : dateFilteredSales;
 
-  // Función para exportar a CSV (INTACTA)
+  // Función para exportar a CSV
   const handleExportCSV = () => {
     const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo'];
     const rows: string[] = [];
@@ -139,7 +149,7 @@ export default function AdminSales() {
   const filteredTotalGeneral = filteredSales.reduce((sum: number, s: any) => sum + s.totalVendedor, 0);
   const filteredTotalVentas = filteredSales.reduce((sum: number, s: any) => sum + s.cantidadVentas, 0);
 
-  // --- DATOS PARA LOS GRÁFICOS (INTACTOS) ---
+  // Datos para los gráficos
   const pieData = filteredSales.map((s: any) => ({
     name: s.vendedor,
     value: s.totalVendedor
@@ -157,7 +167,6 @@ export default function AdminSales() {
     name: key,
     Total: monthlyDataObj[key]
   }));
-  // ---------------------------------------------
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.25rem' }}>Cargando ventas...</div>;
@@ -175,8 +184,6 @@ export default function AdminSales() {
 
         {/* Filtros y Exportar */}
         <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'end' }}>
-          
-          {/* NUEVO: Buscador */}
           <div style={{ flex: '2', minWidth: '250px' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>🔍 Buscar (Factura, Cliente o Teléfono)</label>
             <input 
@@ -215,6 +222,46 @@ export default function AdminSales() {
             <p style={{ margin: '0.5rem 0 0 0', fontSize: '2rem', fontWeight: 'bold' }}>{filteredSales.length}</p>
           </div>
         </div>
+
+        {/* NUEVA SECCIÓN: Top de Productos Más Vendidos */}
+        {topProducts.length > 0 && (
+          <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>
+              🏆 Top 10 Productos Más Vendidos
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+              {topProducts.map((product, index) => (
+                <div 
+                  key={index} 
+                  style={{ 
+                    background: index === 0 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 
+                               index === 1 ? 'linear-gradient(135deg, #e5e7eb, #9ca3af)' : 
+                               index === 2 ? 'linear-gradient(135deg, #fdba74, #ea580c)' : 
+                               'linear-gradient(135deg, #f3f4f6, #d1d5db)',
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    border: index < 3 ? '2px solid gold' : '1px solid #e5e7eb'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: index < 3 ? '#1f2937' : '#6b7280' }}>
+                      #{index + 1}
+                    </span>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#16a34a' }}>
+                      {product.totalQuantity} unidades
+                    </span>
+                  </div>
+                  <h4 style={{ margin: '0.5rem 0', fontSize: '1rem', fontWeight: 'bold', color: '#1f2937' }}>
+                    {product.name}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>
+                    Ingresos: ${product.totalRevenue.toLocaleString('es-CO')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Sección de Gráficos */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
