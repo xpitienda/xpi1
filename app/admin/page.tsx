@@ -208,6 +208,10 @@ export default function AdminDashboard() {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Cargando...</div>;
   }
 
+  // Cálculos para alertas de stock
+  const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= 5).length;
+  const outOfStockCount = products.filter(p => p.stock === 0).length;
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #f0fdf4)', padding: '1.5rem' }}>
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
@@ -217,8 +221,8 @@ export default function AdminDashboard() {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Panel de Control</h1>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #16a34a', cursor: 'pointer' }}>📂 Categorías</button>
-            <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #2E7D32', cursor: 'pointer' }}> Factureros</button>
-            <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #7c3aed', cursor: 'pointer' }}> Vendedores</button>
+            <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #2E7D32', cursor: 'pointer' }}>🧾 Factureros</button>
+            <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #7c3aed', cursor: 'pointer' }}>👥 Vendedores</button>
             <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #10b981', cursor: 'pointer' }}>📊 Ventas</button>
           </div>
           <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
@@ -230,13 +234,13 @@ export default function AdminDashboard() {
             <div style={labelStyle}>Total Productos</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#7e22ce' }}>{products.length}</div>
           </div>
-          <div style={cardStyle}>
-            <div style={labelStyle}>Activos</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#15803d' }}>{products.filter(p => p.is_active).length}</div>
+          <div style={{ ...cardStyle, border: lowStockCount > 0 ? '2px solid #f59e0b' : 'none' }}>
+            <div style={labelStyle}>⚠️ Stock Bajo (≤ 5)</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: lowStockCount > 0 ? '#d97706' : '#15803d' }}>{lowStockCount}</div>
           </div>
-          <div style={cardStyle}>
-            <div style={labelStyle}>Sin Stock</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc2626' }}>{products.filter(p => p.stock === 0).length}</div>
+          <div style={{ ...cardStyle, border: outOfStockCount > 0 ? '2px solid #dc2626' : 'none' }}>
+            <div style={labelStyle}>🚫 Sin Stock (0)</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: outOfStockCount > 0 ? '#dc2626' : '#15803d' }}>{outOfStockCount}</div>
           </div>
           <div style={cardStyle}>
             <div style={labelStyle}>Valor Inventario</div>
@@ -270,14 +274,32 @@ export default function AdminDashboard() {
                   ) : (
                     <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
                   )}
-                  {!product.is_active && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>INACTIVO</div>}
+                  
+                  {/* ALERTAS DE STOCK VISUALES */}
+                  {product.stock === 0 && product.is_active === 1 && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                      🚫 SIN STOCK
+                    </div>
+                  )}
+                  {product.stock > 0 && product.stock <= 5 && product.is_active === 1 && (
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      ⚠️ Stock: {product.stock}
+                    </div>
+                  )}
+                  {!product.is_active && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                      INACTIVO
+                    </div>
+                  )}
                 </div>
                 <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{product.name}</h3>
                     <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.5rem' }}>{product.category}</p>
                     <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '1.3rem' }}>${product.price.toLocaleString()}</p>
-                    <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : '#16a34a' }}>Stock: {product.stock}</p>
+                    <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : (product.stock <= 5 ? '#d97706' : '#16a34a') }}>
+                      Stock: {product.stock}
+                    </p>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                     <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
@@ -291,12 +313,13 @@ export default function AdminDashboard() {
 
         {products.length === 0 && (
           <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
             <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
           </div>
         )}
       </div>
+
       {/* MODAL DE PRODUCTO */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }} onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setImagePreview(''); } }}>
