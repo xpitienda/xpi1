@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -53,7 +53,7 @@ export default function CartPage() {
       // 2. Construir mensaje de WhatsApp
       const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n` +
         `*Datos del Cliente:*\n` +
-        `👤 Nombre: ${customerInfo.name}\n` +
+        ` Nombre: ${customerInfo.name}\n` +
         `📱 Teléfono: ${customerInfo.phone}\n` +
         `📍 Dirección: ${customerInfo.address}\n` +
         `${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}` +
@@ -62,13 +62,47 @@ export default function CartPage() {
         `*TOTAL: $${total.toLocaleString('es-CO')}*`;
 
       const encodedMessage = encodeURIComponent(message);
-      
+
       // 3. Redirigir a WhatsApp
       window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
       showToast('Redirigiendo a WhatsApp...', 'success');
     } catch (error) {
       console.error('Error en checkout:', error);
       showToast('Error al procesar el pedido', 'error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleMercadoPagoCheckout = async () => {
+    if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+      showToast('Por favor completa todos los datos de envío', 'error');
+      setShowAddressForm(true);
+      return;
+    }
+
+    setSending(true);
+    try {
+      const response = await fetch('/api/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          customer: customerInfo
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.init_point) {
+        showToast('Redirigiendo a pasarela de pago segura...', 'success');
+        window.location.href = data.init_point;
+      } else {
+        showToast('Error al generar el pago: ' + (data.error || 'Desconocido'), 'error');
+      }
+    } catch (error) {
+      console.error('Error en checkout MP:', error);
+      showToast('Error al procesar el pago', 'error');
     } finally {
       setSending(false);
     }
@@ -230,20 +264,20 @@ export default function CartPage() {
                   </label>
                 </div>
 
-                <div style={{ 
-                  background: saveCustomerData ? 'rgba(0,255,65,0.1)' : 'rgba(167,139,250,0.1)', 
-                  border: `2px solid ${saveCustomerData ? '#00FF41' : '#a78bfa'}`, 
-                  borderRadius: '0.75rem', 
+                <div style={{
+                  background: saveCustomerData ? 'rgba(0,255,65,0.1)' : 'rgba(167,139,250,0.1)',
+                  border: `2px solid ${saveCustomerData ? '#00FF41' : '#a78bfa'}`,
+                  borderRadius: '0.75rem',
                   padding: '1rem',
                   transition: 'all 0.3s'
                 }}>
-                  <p style={{ 
-                    color: saveCustomerData ? '#00FF41' : '#a78bfa', 
-                    fontSize: '0.85rem', 
-                    margin: 0 
+                  <p style={{
+                    color: saveCustomerData ? '#00FF41' : '#a78bfa',
+                    fontSize: '0.85rem',
+                    margin: 0
                   }}>
-                    {saveCustomerData 
-                      ? '✅ Tus datos se guardarán automáticamente para futuras compras' 
+                    {saveCustomerData
+                      ? '✅ Tus datos se guardarán automáticamente para futuras compras'
                       : 'ℹ️ Tus datos NO se guardarán. Deberás ingresarlos en cada compra.'}
                   </p>
                 </div>
@@ -255,7 +289,7 @@ export default function CartPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             {cart.map((item) => (
               <div key={item.id} style={{ aspectRatio: '1/1', borderRadius: '1rem', overflow: 'hidden', border: '2px solid #2E7D32', boxShadow: '0 0 15px rgba(46,125,50,0.3)', background: '#FDF6E3' }}>
-                <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40">📦</text></svg>'; }} />
+                <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40"></text></svg>'; }} />
               </div>
             ))}
           </div>
@@ -307,9 +341,14 @@ export default function CartPage() {
                 <Trash2 style={{ width: '1.25rem', height: '1.25rem' }} />
                 Vaciar Carrito
               </button>
-              <button onClick={handleCheckout} disabled={sending} style={{ flex: 2, minWidth: '300px', background: 'linear-gradient(135deg, #2E7D32 0%, #00FF41 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,255,65,0.4)' }}>
-                <Mail style={{ width: '1.5rem', height: '1.5rem' }} />
-                {sending ? 'Enviando...' : 'Finalizar Pedido'}
+              
+              <button onClick={handleMercadoPagoCheckout} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #009EE3 0%, #007BB5 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,158,227,0.4)' }}>
+                 Pagar con MercadoPago
+              </button>
+
+              <button onClick={handleCheckout} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #2E7D32 0%, #00FF41 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,255,65,0.4)' }}>
+                <MessageCircle style={{ width: '1.5rem', height: '1.5rem' }} />
+                {sending ? 'Procesando...' : 'Pedir por WhatsApp'}
               </button>
             </div>
           </div>
