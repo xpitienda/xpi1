@@ -8,8 +8,10 @@ const turso = createClient({
 
 export async function GET() {
   try {
+    // MODIFICADO: Excluir ventas anuladas
     const result = await turso.execute(`
-      SELECT * FROM sales 
+      SELECT * FROM sales
+      WHERE id NOT IN (SELECT sale_id FROM voided_sales)
       ORDER BY created_at DESC
     `);
 
@@ -20,7 +22,7 @@ export async function GET() {
 
     allSales.forEach((sale: any) => {
       const sellerName = sale.seller_name || 'Carrito/Web';
-      
+
       if (!salesBySeller[sellerName]) {
         salesBySeller[sellerName] = {
           vendedor: sellerName,
@@ -36,7 +38,7 @@ export async function GET() {
       totalGeneral += Number(sale.total_amount);
     });
 
-    const sellersArray = Object.values(salesBySeller).sort((a: any, b: any) => 
+    const sellersArray = Object.values(salesBySeller).sort((a: any, b: any) =>
       b.totalVendedor - a.totalVendedor
     );
 
@@ -49,9 +51,9 @@ export async function GET() {
 
   } catch (error: any) {
     console.error('[Admin Sales] Error:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Error al obtener ventas',
-      details: error.message 
+      details: error.message
     }, { status: 500 });
   }
 }
