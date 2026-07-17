@@ -8,7 +8,6 @@ const turso = createClient({
 
 export async function GET() {
   try {
-    // MODIFICADO: Excluir ventas anuladas
     const result = await turso.execute(`
       SELECT * FROM sales
       WHERE id NOT IN (SELECT sale_id FROM voided_sales)
