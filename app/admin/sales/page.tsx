@@ -14,53 +14,74 @@ export default function AdminSales() {
   const [loading, setLoading] = useState(true);
   const [expandedSeller, setExpandedSeller] = useState<string | null>(null);
   
-  // Estados para filtros
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
-  // Estado para la búsqueda rápida
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // NUEVO: Estado para el top de productos
   const [topProducts, setTopProducts] = useState<any[]>([]);
   
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Cargar ventas
-        const salesRes = await fetch('/api/admin/sales');
-        const salesData = await salesRes.json();
-        
-        if (salesRes.ok) {
-          setSales(salesData.ventas);
-        } else {
-          alert('Error: ' + salesData.error);
-        }
-
-        // NUEVO: Cargar top de productos
-        const topRes = await fetch('/api/admin/top-products');
-        if (topRes.ok) {
-          const topData = await topRes.json();
-          setTopProducts(topData);
-        }
-      } catch (err) {
-        console.error('Error cargando datos:', err);
-        alert('Error de conexion');
-      } finally {
-        setLoading(false);
+  const fetchSales = async () => {
+    try {
+      setLoading(true);
+      const salesRes = await fetch('/api/admin/sales');
+      const salesData = await salesRes.json();
+      
+      if (salesRes.ok) {
+        setSales(salesData.ventas);
+      } else {
+        alert('Error: ' + salesData.error);
       }
-    };
 
-    fetchData();
+      const topRes = await fetch('/api/admin/top-products');
+      if (topRes.ok) {
+        const topData = await topRes.json();
+        setTopProducts(topData);
+      }
+    } catch (err) {
+      console.error('Error cargando datos:', err);
+      alert('Error de conexion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSales();
   }, []);
 
   const toggleSeller = (sellerName: string) => {
     setExpandedSeller(expandedSeller === sellerName ? null : sellerName);
   };
 
-  // Lógica de filtrado por fecha
+  // NUEVO: Función para anular venta
+  const handleVoidSale = async (saleId: string, invoiceNumber: string) => {
+    if (!confirm(`¿Estás seguro de anular la factura ${invoiceNumber}?\n\nEsta acción devolverá el stock al inventario.`)) {
+      return;
+    }
+
+    const reason = prompt('Motivo de la anulación (opcional):') || 'Anulada por administrador';
+
+    try {
+      const res = await fetch('/api/admin/void-sale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ saleId, reason })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ Venta anulada correctamente. Stock devuelto al inventario.');
+        fetchSales(); // Recargar datos
+      } else {
+        alert('❌ Error: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Error de conexión');
+    }
+  };
+
   const getFilteredSales = () => {
     if (!startDate && !endDate) return sales;
 
@@ -95,7 +116,6 @@ export default function AdminSales() {
     }).filter((sellerData: any) => sellerData.ventas.length > 0);
   };
 
-  // Aplicar búsqueda sobre el resultado de las fechas
   const dateFilteredSales = getFilteredSales();
   
   const filteredSales = searchTerm ? dateFilteredSales.map(seller => {
@@ -116,7 +136,6 @@ export default function AdminSales() {
     };
   }).filter((s: any) => s.ventas.length > 0) : dateFilteredSales;
 
-  // Función para exportar a CSV
   const handleExportCSV = () => {
     const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo'];
     const rows: string[] = [];
@@ -149,7 +168,6 @@ export default function AdminSales() {
   const filteredTotalGeneral = filteredSales.reduce((sum: number, s: any) => sum + s.totalVendedor, 0);
   const filteredTotalVentas = filteredSales.reduce((sum: number, s: any) => sum + s.cantidadVentas, 0);
 
-  // Datos para los gráficos
   const pieData = filteredSales.map((s: any) => ({
     name: s.vendedor,
     value: s.totalVendedor
@@ -176,13 +194,11 @@ export default function AdminSales() {
     <div style={{ minHeight: '100vh', background: '#f3f4f6', padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>📊 Dashboard de Ventas</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}> Dashboard de Ventas</h1>
           <button onClick={() => router.push('/admin')} style={{ background: '#6b7280', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>← Volver al Admin</button>
         </div>
 
-        {/* Filtros y Exportar */}
         <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'end' }}>
           <div style={{ flex: '2', minWidth: '250px' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>🔍 Buscar (Factura, Cliente o Teléfono)</label>
@@ -207,7 +223,6 @@ export default function AdminSales() {
           <button onClick={handleExportCSV} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', height: '42px' }}>📥 Descargar CSV</button>
         </div>
 
-        {/* Stats Generales */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           <div style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', padding: '1.5rem', borderRadius: '0.75rem', color: 'white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
             <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.9 }}>Total General</p>
@@ -223,7 +238,6 @@ export default function AdminSales() {
           </div>
         </div>
 
-        {/* NUEVA SECCIÓN: Top de Productos Más Vendidos */}
         {topProducts.length > 0 && (
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>
@@ -263,7 +277,6 @@ export default function AdminSales() {
           </div>
         )}
 
-        {/* Sección de Gráficos */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>📈 Tendencia de Ventas por Mes</h3>
@@ -294,7 +307,6 @@ export default function AdminSales() {
           </div>
         </div>
 
-        {/* Lista de Vendedores (Tabla) */}
         {filteredSales.length === 0 ? (
           <div style={{ background: 'white', padding: '3rem', borderRadius: '0.75rem', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <p style={{ color: '#6b7280', fontSize: '1.125rem' }}>
@@ -326,6 +338,7 @@ export default function AdminSales() {
                           <th style={{ padding: '0.75rem', textAlign: 'left' }}>Productos</th>
                           <th style={{ padding: '0.75rem', textAlign: 'right' }}>Total</th>
                           <th style={{ padding: '0.75rem', textAlign: 'left' }}>Fecha</th>
+                          <th style={{ padding: '0.75rem', textAlign: 'center' }}>Acción</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -342,6 +355,24 @@ export default function AdminSales() {
                               <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{items.map((item: any) => <div key={item.name} style={{ marginBottom: '0.25rem' }}>{item.name} x{item.quantity}</div>)}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>${Number(sale.total_amount).toLocaleString('es-CO')}</td>
                               <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>{new Date(sale.created_at).toLocaleString('es-CO')}</td>
+                              <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                                <button 
+                                  onClick={() => handleVoidSale(sale.id, sale.invoice_number)}
+                                  style={{ 
+                                    background: '#dc2626', 
+                                    color: 'white', 
+                                    padding: '0.4rem 0.8rem', 
+                                    borderRadius: '0.375rem', 
+                                    border: 'none', 
+                                    cursor: 'pointer', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.8rem'
+                                  }}
+                                  title="Anular venta y devolver stock"
+                                >
+                                   Anular
+                                </button>
+                              </td>
                             </tr>
                           );
                         })}
