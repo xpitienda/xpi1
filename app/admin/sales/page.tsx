@@ -54,7 +54,32 @@ export default function AdminSales() {
     setExpandedSeller(expandedSeller === sellerName ? null : sellerName);
   };
 
-  // NUEVO: Función para anular venta
+  // CORREGIDO: Se agregaron los tipos 'any' para evitar el error de TypeScript
+  const handleStatusChange = async (saleId: string, newStatus: string) => {
+    try {
+      const res = await fetch('/api/admin/update-sale-status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ saleId, status: newStatus })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSales(sales.map((seller: any) => ({
+          ...seller,
+          ventas: seller.ventas.map((v: any) => 
+            v.id === saleId ? { ...v, status: newStatus } : v
+          )
+        })));
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  };
+
   const handleVoidSale = async (saleId: string, invoiceNumber: string) => {
     if (!confirm(`¿Estás seguro de anular la factura ${invoiceNumber}?\n\nEsta acción devolverá el stock al inventario.`)) {
       return;
@@ -73,7 +98,7 @@ export default function AdminSales() {
 
       if (res.ok) {
         alert('✅ Venta anulada correctamente. Stock devuelto al inventario.');
-        fetchSales(); // Recargar datos
+        fetchSales();
       } else {
         alert('❌ Error: ' + data.error);
       }
@@ -118,7 +143,7 @@ export default function AdminSales() {
 
   const dateFilteredSales = getFilteredSales();
   
-  const filteredSales = searchTerm ? dateFilteredSales.map(seller => {
+  const filteredSales = searchTerm ? dateFilteredSales.map((seller: any) => {
     const term = searchTerm.toLowerCase();
     const matchingVentas = seller.ventas.filter((v: any) => {
       const invoice = (v.invoice_number || '').toLowerCase();
@@ -137,7 +162,7 @@ export default function AdminSales() {
   }).filter((s: any) => s.ventas.length > 0) : dateFilteredSales;
 
   const handleExportCSV = () => {
-    const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo'];
+    const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo', 'Estado'];
     const rows: string[] = [];
     
     filteredSales.forEach((sellerData: any) => {
@@ -148,8 +173,9 @@ export default function AdminSales() {
         const productosStr = items.map((item: any) => `${item.name} (x${item.quantity})`).join(' | ');
         const fecha = new Date(venta.created_at).toLocaleString('es-CO');
         const tipo = venta.sale_type === 'cart' ? 'Carrito/Web' : 'Vendedor';
+        const estado = venta.status || 'Pendiente';
         
-        rows.push([`"${fecha}"`, `"${venta.invoice_number}"`, `"${sellerData.vendedor}"`, `"${venta.customer_name}"`, `"${venta.customer_phone || 'N/A'}"`, `"${productosStr}"`, `"${Number(venta.total_amount).toLocaleString('es-CO')}"`, `"${tipo}"`].join(','));
+        rows.push([`"${fecha}"`, `"${venta.invoice_number}"`, `"${sellerData.vendedor}"`, `"${venta.customer_name}"`, `"${venta.customer_phone || 'N/A'}"`, `"${productosStr}"`, `"${Number(venta.total_amount).toLocaleString('es-CO')}"`, `"${tipo}"`, `"${estado}"`].join(','));
       });
     });
 
@@ -186,6 +212,16 @@ export default function AdminSales() {
     Total: monthlyDataObj[key]
   }));
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Pendiente': return '#f59e0b';
+      case 'Enviado': return '#3b82f6';
+      case 'Entregado': return '#10b981';
+      case 'Cancelado': return '#dc2626';
+      default: return '#6b7280';
+    }
+  };
+
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.25rem' }}>Cargando ventas...</div>;
   }
@@ -195,7 +231,7 @@ export default function AdminSales() {
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}> Dashboard de Ventas</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>📊 Dashboard de Ventas</h1>
           <button onClick={() => router.push('/admin')} style={{ background: '#6b7280', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>← Volver al Admin</button>
         </div>
 
@@ -337,6 +373,7 @@ export default function AdminSales() {
                           <th style={{ padding: '0.75rem', textAlign: 'left' }}>Cliente</th>
                           <th style={{ padding: '0.75rem', textAlign: 'left' }}>Productos</th>
                           <th style={{ padding: '0.75rem', textAlign: 'right' }}>Total</th>
+                          <th style={{ padding: '0.75rem', textAlign: 'left' }}>Estado</th>
                           <th style={{ padding: '0.75rem', textAlign: 'left' }}>Fecha</th>
                           <th style={{ padding: '0.75rem', textAlign: 'center' }}>Acción</th>
                         </tr>
@@ -345,6 +382,8 @@ export default function AdminSales() {
                         {sellerData.ventas.map((sale: any, saleIndex: number) => {
                           let items = [];
                           try { items = JSON.parse(sale.items || '[]'); } catch (e) { items = []; }
+                          const currentStatus = sale.status || 'Pendiente';
+                          
                           return (
                             <tr key={saleIndex} style={{ borderBottom: '1px solid #e5e7eb' }}>
                               <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#1e40af' }}>{sale.invoice_number}</td>
@@ -354,6 +393,26 @@ export default function AdminSales() {
                               </td>
                               <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{items.map((item: any) => <div key={item.name} style={{ marginBottom: '0.25rem' }}>{item.name} x{item.quantity}</div>)}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>${Number(sale.total_amount).toLocaleString('es-CO')}</td>
+                              <td style={{ padding: '0.75rem' }}>
+                                <select 
+                                  value={currentStatus}
+                                  onChange={(e) => handleStatusChange(sale.id, e.target.value)}
+                                  style={{ 
+                                    padding: '0.4rem', 
+                                    borderRadius: '0.375rem', 
+                                    border: `2px solid ${getStatusColor(currentStatus)}`,
+                                    backgroundColor: getStatusColor(currentStatus) + '20',
+                                    fontWeight: 'bold',
+                                    color: getStatusColor(currentStatus),
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <option value="Pendiente">🟡 Pendiente</option>
+                                  <option value="Enviado">🔵 Enviado</option>
+                                  <option value="Entregado">🟢 Entregado</option>
+                                  <option value="Cancelado">🔴 Cancelado</option>
+                                </select>
+                              </td>
                               <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>{new Date(sale.created_at).toLocaleString('es-CO')}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                                 <button 
@@ -370,7 +429,7 @@ export default function AdminSales() {
                                   }}
                                   title="Anular venta y devolver stock"
                                 >
-                                   Anular
+                                  ❌ Anular
                                 </button>
                               </td>
                             </tr>
