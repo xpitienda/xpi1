@@ -24,26 +24,11 @@ export async function POST(request: Request) {
       })),
       back_urls: {
         success: `${appUrl}/payment/success`,
-        failure: `${appUrl}/catalog`,  // CAMBIADO: Ahora va al catálogo, no al carrito
-        pending: `${appUrl}/catalog`,   // CAMBIADO
+        failure: `${appUrl}/catalog`,
+        pending: `${appUrl}/catalog`,
       },
       auto_return: 'approved',
       external_reference: `XPI-ORDER-${Date.now()}`,
-      payment_methods: {
-        excluded_payment_types: [],
-        installments: 1,
-      },
-      additional_info: {
-        ip_address: request.headers.get('x-forwarded-for') || '127.0.0.1',
-        items: items.map((item: any) => ({
-          id: item.id || `item-${Date.now()}`,
-          name: item.name,
-          description: item.name,
-          picture_url: item.image,
-          quantity: Number(item.quantity),
-          unit_price: Number(item.price),
-        })),
-      },
       payer: {
         name: customer.name?.split(' ')[0] || 'Cliente',
         surname: customer.name?.split(' ').slice(1).join(' ') || 'XPI',
@@ -51,15 +36,6 @@ export async function POST(request: Request) {
         phone: {
           area_code: '57',
           number: customer.phone?.replace(/\D/g, '') || '3000000000',
-        },
-        identification: {
-          type: 'CC',
-          number: '12345678',
-        },
-        address: {
-          street_name: customer.address || 'Calle Principal',
-          street_number: '123',
-          zip_code: '110111',
         },
       },
     };
