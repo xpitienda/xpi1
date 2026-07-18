@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
-import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User, Mail } from 'lucide-react';
+import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User, Mail, Wallet, CreditCard } from 'lucide-react';
 import Header from '@/components/Header';
 
 export default function CartPage() {
@@ -13,6 +13,7 @@ export default function CartPage() {
   const [sending, setSending] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(true);
+  const [showNequiModal, setShowNequiModal] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -30,9 +31,8 @@ export default function CartPage() {
 
     setSending(true);
     try {
-      // 1. Enviar email primero
-      console.log(' DEBUG: Iniciando env?o de email...');
-      console.log('?? Datos cliente:', customerInfo);
+      console.log(' DEBUG: Iniciando envío de email...');
+      console.log(' Datos cliente:', customerInfo);
       const emailResponse = await fetch('/api/send-order-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,13 +47,12 @@ export default function CartPage() {
       if (emailResponse.ok) {
         showToast('✅ Pedido enviado por correo electrónico', 'success');
       } else {
-        showToast('⚠️ Error al enviar email, pero continuamos con WhatsApp', 'error');
+        showToast('️ Error al enviar email, pero continuamos con WhatsApp', 'error');
       }
 
-      // 2. Construir mensaje de WhatsApp
       const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n` +
         `*Datos del Cliente:*\n` +
-        ` Nombre: ${customerInfo.name}\n` +
+        `👤 Nombre: ${customerInfo.name}\n` +
         `📱 Teléfono: ${customerInfo.phone}\n` +
         `📍 Dirección: ${customerInfo.address}\n` +
         `${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}` +
@@ -63,7 +62,6 @@ export default function CartPage() {
 
       const encodedMessage = encodeURIComponent(message);
 
-      // 3. Redirigir a WhatsApp
       window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
       showToast('Redirigiendo a WhatsApp...', 'success');
     } catch (error) {
@@ -108,6 +106,34 @@ export default function CartPage() {
     }
   };
 
+  const handleNequiPayment = () => {
+    if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+      showToast('Por favor completa todos los datos de envío', 'error');
+      setShowAddressForm(true);
+      return;
+    }
+    setShowNequiModal(true);
+  };
+
+  const handleNequiConfirm = () => {
+    setShowNequiModal(false);
+    const message = `*PEDIDO XPI TIENDA - PAGO CON NEQUI*\n\n` +
+      `*Datos del Cliente:*\n` +
+      `👤 Nombre: ${customerInfo.name}\n` +
+      `📱 Teléfono: ${customerInfo.phone}\n` +
+      `📍 Dirección: ${customerInfo.address}\n` +
+      `${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}` +
+      `\n*Método de pago:* 💜 Nequi\n` +
+      `*Monto a pagar:* $${total.toLocaleString('es-CO')}\n\n` +
+      `*Productos:*\n` +
+      `${cart.map((item) => `• ${item.name} x${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-CO')}`).join('\n')}\n\n` +
+      `📱 *Ya realicé la transferencia por Nequi al 3234475311*`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.location.href = `https://wa.me/573234475311?text=${encodedMessage}`;
+    showToast('Redirigiendo a WhatsApp para confirmar pago Nequi...', 'success');
+  };
+
   if (!mounted) return null;
 
   if (cart.length === 0) {
@@ -145,7 +171,7 @@ export default function CartPage() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', cursor: 'pointer' }} onClick={() => setShowAddressForm(!showAddressForm)}>
               <h3 style={{ color: '#F59E0B', fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
-                📋 Datos de Envío
+                 Datos de Envío
               </h3>
               <span style={{ color: '#a78bfa', fontSize: '0.9rem' }}>
                 {showAddressForm ? '▲ Ocultar' : '▼ Mostrar'}
@@ -245,7 +271,6 @@ export default function CartPage() {
                   />
                 </div>
 
-                {/* Checkbox para guardar datos */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
                   <input
                     type="checkbox"
@@ -289,7 +314,7 @@ export default function CartPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             {cart.map((item) => (
               <div key={item.id} style={{ aspectRatio: '1/1', borderRadius: '1rem', overflow: 'hidden', border: '2px solid #2E7D32', boxShadow: '0 0 15px rgba(46,125,50,0.3)', background: '#FDF6E3' }}>
-                <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40"></text></svg>'; }} />
+                <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40">📦</text></svg>'; }} />
               </div>
             ))}
           </div>
@@ -337,23 +362,111 @@ export default function CartPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <button onClick={() => { if (window.confirm("¿Estás seguro de vaciar todo el carrito?")) { clearCart(); } }} style={{ flex: 1, minWidth: '200px', background: 'rgba(255,255,255,0.1)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', border: '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              <button 
+                onClick={() => { if (window.confirm("¿Estás seguro de vaciar todo el carrito?")) { clearCart(); } }} 
+                style={{ 
+                  flex: 1, 
+                  minWidth: '200px', 
+                  background: 'rgba(255,255,255,0.1)', 
+                  color: 'white', 
+                  padding: '1rem', 
+                  borderRadius: '1rem', 
+                  fontWeight: 'bold', 
+                  border: '2px solid rgba(255,255,255,0.3)', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.5rem' 
+                }}
+              >
                 <Trash2 style={{ width: '1.25rem', height: '1.25rem' }} />
                 Vaciar Carrito
               </button>
               
-              <button onClick={handleMercadoPagoCheckout} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #009EE3 0%, #007BB5 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,158,227,0.4)' }}>
-                 Pagar con MercadoPago
+              {/* BOTÓN NEQUI - NUEVO */}
+              <button 
+                onClick={handleNequiPayment} 
+                disabled={sending} 
+                style={{ 
+                  flex: 1, 
+                  minWidth: '250px', 
+                  background: 'linear-gradient(135deg, #9D00FF 0%, #6B00A8 100%)', 
+                  color: 'white', 
+                  padding: '1rem', 
+                  borderRadius: '1rem', 
+                  fontWeight: 'bold', 
+                  fontSize: '1rem', 
+                  border: 'none', 
+                  cursor: sending ? 'not-allowed' : 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.75rem', 
+                  opacity: sending ? 0.7 : 1, 
+                  boxShadow: '0 0 20px rgba(157,0,255,0.4)' 
+                }}
+              >
+                <Wallet style={{ width: '1.5rem', height: '1.5rem' }} />
+                💜 Pagar con Nequi
               </button>
 
-              <button onClick={handleCheckout} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #2E7D32 0%, #00FF41 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,255,65,0.4)' }}>
+              {/* BOTÓN MERCADOPAGO - ACTUALIZADO */}
+              <button 
+                onClick={handleMercadoPagoCheckout} 
+                disabled={sending} 
+                style={{ 
+                  flex: 1, 
+                  minWidth: '250px', 
+                  background: 'linear-gradient(135deg, #009EE3 0%, #007BB5 100%)', 
+                  color: 'white', 
+                  padding: '1rem', 
+                  borderRadius: '1rem', 
+                  fontWeight: 'bold', 
+                  fontSize: '1rem', 
+                  border: 'none', 
+                  cursor: sending ? 'not-allowed' : 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.75rem', 
+                  opacity: sending ? 0.7 : 1, 
+                  boxShadow: '0 0 20px rgba(0,158,227,0.4)' 
+                }}
+              >
+                <CreditCard style={{ width: '1.5rem', height: '1.5rem' }} />
+                💳 MercadoPago (Nequi, PSE, Tarjeta)
+              </button>
+
+              {/* BOTÓN WHATSAPP */}
+              <button 
+                onClick={handleCheckout} 
+                disabled={sending} 
+                style={{ 
+                  flex: 1, 
+                  minWidth: '250px', 
+                  background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', 
+                  color: 'white', 
+                  padding: '1rem', 
+                  borderRadius: '1rem', 
+                  fontWeight: 'bold', 
+                  fontSize: '1.125rem', 
+                  border: 'none', 
+                  cursor: sending ? 'not-allowed' : 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.75rem', 
+                  opacity: sending ? 0.7 : 1, 
+                  boxShadow: '0 0 20px rgba(37,211,102,0.4)' 
+                }}
+              >
                 <MessageCircle style={{ width: '1.5rem', height: '1.5rem' }} />
-                {sending ? 'Procesando...' : 'Pedir por WhatsApp'}
+                {sending ? 'Procesando...' : '📱 Pedir por WhatsApp'}
               </button>
             </div>
           </div>
 
-          {/* Botón seguir comprando */}
           <div style={{ textAlign: 'center' }}>
             <Link href="/catalog" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(75,0,130,0.6)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '1rem', fontWeight: 'bold', border: '2px solid #4B0082', textDecoration: 'none', transition: 'all 0.3s' }}>
               <ArrowLeft style={{ width: '1.25rem', height: '1.25rem' }} />
@@ -362,6 +475,94 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE NEQUI */}
+      {showNequiModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }} onClick={() => setShowNequiModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #9D00FF 0%, #6B00A8 100%)',
+            borderRadius: '2rem',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '100%',
+            border: '3px solid #00FF41',
+            boxShadow: '0 0 60px rgba(157,0,255,0.6)',
+            color: 'white'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <Wallet style={{ width: '5rem', height: '5rem', margin: '0 auto 1rem', color: '#00FF41' }} />
+              <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}> Pagar con Nequi</h2>
+              <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Sigue estos pasos:</p>
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.5rem', borderRadius: '1rem', marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>1️⃣ Abre tu app de Nequi</p>
+                <p style={{ margin: 0, opacity: 0.9 }}>Inicia sesión en tu aplicación de Nequi</p>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.5rem', borderRadius: '1rem', marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>2️ Realiza el pago</p>
+                <p style={{ margin: '0 0 0.5rem', opacity: 0.9 }}>Envía a: <strong style={{ color: '#00FF41' }}>323 447 5311</strong></p>
+                <p style={{ margin: 0, opacity: 0.9 }}>Monto: <strong style={{ color: '#00FF41', fontSize: '1.3rem' }}>${total.toLocaleString('es-CO')}</strong></p>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.5rem', borderRadius: '1rem', marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>3️⃣ Confirma tu pago</p>
+                <p style={{ margin: 0, opacity: 0.9 }}>Te redirigiremos a WhatsApp para que envíes el comprobante</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={() => setShowNequiModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '1rem',
+                  borderRadius: '1rem',
+                  background: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  border: '2px solid white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '1rem'
+                }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleNequiConfirm}
+                style={{
+                  flex: 2,
+                  padding: '1rem',
+                  borderRadius: '1rem',
+                  background: 'linear-gradient(135deg, #00FF41 0%, #16a34a 100%)',
+                  color: '#1a1a2e',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '1.1rem',
+                  boxShadow: '0 0 20px rgba(0,255,65,0.4)'
+                }}
+              >
+                ✅ Ya realicé el pago
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
