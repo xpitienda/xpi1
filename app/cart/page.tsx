@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
-import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User, Mail, Wallet, CreditCard } from 'lucide-react';
+import { ShoppingCart, Trash2, MessageCircle, Plus, Minus, ArrowLeft, MapPin, Phone, User, Mail, Wallet } from 'lucide-react';
 import Header from '@/components/Header';
 
 export default function CartPage() {
@@ -47,7 +47,7 @@ export default function CartPage() {
       if (emailResponse.ok) {
         showToast('✅ Pedido enviado por correo electrónico', 'success');
       } else {
-        showToast('️ Error al enviar email, pero continuamos con WhatsApp', 'error');
+        showToast('⚠️ Error al enviar email, pero continuamos con WhatsApp', 'error');
       }
 
       const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n` +
@@ -171,7 +171,7 @@ export default function CartPage() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', cursor: 'pointer' }} onClick={() => setShowAddressForm(!showAddressForm)}>
               <h3 style={{ color: '#F59E0B', fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
-                 Datos de Envío
+                📋 Datos de Envío
               </h3>
               <span style={{ color: '#a78bfa', fontSize: '0.9rem' }}>
                 {showAddressForm ? '▲ Ocultar' : '▼ Mostrar'}
@@ -384,7 +384,7 @@ export default function CartPage() {
                 Vaciar Carrito
               </button>
               
-              {/* BOTÓN NEQUI - NUEVO */}
+              {/* BOTÓN NEQUI - CON LOGO */}
               <button 
                 onClick={handleNequiPayment} 
                 disabled={sending} 
@@ -407,11 +407,19 @@ export default function CartPage() {
                   boxShadow: '0 0 20px rgba(157,0,255,0.4)' 
                 }}
               >
-                <Wallet style={{ width: '1.5rem', height: '1.5rem' }} />
+                <img 
+                  src="/Nequi.png" 
+                  alt="Nequi" 
+                  style={{ 
+                    width: '1.5rem', 
+                    height: '1.5rem', 
+                    objectFit: 'contain' 
+                  }} 
+                />
                 💜 Pagar con Nequi
               </button>
 
-              {/* BOTÓN MERCADOPAGO - ACTUALIZADO */}
+              {/* BOTÓN MERCADOPAGO - CON LOGO */}
               <button 
                 onClick={handleMercadoPagoCheckout} 
                 disabled={sending} 
@@ -434,7 +442,15 @@ export default function CartPage() {
                   boxShadow: '0 0 20px rgba(0,158,227,0.4)' 
                 }}
               >
-                <CreditCard style={{ width: '1.5rem', height: '1.5rem' }} />
+                <img 
+                  src="/MercadoPago.png" 
+                  alt="MercadoPago" 
+                  style={{ 
+                    width: '1.5rem', 
+                    height: '1.5rem', 
+                    objectFit: 'contain' 
+                  }} 
+                />
                 💳 MercadoPago (Nequi, PSE, Tarjeta)
               </button>
 
@@ -503,7 +519,7 @@ export default function CartPage() {
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Wallet style={{ width: '5rem', height: '5rem', margin: '0 auto 1rem', color: '#00FF41' }} />
-              <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}> Pagar con Nequi</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>💜 Pagar con Nequi</h2>
               <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Sigue estos pasos:</p>
             </div>
 
@@ -514,7 +530,7 @@ export default function CartPage() {
               </div>
 
               <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.5rem', borderRadius: '1rem', marginBottom: '1rem' }}>
-                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>2️ Realiza el pago</p>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>2️⃣ Realiza el pago</p>
                 <p style={{ margin: '0 0 0.5rem', opacity: 0.9 }}>Envía a: <strong style={{ color: '#00FF41' }}>323 447 5311</strong></p>
                 <p style={{ margin: 0, opacity: 0.9 }}>Monto: <strong style={{ color: '#00FF41', fontSize: '1.3rem' }}>${total.toLocaleString('es-CO')}</strong></p>
               </div>
