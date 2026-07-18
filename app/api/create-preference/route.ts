@@ -9,6 +9,10 @@ export async function POST(request: Request) {
   try {
     const { items, customer } = await request.json();
 
+    console.log('🔵 [MercadoPago] Creando preferencia...');
+    console.log('Items:', items);
+    console.log('Customer:', customer);
+
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'No hay productos en el carrito' }, { status: 400 });
     }
@@ -29,10 +33,11 @@ export async function POST(request: Request) {
       },
       auto_return: 'approved',
       external_reference: `XPI-ORDER-${Date.now()}`,
+      notification_url: `${appUrl}/api/payment/webhook`,
       payer: {
         name: customer.name?.split(' ')[0] || 'Cliente',
         surname: customer.name?.split(' ').slice(1).join(' ') || 'XPI',
-        email: customer.email || 'cliente@ejemplo.com',
+        email: customer.email || customer.phone + '@ejemplo.com',
         phone: {
           area_code: '57',
           number: customer.phone?.replace(/\D/g, '') || '3000000000',
@@ -40,18 +45,28 @@ export async function POST(request: Request) {
       },
     };
 
+    console.log('🔵 [MercadoPago] Body de la preferencia:', JSON.stringify(body, null, 2));
+
     const preference = new Preference(client);
     const response = await preference.create({ body });
 
+    console.log('✅ [MercadoPago] Preferencia creada:', response.id);
+    console.log('🔗 [MercadoPago] URL de pago:', response.init_point);
+
     return NextResponse.json({ 
-      init_point: response.init_point 
+      init_point: response.init_point,
+      preference_id: response.id
     });
 
   } catch (error: any) {
-    console.error('Error creando preferencia MP:', error);
+    console.error('❌ [MercadoPago] Error creando preferencia:', error);
+    console.error('❌ Detalles:', error.message);
+    console.error('❌ Response:', error.response);
+    
     return NextResponse.json({ 
       error: 'Error al crear preferencia de pago',
-      details: error.message 
+      details: error.message,
+      statusCode: error.response?.status
     }, { status: 500 });
   }
 }
