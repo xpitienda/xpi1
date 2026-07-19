@@ -6,13 +6,13 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN!,
 });
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // CORREGIDO: Usar la tabla 'catalog' (la original)
+    // Usamos SELECT * para traer todos los campos que el admin necesita mostrar
     const result = await turso.execute('SELECT * FROM catalog ORDER BY name ASC');
     return NextResponse.json(result.rows || []);
-  } catch (error) {
-    console.error('Error cargando productos:', error);
+  } catch (error: any) {
+    console.error('Error cargando productos en admin:', error);
     return NextResponse.json({ error: 'Error al cargar productos' }, { status: 500 });
   }
 }
@@ -22,21 +22,21 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, description, price, stock, category_id, image, is_active } = body;
 
-    if (!name || !price || stock === undefined) {
+    if (!name || price === undefined || stock === undefined) {
       return NextResponse.json({ error: 'Nombre, precio y stock son requeridos' }, { status: 400 });
     }
 
-    // CORREGIDO: Insertar en 'catalog'
     const result = await turso.execute({
-      sql: 'INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      sql: `INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name, 
         description || null, 
-        price, 
-        stock, 
+        Number(price), 
+        Number(stock), 
         category_id || null, 
         image || null, 
-        is_active !== undefined ? is_active : 1
+        is_active !== undefined ? Number(is_active) : 1
       ]
     });
 
@@ -44,15 +44,15 @@ export async function POST(request: Request) {
       id: result.lastInsertRowid,
       name,
       description: description || null,
-      price,
-      stock,
+      price: Number(price),
+      stock: Number(stock),
       category_id: category_id || null,
       image: image || null,
-      is_active: is_active !== undefined ? is_active : 1
+      is_active: is_active !== undefined ? Number(is_active) : 1
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creando producto:', error);
-    return NextResponse.json({ error: 'Error al crear producto' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al crear producto: ' + error.message }, { status: 500 });
   }
 }
 
@@ -65,15 +65,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
     }
 
-    // CORREGIDO: Eliminar de 'catalog'
     await turso.execute({
       sql: 'DELETE FROM catalog WHERE id = ?',
       args: [id]
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error eliminando producto:', error);
-    return NextResponse.json({ error: 'Error al eliminar producto' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al eliminar producto: ' + error.message }, { status: 500 });
   }
 }
