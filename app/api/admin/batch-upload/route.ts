@@ -1,50 +1,76 @@
-﻿import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
+import { NextResponse } from 'next/server';
+import { createClient } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
-import * as https from 'https';
 
-const httpsAgent = new https.Agent({ rejectUnauthorized: false });
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'xpitienda-images';
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const files = formData.getAll('files') as File[];
+    const file = formData.get('file') as File;
 
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No files provided' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'No se encontró el archivo' }, { status: 400 });
     }
 
-    const client = new S3Client({
-      region: 'auto',
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: { accessKeyId: R2_ACCESS_KEY_ID!, secretAccessKey: R2_SECRET_ACCESS_KEY! },
-      requestHandler: new NodeHttpHandler({ httpsAgent }),
-    });
+    // Procesar el archivo CSV
+    const text = await file.text();
+    const rows = text.split('\n').slice(1); // Ignorar encabezado
 
-    const urls = [];
-    for (const file of files) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const ext = file.name.split('.').pop();
-      const key = `products/${uuidv4()}.${ext}`;
+    const errors = [];
+    const products = [];
 
-      await client.send(new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME, Key: key, Body: buffer, ContentType: file.type,
-      }));
+    for (const row of rows) {
+      const [name, description, price, stock, category_id, image] = row.split(',');
+      
+      if (!name || !price || stock === undefined) {
+        errors.push(`Fila inválida: ${row}`);
+        continue;
+      }
 
-      urls.push({
-        originalName: file.name,
-        url: `https://pub-aa262763875e4dc4ab1d8c212bad2fa0.r2.dev/${key}`
-      });
+      try {
+        // Insertar en la tabla CORRECTA 'catalog'
+        const result = await turso.execute({
+          sql: 'INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            name.trim(),
+            description?.trim() || null,
+            Number(price),
+            Number(stock),
+            category_id?.trim() || null,
+            image?.trim() || null,
+            1
+          ]
+        });
+
+        products.push({
+          id: result.lastInsertRowid,
+          name,
+          price: Number(price),
+          stock: Number(stock)
+        });
+      } catch (error) {
+        errors.push(`Error al procesar ${name}: ${error.message}`);
+      }
     }
 
-    return NextResponse.json({ success: true, count: urls.length, urls });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (errors.length > 0) {
+      return NextResponse.json(
+        { 
+          success: true, 
+          products, 
+          errors 
+        }, 
+        { status: 207 } // Multi-Status
+      );
+    }
+
+    return NextResponse.json({ success: true, products });
+  } catch (error) {
+    console.error('Error en carga masiva:', error);
+    return NextResponse.json({ error: 'Error al procesar el archivo' }, { status: 500 });
   }
 }
