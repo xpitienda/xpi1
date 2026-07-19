@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 
 const turso = createClient({
@@ -8,19 +8,10 @@ const turso = createClient({
 
 export async function GET(request: Request) {
   try {
-    // Verificar autenticación (opcional - puedes quitarlo si quieres que sea público)
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    // CORRECCIÓN: Usar la tabla original 'catalog'
+    const result = await turso.execute('SELECT * FROM catalog ORDER BY name ASC');
     
-    // Si no hay token, permitir acceso igual (para el admin local)
-    // O quitar esta validación si prefieres
-    
-    const result = await turso.execute('SELECT * FROM products ORDER BY name ASC');
-    
-    // Asegurar que siempre retorne un array
-    const products = result.rows || [];
-    
-    return NextResponse.json(products);
+    return NextResponse.json(result.rows || []);
   } catch (error) {
     console.error('Error cargando productos:', error);
     return NextResponse.json({ error: 'Error al cargar productos', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
@@ -30,15 +21,24 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, description, price, stock, category_id, image } = body;
+    const { name, description, price, stock, category_id, image, is_active } = body;
 
     if (!name || !price || stock === undefined) {
       return NextResponse.json({ error: 'Nombre, precio y stock son requeridos' }, { status: 400 });
     }
 
+    // CORRECCIÓN: Insertar en la tabla original 'catalog'
     const result = await turso.execute({
-      sql: 'INSERT INTO products (name, description, price, stock, category_id, image) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [name, description || null, price, stock, category_id || null, image || null]
+      sql: 'INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [
+        name, 
+        description || null, 
+        price, 
+        stock, 
+        category_id || null, 
+        image || null, 
+        is_active !== undefined ? is_active : 1
+      ]
     });
 
     return NextResponse.json({ 
@@ -48,7 +48,8 @@ export async function POST(request: Request) {
       price,
       stock,
       category_id: category_id || null,
-      image: image || null
+      image: image || null,
+      is_active: is_active !== undefined ? is_active : 1
     });
   } catch (error) {
     console.error('Error creando producto:', error);
@@ -65,8 +66,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
     }
 
+    // CORRECCIÓN: Eliminar de la tabla original 'catalog'
     await turso.execute({
-      sql: 'DELETE FROM products WHERE id = ?',
+      sql: 'DELETE FROM catalog WHERE id = ?',
       args: [id]
     });
 
