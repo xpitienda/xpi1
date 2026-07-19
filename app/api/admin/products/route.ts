@@ -8,13 +8,12 @@ const turso = createClient({
 
 export async function GET(request: Request) {
   try {
-    // CORRECCIÓN: Usar la tabla original 'catalog'
+    // CORREGIDO: Usar la tabla 'catalog' (la original)
     const result = await turso.execute('SELECT * FROM catalog ORDER BY name ASC');
-    
     return NextResponse.json(result.rows || []);
   } catch (error) {
     console.error('Error cargando productos:', error);
-    return NextResponse.json({ error: 'Error al cargar productos', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al cargar productos' }, { status: 500 });
   }
 }
 
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nombre, precio y stock son requeridos' }, { status: 400 });
     }
 
-    // CORRECCIÓN: Insertar en la tabla original 'catalog'
+    // CORREGIDO: Insertar en 'catalog'
     const result = await turso.execute({
       sql: 'INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
       args: [
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error creando producto:', error);
-    return NextResponse.json({ error: 'Error al crear producto', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al crear producto' }, { status: 500 });
   }
 }
 
@@ -66,7 +65,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
     }
 
-    // CORRECCIÓN: Eliminar de la tabla original 'catalog'
+    // CORREGIDO: Eliminar de 'catalog'
     await turso.execute({
       sql: 'DELETE FROM catalog WHERE id = ?',
       args: [id]
@@ -75,6 +74,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error eliminando producto:', error);
-    return NextResponse.json({ error: 'Error al eliminar producto', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al eliminar producto' }, { status: 500 });
   }
 }
