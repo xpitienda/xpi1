@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
-import { v4 as uuidv4 } from 'uuid';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL!,
@@ -20,8 +19,8 @@ export async function POST(request: Request) {
     const text = await file.text();
     const rows = text.split('\n').slice(1); // Ignorar encabezado
 
-    const errors = [];
-    const products = [];
+    const errors: string[] = [];
+    const products: any[] = [];
 
     for (const row of rows) {
       const [name, description, price, stock, category_id, image] = row.split(',');
@@ -52,8 +51,10 @@ export async function POST(request: Request) {
           price: Number(price),
           stock: Number(stock)
         });
-      } catch (error) {
-        errors.push(`Error al procesar ${name}: ${error.message}`);
+      } catch (err) {
+        // CORREGIDO: Manejar error de tipo unknown
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+        errors.push(`Error al procesar ${name}: ${errorMessage}`);
       }
     }
 
