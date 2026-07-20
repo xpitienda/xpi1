@@ -5,7 +5,6 @@ function verifyAdmin(request: Request) {
   const authHeader = request.headers.get('Authorization') || '';
   const expectedPass = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '15321767';
   
-  // Maneja "Bearer 15321767", "Bearer15321767" o solo "15321767"
   let token = authHeader.replace('Bearer', '').trim();
   
   return token === expectedPass;
@@ -19,9 +18,9 @@ export async function GET(request: Request) {
   }
 
   try {
-    // CORRECCIÓN REAL: Usar 'products' en lugar de 'catalog'
+    // ✅ CORRECCIÓN: Usar 'category' en lugar de 'category_id'
     const result = await turso.execute({
-      sql: 'SELECT id, name, price, image_url, category, is_featured, offer_type, offer_price FROM products WHERE is_active = 1 ORDER BY category, name',
+      sql: 'SELECT id, name, price, image_url, category, is_featured, offer_type, offer_price FROM catalog WHERE is_active = 1 ORDER BY category, name',
       args: []
     });
 
@@ -35,16 +34,15 @@ export async function GET(request: Request) {
 // PUT: Actualizar destacado/oferta de un producto
 export async function PUT(request: Request) {
   if (!verifyAdmin(request)) {
-    console.error('❌ No autorizado en PUT');
+    console.error(' No autorizado en PUT');
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   try {
     const { id, is_featured, offer_type, offer_price } = await request.json();
 
-    // CORRECCIÓN REAL: Usar 'products' en lugar de 'catalog'
     await turso.execute({
-      sql: `UPDATE products SET
+      sql: `UPDATE catalog SET
         is_featured = ?,
         offer_type = ?,
         offer_price = ?,

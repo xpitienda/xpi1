@@ -25,9 +25,9 @@ export async function POST(request: Request) {
     // Por ahora simulamos una URL
     const imageUrl = `https://example.com/images/${fileName}`;
 
-    // ✅ CORREGIDO: Actualiza la tabla 'products' y el campo 'image_url'
+    // ✅ CORREGIDO: Usar tabla 'catalog' y campo 'image_url'
     await turso.execute({
-      sql: 'UPDATE products SET image_url = ? WHERE id = ?',
+      sql: 'UPDATE catalog SET image_url = ? WHERE id = ?',
       args: [imageUrl, productId]
     });
 
