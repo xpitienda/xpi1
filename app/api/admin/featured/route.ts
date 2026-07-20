@@ -3,14 +3,11 @@ import { turso } from '@/lib/turso';
 
 function verifyAdmin(request: Request) {
   const authHeader = request.headers.get('Authorization') || '';
-  
-  // Usamos la contraseña conocida como fallback por si las variables de entorno fallan en el cliente
   const expectedPass = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '15321767';
   
-  // Extraemos el token quitando "Bearer " y espacios extra
-  const token = authHeader.replace('Bearer', '').trim();
+  // Maneja "Bearer 15321767", "Bearer15321767" o solo "15321767"
+  let token = authHeader.replace('Bearer', '').trim();
   
-  // Verificamos si coincide
   return token === expectedPass;
 }
 
@@ -22,8 +19,9 @@ export async function GET(request: Request) {
   }
 
   try {
+    // CORRECCIÓN REAL: Usar 'products' en lugar de 'catalog'
     const result = await turso.execute({
-      sql: 'SELECT id, name, price, image_url, category, is_featured, offer_type, offer_price FROM catalog WHERE is_active = 1 ORDER BY category, name',
+      sql: 'SELECT id, name, price, image_url, category, is_featured, offer_type, offer_price FROM products WHERE is_active = 1 ORDER BY category, name',
       args: []
     });
 
@@ -44,8 +42,9 @@ export async function PUT(request: Request) {
   try {
     const { id, is_featured, offer_type, offer_price } = await request.json();
 
+    // CORRECCIÓN REAL: Usar 'products' en lugar de 'catalog'
     await turso.execute({
-      sql: `UPDATE catalog SET
+      sql: `UPDATE products SET
         is_featured = ?,
         offer_type = ?,
         offer_price = ?,
