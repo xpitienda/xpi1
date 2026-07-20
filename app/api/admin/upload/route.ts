@@ -21,13 +21,13 @@ export async function POST(request: Request) {
     const extension = file.name.split('.').pop();
     const fileName = `product_${uuidv4()}.${extension}`;
     
-    // Aquí deberías subir a un servicio de almacenamiento
-    // Por ahora solo simulamos
+    // Aquí subirías a un servicio de almacenamiento (ej: Cloudinary, S3)
+    // Por ahora simulamos una URL
     const imageUrl = `https://example.com/images/${fileName}`;
 
-    // Actualizar imagen en la tabla CORRECTA 'catalog'
+    // ✅ CORREGIDO: Actualiza la tabla 'products' y el campo 'image_url'
     await turso.execute({
-      sql: 'UPDATE catalog SET image = ? WHERE id = ?',
+      sql: 'UPDATE products SET image_url = ? WHERE id = ?',
       args: [imageUrl, productId]
     });
 
