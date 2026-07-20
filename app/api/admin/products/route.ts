@@ -8,8 +8,9 @@ const turso = createClient({
 
 export async function GET() {
   try {
-    // Usamos SELECT * para traer todos los campos que el admin necesita mostrar
-    const result = await turso.execute('SELECT * FROM catalog ORDER BY name ASC');
+    const result = await turso.execute(
+      'SELECT * FROM catalog ORDER BY name ASC'
+    );
     return NextResponse.json(result.rows || []);
   } catch (error: any) {
     console.error('Error cargando productos en admin:', error);
@@ -20,22 +21,24 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, description, price, stock, category_id, image, is_active } = body;
+    // ✅ Usamos image_url en lugar de image
+    const { name, description, price, stock, category, image_url, is_active } = body;
 
     if (!name || price === undefined || stock === undefined) {
       return NextResponse.json({ error: 'Nombre, precio y stock son requeridos' }, { status: 400 });
     }
 
+    // ✅ CORRECCIÓN: Usar 'image_url' en lugar de 'image'
     const result = await turso.execute({
-      sql: `INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) 
+      sql: `INSERT INTO catalog (name, description, price, stock, category, image_url, is_active) 
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name, 
         description || null, 
         Number(price), 
         Number(stock), 
-        category_id || null, 
-        image || null, 
+        category || null,  
+        image_url || null, // ¡Aquí va image_url!
         is_active !== undefined ? Number(is_active) : 1
       ]
     });
@@ -46,8 +49,8 @@ export async function POST(request: Request) {
       description: description || null,
       price: Number(price),
       stock: Number(stock),
-      category_id: category_id || null,
-      image: image || null,
+      category: category || null,  
+      image_url: image_url || null, // ¡Aquí va image_url!
       is_active: is_active !== undefined ? Number(is_active) : 1
     });
   } catch (error: any) {
