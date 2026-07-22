@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -101,15 +101,19 @@ export default function CategoriesAdmin() {
       // Obtener el ID de la categoría recién creada o editada
       const mainCategoryId = editingCategory ? editingCategory.id : responseData.id;
 
+      // Solo permitimos añadir subcategorías a categorías principales (sin padre)
+      const canAddSubcategories = !formData.parent_id;
+
       // 2. Procesar subcategorías masivas si existen
-      if (subcategoriesInput.trim() && !editingCategory) {
+      let createdSubs = 0;
+      if (subcategoriesInput.trim() && canAddSubcategories) {
         const subNames = subcategoriesInput
           .split(/[\n,]/) // Separar por saltos de línea o comas
           .map(s => s.trim())
           .filter(s => s.length > 0);
 
         for (const subName of subNames) {
-          await fetch(url, {
+          const subRes = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD },
             body: JSON.stringify({
@@ -117,10 +121,14 @@ export default function CategoriesAdmin() {
               parent_id: mainCategoryId
             }),
           });
+          if (subRes.ok) createdSubs++;
         }
-        alert('Categoría principal y subcategorías creadas exitosamente');
-      } else if (editingCategory) {
-        alert('Categoría actualizada');
+      }
+
+      if (editingCategory) {
+        alert(createdSubs > 0 ? 'Categoría actualizada y ' + createdSubs + ' subcategoría(s) añadida(s)' : 'Categoría actualizada');
+      } else if (createdSubs > 0) {
+        alert('Categoría principal y ' + createdSubs + ' subcategoría(s) creadas exitosamente');
       } else {
         alert('Categoría creada');
       }
@@ -221,17 +229,17 @@ export default function CategoriesAdmin() {
                   <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }} placeholder="Ej: Calzado" required />
                 </div>
                 
-                {/* NUEVO CAMPO PARA SUBCATEGORÍAS MASIVAS */}
-                {!editingCategory && (
+                {/* CAMPO PARA SUBCATEGORÍAS MASIVAS (solo en categorías principales) */}
+                {!formData.parent_id && (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>Subcategorías (Opcional)</label>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>{editingCategory ? 'Añadir subcategorías (Opcional)' : 'Subcategorías (Opcional)'}</label>
                     <textarea 
                       value={subcategoriesInput} 
                       onChange={(e) => setSubcategoriesInput(e.target.value)} 
                       style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none', minHeight: '80px', fontFamily: 'inherit' }} 
                       placeholder="Escribe cada subcategoría en una nueva línea o sepáralas por comas&#10;Ej: Tennis, Zapatillas, Zapatos Dama" 
                     />
-                    <p style={{ fontSize: '0.75rem', color: '#006B3C', marginTop: '0.25rem' }}>Estas se crearán automáticamente como hijas de "{formData.name || 'la nueva categoría'}"</p>
+                    <p style={{ fontSize: '0.75rem', color: '#006B3C', marginTop: '0.25rem' }}>Estas se crearán automáticamente como hijas de "{formData.name || 'la categoría'}"</p>
                   </div>
                 )}
 
