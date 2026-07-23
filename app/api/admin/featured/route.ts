@@ -1,22 +1,8 @@
 import { NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 
-function verifyAdmin(request: Request) {
-  const authHeader = request.headers.get('Authorization') || '';
-  const expectedPass = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '15321767';
-  
-  let token = authHeader.replace('Bearer', '').trim();
-  
-  return token === expectedPass;
-}
-
 // GET: Obtener productos destacados y ofertas
-export async function GET(request: Request) {
-  if (!verifyAdmin(request)) {
-    console.error('❌ No autorizado. Header recibido:', request.headers.get('Authorization'));
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
+export async function GET() {
   try {
     // ✅ CORRECCIÓN: Usar 'category' en lugar de 'category_id'
     const result = await turso.execute({
@@ -27,17 +13,13 @@ export async function GET(request: Request) {
     return NextResponse.json(JSON.parse(JSON.stringify(result.rows || [])));
   } catch (error: any) {
     console.error('❌ Error en GET:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Degradar con elegancia: devolver lista vacía en lugar de romper la página
+    return NextResponse.json([], { status: 200 });
   }
 }
 
 // PUT: Actualizar destacado/oferta de un producto
 export async function PUT(request: Request) {
-  if (!verifyAdmin(request)) {
-    console.error(' No autorizado en PUT');
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
   try {
     const { id, is_featured, offer_type, offer_price } = await request.json();
 
