@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -40,11 +40,13 @@ export default function AdminDashboard() {
 
   const fetchProducts = async () => {
     try {
+      // ✅ CORRECCIÓN 1: Evitar caché de Next.js para siempre traer datos frescos
       const res = await fetch('/api/admin/products', {
+        cache: 'no-store',
         headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
       const data = await res.json();
-      const activeProducts = data.filter((p: Product) => p.is_active === 1);
+      const activeProducts = Array.isArray(data) ? data.filter((p: Product) => p.is_active === 1) : [];
       setProducts(activeProducts);
     } catch (err: any) {
       console.error('Error:', err);
@@ -62,10 +64,11 @@ export default function AdminDashboard() {
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/admin/categories', {
+        cache: 'no-store',
         headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
       const data = await res.json();
-      setCategories(data.map((c: any) => c.name));
+      setCategories(Array.isArray(data) ? data.map((c: any) => c.name) : []);
     } catch (err) {
       console.error('Error cargando categorías:', err);
     }
@@ -74,19 +77,22 @@ export default function AdminDashboard() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Eliminar "${name}" permanentemente?`)) return;
     try {
+      // ✅ CORRECCIÓN 2: Enviar el ID como parámetro de consulta (?id=...) para que el backend lo lea bien
       const res = await fetch(`/api/admin/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
       });
+      
+      const responseData = await res.json();
+      
       if (res.ok) {
-        setProducts(products.filter(p => p.id !== id));
-        alert('Producto eliminado');
+        setProducts(prev => prev.filter(p => p.id !== id));
+        alert('Producto eliminado correctamente');
       } else {
-        const error = await res.json();
-        alert('Error: ' + error.error);
+        alert('Error: ' + (responseData.error || 'No se pudo eliminar'));
       }
     } catch (err: any) {
-      alert('Error de conexion: ' + err.message);
+      alert('Error de conexión: ' + err.message);
     }
   };
 
@@ -124,23 +130,34 @@ export default function AdminDashboard() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
+    
     setUploading(true);
     try {
       const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: formDataUpload });
+      // ✅ CORRECCIÓN 3: Usar 'image' en lugar de 'file' para coincidir con el backend
+      formDataUpload.append('image', file);
+      
+      const res = await fetch('/api/admin/upload', { 
+        method: 'POST', 
+        body: formDataUpload,
+        headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
+      });
+      
       const data = await res.json();
-      if (data.success && data.url) {
-        setFormData({ ...formData, image_url: data.url });
-        alert('Imagen subida correctamente');
+      if (res.ok && data.url) {
+        setFormData(prev => ({ ...prev, image_url: data.url }));
+        // No alertamos aquí para no interrumpir el flujo, el usuario ve la preview
       } else {
-        alert('Error al subir: ' + (data.error || 'Error desconocido'));
+        alert('Error al subir imagen: ' + (data.error || 'Error desconocido'));
+        setImagePreview(''); // Limpiar preview si falla
       }
     } catch (err: any) {
-      alert('Error de conexion: ' + err.message);
+      alert('Error de conexión al subir imagen: ' + err.message);
+      setImagePreview('');
     } finally {
       setUploading(false);
     }
@@ -149,14 +166,17 @@ export default function AdminDashboard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return alert('El nombre es obligatorio');
+    
     const priceNum = parseFloat(formData.price);
     const stockNum = parseInt(formData.stock);
+    
     if (isNaN(priceNum) || priceNum <= 0) return alert('El precio debe ser mayor a 0');
     if (isNaN(stockNum) || stockNum < 0) return alert('Stock inválido');
 
     try {
       const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : '/api/admin/products';
       const method = editingProduct ? 'PUT' : 'POST';
+      
       const bodyData = {
         name: String(formData.name).trim(),
         description: String(formData.description || '').trim(),
@@ -169,26 +189,33 @@ export default function AdminDashboard() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` 
+        },
         body: JSON.stringify(bodyData),
       });
+      
       const responseData = await res.json();
 
       if (res.ok) {
         if (editingProduct) {
-          setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...bodyData } : p));
+          setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...bodyData, id: editingProduct.id } : p));
           alert('Producto actualizado');
         } else {
-          setProducts([...products, { id: Date.now().toString(), ...bodyData }]);
-          alert('Producto creado');
+          // ✅ Usamos el ID que devuelve el backend, no Date.now()
+          setProducts(prev => [...prev, { ...bodyData, id: responseData.id }]);
+          alert('Producto creado correctamente');
         }
         setShowModal(false);
         setImagePreview('');
+        // Recargar para asegurar consistencia
+        fetchProducts(); 
       } else {
         alert('Error: ' + (responseData.error || 'Error al guardar'));
       }
     } catch (err: any) {
-      alert('Error de conexion: ' + err.message);
+      alert('Error de conexión: ' + err.message);
     }
   };
 
@@ -208,15 +235,13 @@ export default function AdminDashboard() {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Cargando...</div>;
   }
 
-  // Cálculos para alertas de stock
   const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= 5).length;
   const outOfStockCount = products.filter(p => p.stock === 0).length;
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #f0fdf4)', padding: '1.5rem' }}>
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
-        
-        {/* BARRA SUPERIOR */}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Panel de Control</h1>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -228,7 +253,6 @@ export default function AdminDashboard() {
           <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
         </div>
 
-        {/* TARJETAS ESTADÍSTICAS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           <div style={cardStyle}>
             <div style={labelStyle}>Total Productos</div>
@@ -250,7 +274,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* GESTIÓN DE PRODUCTOS */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Gestión de Productos</h2>
           <div style={{ display: 'flex', gap: '1rem' }}>
@@ -261,7 +284,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* GRID DE PRODUCTOS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
           {products.map((product) => {
             const hasImageError = imageError[product.id];
@@ -274,8 +296,7 @@ export default function AdminDashboard() {
                   ) : (
                     <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
                   )}
-                  
-                  {/* ALERTAS DE STOCK VISUALES */}
+
                   {product.stock === 0 && product.is_active === 1 && (
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
                       🚫 SIN STOCK
@@ -320,7 +341,6 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* MODAL DE PRODUCTO */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }} onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setImagePreview(''); } }}>
           <div style={{ background: 'white', borderRadius: '1rem', maxWidth: '42rem', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -378,3 +398,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

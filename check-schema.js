@@ -7,22 +7,13 @@ const turso = createClient({
 });
 
 async function checkTables() {
-  console.log('📊 TABLAS EXISTENTES EN TURSO:\n');
+  console.log('📊 ESQUEMA DE TABLAS EXISTENTES:\n');
   
-  // Ver todas las tablas
-  const tables = await turso.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
-  
-  console.log('Tablas encontradas (' + tables.rows.length + '):');
-  tables.rows.forEach(t => console.log('  - ' + t.name));
-  
-  // Ver esquema de cada tabla importante
-  const importantTables = ['catalog', 'categories', 'sales', 'sale_items', 'sellers', 'invoices'];
-  
-  console.log('\n📋 ESQUEMA DE TABLAS IMPORTANTES:\n');
+  const importantTables = ['catalog', 'categories', 'sellers', 'invoice_counters'];
   
   for (const tableName of importantTables) {
     try {
-      const schema = await turso.execute('SELECT sql FROM sqlite_master WHERE type="table" AND name="' + tableName + '"');
+      const schema = await turso.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='" + tableName + "'");
       if (schema.rows.length > 0) {
         console.log('✅ ' + tableName + ':');
         console.log(schema.rows[0].sql);

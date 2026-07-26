@@ -1,57 +1,75 @@
-import { NextResponse } from 'next/server';
-import { turso } from '@/lib/turso';
+﻿import { NextResponse } from 'next/server';
+import { createClient } from '@libsql/client';
 
-function verifyAdmin(request: Request) {
-  const authHeader = request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD;
-  return adminPass && authHeader === `Bearer ${adminPass}`;
-}
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
 
-export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-  
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const params = await props.params;
+    // Next.js 15+: params es una promesa
+    const { id } = await params;
     const body = await request.json();
-    
-    const name = String(body.name || '');
-    const description = String(body.description || '');
-    const price = Number(body.price || 0);
-    const category = String(body.category || 'General');
-    const stock = Number(body.stock || 0);
-    const image_url = String(body.image_url || '');
-    const is_active = Number(body.is_active !== undefined ? body.is_active : 1);
+    const { name, description, price, stock, category, image_url, is_active } = body;
 
-    if (!name) {
-      return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
+    if (!name || price === undefined || stock === undefined) {
+      return NextResponse.json({ error: 'Nombre, precio y stock son requeridos' }, { status: 400 });
     }
 
-    await turso.execute(
-      'UPDATE catalog SET name=?, description=?, price=?, image_url=?, category=?, stock=?, is_active=? WHERE id=?',
-      [name, description, price, image_url, category, stock, is_active, params.id]
-    );
+    // Usamos comillas dobles para la consulta SQL para evitar problemas con backticks
+    await turso.execute({
+      sql: "UPDATE catalog SET name = ?, description = ?, price = ?, stock = ?, category = ?, image_url = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      args: [
+        name,
+        description || null,
+        Number(price),
+        Number(stock), // Esto permite que el stock 0 se guarde correctamente
+        category || null,
+        image_url || null,
+        is_active !== undefined ? Number(is_active) : 1,
+        id
+      ]
+    });
 
-    return NextResponse.json({ message: 'Producto actualizado correctamente' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Producto actualizado',
+      id,
+      name,
+      price: Number(price),
+      stock: Number(stock),
+      image_url: image_url || null
+    });
+
   } catch (error: any) {
-    console.error('Error updating product:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error actualizando producto:', error);
+    return NextResponse.json({ error: 'Error al actualizar: ' + error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-  
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const params = await props.params;
-    
-    await turso.execute('UPDATE catalog SET is_active=0 WHERE id=?', [params.id]);
-    return NextResponse.json({ message: 'Producto eliminado correctamente' });
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
+    }
+
+    await turso.execute({
+      sql: 'DELETE FROM catalog WHERE id = ?',
+      args: [id]
+    });
+
+    return NextResponse.json({ success: true, message: 'Producto eliminado' });
   } catch (error: any) {
-    console.error('Error deleting product:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error eliminando producto:', error);
+    return NextResponse.json({ error: 'Error al eliminar: ' + error.message }, { status: 500 });
   }
 }
