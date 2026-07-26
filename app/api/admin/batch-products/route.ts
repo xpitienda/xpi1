@@ -1,50 +1,43 @@
 ﻿import { NextResponse } from 'next/server';
-import { turso } from '@/lib/turso';
+import { createClient } from '@libsql/client';
+import { randomUUID } from 'crypto';
 
-function verifyAdmin(request: Request) {
-  const authHeader = request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD;
-  return adminPass && authHeader === 'Bearer ' + adminPass;
-}
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
 
 export async function POST(request: Request) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
-    const products = body.products;
+    const { products } = body;
 
     if (!Array.isArray(products) || products.length === 0) {
-      return NextResponse.json({ error: 'Se requiere un array de productos' }, { status: 400 });
+      return NextResponse.json({ error: 'No se recibieron productos válidos' }, { status: 400 });
     }
 
-    // Guardar cada producto en Turso
-    for (const product of products) {
-      const id = 'prod_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-      
-      await turso.execute(`
-        INSERT INTO catalog (id, name, description, price, stock, image_url, category, is_active, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
-      `, [
-        id,
-        product.name,
-        product.description || '',
-        parseFloat(product.price),
-        parseInt(product.stock) || 0,
-        product.image_url,
-        product.category || 'General'
-      ]);
+    let successCount = 0;
+    for (const p of products) {
+      const newId = randomUUID();
+      await turso.execute({
+        sql: "INSERT INTO catalog (id, name, description, price, stock, category, image_url, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        args: [
+          newId,
+          p.name || 'Sin nombre',
+          p.description || null,
+          Number(p.price) || 0,
+          Number(p.stock) || 0,
+          p.category || 'General',
+          p.image_url || null,
+          1
+        ]
+      });
+      successCount++;
     }
 
-    return NextResponse.json({ 
-      message: `✅ ${products.length} productos guardados exitosamente`,
-      count: products.length 
-    });
-
+    return NextResponse.json({ success: true, count: successCount, message: successCount + ' productos guardados' });
   } catch (error: any) {
-    console.error('Error en batch:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error guardando lote:', error);
+    return NextResponse.json({ error: 'Error al guardar productos: ' + error.message }, { status: 500 });
   }
 }

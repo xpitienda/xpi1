@@ -1,77 +1,61 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@libsql/client';
+﻿import { NextResponse } from 'next/server';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { randomUUID } from 'crypto';
 
-const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
+const s3Client = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+  },
 });
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const files = formData.getAll('files') as File[];
 
-    if (!file) {
-      return NextResponse.json({ error: 'No se encontró el archivo' }, { status: 400 });
+    if (!files || files.length === 0) {
+      return NextResponse.json({ error: 'No se recibieron archivos' }, { status: 400 });
     }
 
-    // Procesar el archivo CSV
-    const text = await file.text();
-    const rows = text.split('\n').slice(1); // Ignorar encabezado
+    const uploadedUrls = [];
 
-    const errors: string[] = [];
-    const products: any[] = [];
+    for (const file of files) {
+      if (!(file instanceof File) || file.size === 0) continue;
 
-    for (const row of rows) {
-      const [name, description, price, stock, category_id, image] = row.split(',');
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `${randomUUID()}-${cleanName}`;
+
+      await s3Client.send(new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: file.type,
+      }));
+
+      const baseUrl = process.env.R2_PUBLIC_URL!.startsWith('http')
+        ? process.env.R2_PUBLIC_URL
+        : `https://${process.env.R2_PUBLIC_URL}`;
       
-      if (!name || !price || stock === undefined) {
-        errors.push(`Fila inválida: ${row}`);
-        continue;
-      }
+      const publicUrl = `${baseUrl}/${fileName}`;
 
-      try {
-        // Insertar en la tabla CORRECTA 'catalog'
-        const result = await turso.execute({
-          sql: 'INSERT INTO catalog (name, description, price, stock, category_id, image, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          args: [
-            name.trim(),
-            description?.trim() || null,
-            Number(price),
-            Number(stock),
-            category_id?.trim() || null,
-            image?.trim() || null,
-            1
-          ]
-        });
-
-        products.push({
-          id: result.lastInsertRowid,
-          name,
-          price: Number(price),
-          stock: Number(stock)
-        });
-      } catch (err) {
-        // CORREGIDO: Manejar error de tipo unknown
-        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-        errors.push(`Error al procesar ${name}: ${errorMessage}`);
-      }
+      uploadedUrls.push({
+        url: publicUrl,
+        originalName: file.name
+      });
     }
 
-    if (errors.length > 0) {
-      return NextResponse.json(
-        { 
-          success: true, 
-          products, 
-          errors 
-        }, 
-        { status: 207 } // Multi-Status
-      );
-    }
+    return NextResponse.json({ 
+      success: true, 
+      urls: uploadedUrls,
+      count: uploadedUrls.length 
+    });
 
-    return NextResponse.json({ success: true, products });
-  } catch (error) {
-    console.error('Error en carga masiva:', error);
-    return NextResponse.json({ error: 'Error al procesar el archivo' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error en batch upload:', error);
+    return NextResponse.json({ error: 'Error al subir: ' + error.message }, { status: 500 });
   }
 }

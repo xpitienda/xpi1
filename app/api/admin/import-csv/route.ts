@@ -5,56 +5,48 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
-    if (!file) {
-      return NextResponse.json({ error: 'No se recibió archivo' }, { status: 400 });
+    if (!file || file.size === 0) {
+      return NextResponse.json({ error: 'No se proporcionó ningún archivo' }, { status: 400 });
     }
 
     const text = await file.text();
-    const lines = text.split('\n').filter(l => l.trim() !== '');
+    const lines = text.split('\n').filter(line => line.trim() !== '');
     
     if (lines.length < 2) {
-      return NextResponse.json({ error: 'El CSV está vacío o mal formado' }, { status: 400 });
+      return NextResponse.json({ error: 'El CSV está vacío o no tiene formato válido' }, { status: 400 });
     }
 
-    // Parsear cabeceras
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-    console.log('Columnas detectadas:', headers); // DEBUG
-    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
     const products = [];
-
+    
     for (let i = 1; i < lines.length; i++) {
-      const matches = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-      const row: any = {};
+      const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+      const cleanValues = values.map(v => v.trim().replace(/^"|"$/g, ''));
       
+      const product: any = {};
       headers.forEach((header, index) => {
-        let val = matches[index] ? matches[index].replace(/^"|"$/g, '').trim() : '';
-        row[header] = val;
+        let val = cleanValues[index] || '';
+        if (header === 'price' || header === 'stock') {
+          product[header] = parseFloat(val) || 0;
+        } else {
+          product[header] = val;
+        }
       });
 
-      if (!row.name && !row.nombre) continue;
-      
-      // INCLUIR image_url explícitamente
       products.push({
-        name: row.name || row.nombre || 'Sin Nombre',
-        price: parseFloat(row.price || row.precio || '0'),
-        stock: parseInt(row.stock || row.cantidad || '0'),
-        description: row.description || row.descripcion || '',
-        category: row.category || row.categoria || 'General',
-        filename: row.filename || row.file || row['nombre archivo'] || '',
-        image_url: row.image_url || row.url || row.imagen || '', // ✅ NUEVO
+        filename: product.filename || '',
+        name: product.name || 'Sin nombre',
+        price: product.price || 0,
+        stock: product.stock || 0,
+        description: product.description || '',
+        category: product.category || 'General',
+        image_url: product.image_url || product.url || ''
       });
     }
 
-    console.log('Primer producto parseado:', products[0]); // DEBUG
-
-    return NextResponse.json({ 
-      success: true,
-      count: products.length,
-      products 
-    });
-
+    return NextResponse.json({ success: true, products, count: products.length });
   } catch (error: any) {
-    console.error('Error parseando CSV:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error leyendo CSV:', error);
+    return NextResponse.json({ error: 'Error al procesar el CSV: ' + error.message }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,7 @@ interface BatchItem {
 export default function AddProductPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'single' | 'batch'>('single');
-  
+
   // --- ESTADOS MODO INDIVIDUAL ---
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -32,9 +32,9 @@ export default function AddProductPage() {
   const [batchMessage, setBatchMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const batchFileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- ESTADOS CSV (NUEVOS Y CORRECTOS) ---
+  // --- ESTADOS CSV ---
   const [csvData, setCsvData] = useState<any[]>([]);
-  const [showCsvModal, setShowCsvModal] = useState(false); // ✅ Aquí está definido
+  const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
   const [csvMessage, setCsvMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [assignedFiles, setAssignedFiles] = useState<Record<string, File>>({});
@@ -60,28 +60,41 @@ export default function AddProductPage() {
       const form = e.currentTarget;
       const formData = new FormData(form);
       const file = formData.get('image') as File;
+      
       if (!file || file.size === 0) {
         setMessage({ type: 'error', text: 'Selecciona una imagen' });
         setLoading(false);
         return;
       }
+
+      // 1. Subir imagen
       const imageFormData = new FormData();
-      imageFormData.append('file', file);
-      const uploadRes = await fetch('/api/upload', { method: 'POST', body: imageFormData });
+      imageFormData.append('image', file); // Corregido: 'image' en lugar de 'file'
+      const uploadRes = await fetch('/api/admin/upload', { 
+        method: 'POST', 
+        body: imageFormData,
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
       const uploadData = await uploadRes.json();
       if (!uploadData.url) throw new Error(uploadData.error || 'Error al subir imagen');
 
+      // 2. Guardar producto
       const productData = {
         name: formData.get('name'),
         description: formData.get('description'),
         price: formData.get('price'),
         stock: formData.get('stock'),
+        category: formData.get('category') || 'General',
         image_url: uploadData.url,
+        is_active: 1
       };
 
-      const productRes = await fetch('/api/products', {
+      const productRes = await fetch('/api/admin/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD 
+        },
         body: JSON.stringify(productData),
       });
       const productDataRes = await productRes.json();
@@ -98,7 +111,7 @@ export default function AddProductPage() {
     }
   };
 
-  // --- LÓGICA MODO MASIVO ---
+  // --- LÓGICA MODO MASIVO (FOTOS) ---
   const handleBatchFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -135,30 +148,43 @@ export default function AddProductPage() {
     setBatchLoading(true);
     setBatchMessage(null);
     try {
-      const itemsWithUrls = await Promise.all(batchItems.map(async (item, idx) => {
-        try {
-          setBatchItems(prev => prev.map((it, i) => i === idx ? { ...it, uploading: true } : it));
-          const formData = new FormData();
-          formData.append('file', item.file);
-          const res = await fetch('/api/upload', { method: 'POST', body: formData });
-          const data = await res.json();
-          if (!data.url) throw new Error('Error subiendo imagen');
-          setBatchItems(prev => prev.map((it, i) => i === idx ? { ...it, uploading: false, uploaded: true, imageUrl: data.url } : it));
-          return { ...item, imageUrl: data.url };
-        } catch (err) {
-          setBatchItems(prev => prev.map((it, i) => i === idx ? { ...it, uploading: false } : it));
-          throw err;
-        }
-      }));
+      const productsToSave = [];
+      
+      for (let idx = 0; idx < batchItems.length; idx++) {
+        const item = batchItems[idx];
+        setBatchItems(prev => prev.map((it, i) => i === idx ? { ...it, uploading: true } : it));
+        
+        // Subir imagen
+        const formData = new FormData();
+        formData.append('image', item.file);
+        const res = await fetch('/api/admin/upload', { 
+          method: 'POST', 
+          body: formData,
+          headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+        });
+        const data = await res.json();
+        if (!data.url) throw new Error(`Error subiendo imagen de ${item.name}`);
+        
+        setBatchItems(prev => prev.map((it, i) => i === idx ? { ...it, uploading: false, uploaded: true, imageUrl: data.url } : it));
+        
+        productsToSave.push({
+          name: item.name, 
+          description: item.description, 
+          price: item.price,
+          stock: item.stock, 
+          image_url: data.url, 
+          category: item.category,
+          is_active: 1
+        });
+      }
 
-      const productsToSave = itemsWithUrls.map(item => ({
-        name: item.name, description: item.description, price: item.price,
-        stock: item.stock, image_url: item.imageUrl, category: item.category
-      }));
-
+      // Guardar todos en lote
       const saveRes = await fetch('/api/admin/batch-products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD 
+        },
         body: JSON.stringify({ products: productsToSave }),
       });
       const saveData = await saveRes.json();
@@ -173,7 +199,7 @@ export default function AddProductPage() {
     }
   };
 
-  // --- LÓGICA CSV MEJORADA ---
+  // --- LÓGICA CSV ---
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -183,17 +209,20 @@ export default function AddProductPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/admin/import-csv', { method: 'POST', body: formData });
+      const res = await fetch('/api/admin/import-csv', { 
+        method: 'POST', 
+        body: formData,
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         setCsvData(data.products);
-        console.log('CSV Data recibido:', data.products);
-        setCsvMessage({ type: 'success', text: `✅ Se cargaron ${data.count} productos. Revisa consola (F12) para ver detalles.` });
+        setCsvMessage({ type: 'success', text: `✅ Se cargaron ${data.count} productos del CSV.` });
       } else {
         setCsvMessage({ type: 'error', text: data.error || 'Error al leer CSV' });
       }
     } catch (err) {
-      setCsvMessage({ type: 'error', text: 'Error de conexión' });
+      setCsvMessage({ type: 'error', text: 'Error de conexión al leer CSV' });
     } finally {
       setCsvLoading(false);
     }
@@ -203,9 +232,9 @@ export default function AddProductPage() {
     const files = Array.from(e.target.files || []);
     const newAssignments: Record<string, File> = { ...assignedFiles };
     files.forEach(file => {
-      const match = csvData.find(p => 
-        p.filename.toLowerCase() === file.name.toLowerCase() || 
-        file.name.toLowerCase().includes(p.filename.toLowerCase())
+      const match = csvData.find(p =>
+        (p.filename && p.filename.toLowerCase() === file.name.toLowerCase()) ||
+        file.name.toLowerCase().includes((p.filename || p.name).toLowerCase())
       );
       if (match) newAssignments[match.name] = file;
     });
@@ -213,33 +242,63 @@ export default function AddProductPage() {
   };
 
   const handleSaveCsvBatch = async () => {
-  const tempImageUrls: Record<string, string> = {};
-
     setCsvLoading(true);
     setCsvMessage(null);
     try {
+      const productsToSave = [];
+
       for (const product of csvData) {
+        let imageUrl = product.image_url || '';
         const file = assignedFiles[product.name];
-        let imageUrl = (product.image_url && product.image_url !== '0') ? product.image_url : (product.url || (tempImageUrls ? tempImageUrls[product.name] : '') || '');
+        
+        // Si hay una imagen asignada manualmente, subirla primero
         if (file) {
           const imgFormData = new FormData();
-          imgFormData.append('file', file);
-          const uploadRes = await fetch('/api/upload', { method: 'POST', body: imgFormData });
+          imgFormData.append('image', file);
+          const uploadRes = await fetch('/api/admin/upload', { 
+            method: 'POST', 
+            body: imgFormData,
+            headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+          });
           const uploadData = await uploadRes.json();
-          if (uploadData.url) { imageUrl = uploadData.url; }
-          else throw new Error(`Error subiendo imagen para ${product.name}`);
+          if (uploadData.url) { 
+            imageUrl = uploadData.url; 
+          } else {
+            throw new Error(`Error subiendo imagen para ${product.name}`);
+          }
         }
-        const prodRes = await fetch('/api/admin/batch-products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD },
-          body: JSON.stringify({ products: [{ name: product.name, price: product.price, stock: product.stock, description: product.description, category: product.category, image_url: imageUrl }] })
+
+        productsToSave.push({
+          name: product.name, 
+          price: product.price, 
+          stock: product.stock, 
+          description: product.description, 
+          category: product.category, 
+          image_url: imageUrl,
+          is_active: 1
         });
-        if (!prodRes.ok) throw new Error(`Error guardando ${product.name}`);
       }
-      setCsvMessage({ type: 'success', text: `✅ ¡Éxito! ${csvData.length} productos creados.` });
+
+      // Guardar TODO en una sola petición al backend (mucho más rápido y seguro)
+      const saveRes = await fetch('/api/admin/batch-products', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD 
+        },
+        body: JSON.stringify({ products: productsToSave })
+      });
+      
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.error || 'Error guardando productos');
+
+      setCsvMessage({ type: 'success', text: `✅ ¡Éxito! ${saveData.count} productos creados.` });
       setCsvData([]);
       setAssignedFiles({});
-      setTimeout(() => window.location.reload(), 3000);
+      
+      // Recargar la página después de 2 segundos para ver los cambios
+      setTimeout(() => window.location.reload(), 2000);
+      
     } catch (err: any) {
       setCsvMessage({ type: 'error', text: err.message });
     } finally {
@@ -260,20 +319,23 @@ export default function AddProductPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        
+        <button onClick={() => router.push('/admin')} style={{ marginBottom: '1rem', background: '#eee', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
+          ← Volver al Panel
+        </button>
+
         {/* Selector de Modo */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', background: 'white', padding: '0.5rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
           <button onClick={() => setMode('single')} style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', background: mode === 'single' ? '#3D1A78' : 'transparent', color: mode === 'single' ? 'white' : '#666' }}>
             ➕ Agregar Uno (Normal)
           </button>
           <button onClick={() => setMode('batch')} style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', background: mode === 'batch' ? '#006B3C' : 'transparent', color: mode === 'batch' ? 'white' : '#666' }}>
-             Carga Masiva (Lote)
+             📦 Carga Masiva (Lote)
           </button>
         </div>
 
         {/* MODO INDIVIDUAL */}
         {mode === 'single' && (
-          <div className="max-w-2xl mx-auto">
+          <div>
             {message && (
               <div style={{ padding: '1rem', marginBottom: '1rem', borderRadius: '8px', background: message.type === 'success' ? '#dcfce7' : '#fee2e2', color: message.type === 'success' ? '#166534' : '#991b1b' }}>
                 {message.text}
@@ -294,7 +356,7 @@ export default function AddProductPage() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Descripción</label>
                 <textarea name="description" rows={3} style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Precio ($) *</label>
                   <input type="number" name="price" step="0.01" min="0" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }} />
@@ -303,9 +365,18 @@ export default function AddProductPage() {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Stock</label>
                   <input type="number" name="stock" defaultValue="0" min="0" style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }} />
                 </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Categoría</label>
+                  <select name="category" style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box', background: 'white' }}>
+                    <option value="General">General</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Calzado">Calzado</option>
+                    <option value="Accesorios">Accesorios</option>
+                  </select>
+                </div>
               </div>
               <button type="submit" disabled={loading} style={{ background: '#3D1A78', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-                {loading ? ' Guardando...' : ' Guardar Producto'}
+                {loading ? '⏳ Guardando...' : '💾 Guardar Producto'}
               </button>
             </form>
           </div>
@@ -320,27 +391,21 @@ export default function AddProductPage() {
               </div>
             )}
 
-            {/* Botón Importar CSV (CORRECTAMENTE UBICADO FUERA DEL P) */}
             <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
-              <button 
-                onClick={() => setShowCsvModal(true)} 
-                style={{ background: '#3B82F6', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
-              >
-                 Importar Datos (Excel/CSV)
+              <button onClick={() => setShowCsvModal(true)} style={{ background: '#3B82F6', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                📄 Importar Datos (Excel/CSV)
               </button>
             </div>
 
-            {/* Área de carga de archivos */}
             <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center', border: '2px dashed #ccc', marginBottom: '2rem' }}>
               <input ref={batchFileInputRef} type="file" multiple accept="image/*" onChange={handleBatchFiles} style={{ display: 'none' }} id="batch-upload" />
               <label htmlFor="batch-upload" style={{ cursor: 'pointer', display: 'block' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}></div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📸</div>
                 <p style={{ fontWeight: 'bold', color: '#3D1A78', margin: '0 0 0.5rem 0' }}>Haz clic para seleccionar múltiples imágenes</p>
                 <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>O arrastra tus fotos aquí (JPG, PNG, WebP)</p>
               </label>
             </div>
 
-            {/* Lista de productos pendientes */}
             {batchItems.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {batchItems.map((item, index) => (
@@ -359,10 +424,6 @@ export default function AddProductPage() {
                         <option value="Ropa">Ropa</option>
                         <option value="Calzado">Calzado</option>
                         <option value="Accesorios">Accesorios</option>
-                        <option value="Tecnologia">Tecnología</option>
-                        <option value="Deportes">Deportes</option>
-                        <option value="Hogar">Hogar</option>
-                        <option value="Bisutería">Bisutería</option>
                       </select>
                       <textarea placeholder="Descripción breve..." value={item.description} onChange={(e) => updateBatchItem(index, 'description', e.target.value)} rows={1} style={{ gridColumn: '1 / -1', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', resize: 'vertical' }} />
                     </div>
@@ -377,12 +438,12 @@ export default function AddProductPage() {
           </div>
         )}
 
-        {/* Modal Importar CSV Mejorado */}
+        {/* Modal Importar CSV */}
         {showCsvModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
             <div style={{ background: 'white', borderRadius: '16px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
               <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
-                <h3 style={{ margin: 0, color: '#3D1A78' }}> Importar Datos Masivos</h3>
+                <h3 style={{ margin: 0, color: '#3D1A78' }}>📄 Importar Datos Masivos</h3>
                 <button onClick={() => setShowCsvModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
               </div>
               <div style={{ padding: '1.5rem' }}>
@@ -397,7 +458,7 @@ export default function AddProductPage() {
                   <>
                     <div style={{ background: '#eff6ff', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #bfdbfe' }}>
                       <p style={{ margin: 0, fontSize: '0.9rem', color: '#1e40af' }}>
-                        ✅ <strong>{csvData.length} productos listos.</strong> Selecciona las imágenes. El sistema las asignará si el nombre coincide con "filename".
+                        ✅ <strong>{csvData.length} productos listos.</strong> Selecciona las imágenes. El sistema las asignará si el nombre del archivo coincide con la columna "filename".
                       </p>
                     </div>
                     <input type="file" multiple accept="image/*" onChange={handleImageAssignment} style={{ marginBottom: '1rem', width: '100%' }} />
@@ -414,12 +475,12 @@ export default function AddProductPage() {
                           {csvData.map((p, idx) => (
                             <tr key={idx} style={{ background: assignedFiles[p.name] ? '#f0fdf4' : 'white' }}>
                               <td style={{ padding: '0.75rem', borderBottom: '1px solid #eee' }}>{p.name}</td>
-                              <td style={{ padding: '0.75rem', borderBottom: '1px solid #eee' }}>${p.price.toLocaleString()}</td>
+                              <td style={{ padding: '0.75rem', borderBottom: '1px solid #eee' }}>${Number(p.price).toLocaleString()}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '1px solid #eee' }}>
                                 {assignedFiles[p.name] ? (
                                   <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✅ {assignedFiles[p.name].name}</span>
                                 ) : (
-                                  <span style={{ color: '#dc2626' }}>️ Falta</span>
+                                  <span style={{ color: '#dc2626' }}>⚠️ Falta</span>
                                 )}
                               </td>
                             </tr>
@@ -428,7 +489,7 @@ export default function AddProductPage() {
                       </table>
                     </div>
                     <button onClick={handleSaveCsvBatch} disabled={csvLoading} style={{ marginTop: '1rem', width: '100%', background: '#006B3C', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: csvLoading ? 'not-allowed' : 'pointer' }}>
-                      {csvLoading ? ' Subiendo y Guardando...' : ' Guardar Todo'}
+                      {csvLoading ? '⏳ Subiendo y Guardando...' : '💾 Guardar Todo'}
                     </button>
                   </>
                 )}
@@ -441,7 +502,6 @@ export default function AddProductPage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
