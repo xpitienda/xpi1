@@ -20,7 +20,6 @@ export default function GenerateCsvPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // ✅ Cargar categorías dinámicamente desde la BD
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -86,9 +85,38 @@ export default function GenerateCsvPage() {
     ));
   };
 
-  // ✅ Aplicar una categoría a todos los productos de una vez
+  // ✅ APLICAR VALORES DEL PRIMER ITEM A TODOS LOS DEMÁS
+  const applyFirstToAll = () => {
+    if (imageItems.length === 0) return;
+    
+    const firstItem = imageItems[0];
+    setImageItems(prev => prev.map((item, index) => 
+      index === 0 ? item : {
+        ...item,
+        name: firstItem.name,
+        price: firstItem.price,
+        stock: firstItem.stock,
+        description: firstItem.description,
+        category: firstItem.category
+      }
+    ));
+    
+    setMessage({ type: 'success', text: `✅ Valores del primer producto aplicados a los ${imageItems.length} productos` });
+  };
+
+  // Aplicar categoría específica a todos
   const applyCategoryToAll = (category: string) => {
     setImageItems(prev => prev.map(item => ({ ...item, category })));
+  };
+
+  // Aplicar precio a todos
+  const applyPriceToAll = (price: string) => {
+    setImageItems(prev => prev.map(item => ({ ...item, price })));
+  };
+
+  // Aplicar stock a todos
+  const applyStockToAll = (stock: string) => {
+    setImageItems(prev => prev.map(item => ({ ...item, stock })));
   };
 
   const downloadCsv = () => {
@@ -136,30 +164,108 @@ export default function GenerateCsvPage() {
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ marginBottom: '1rem', color: '#3D1A78' }}>Define los valores para cada producto:</h2>
             
-            {/* ✅ Selector rápido de categoría para todos */}
-            <div style={{ background: '#eff6ff', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #bfdbfe' }}>
-              <label style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>📂 Asignar categoría a TODOS:</label>
-              <select
-                onChange={(e) => applyCategoryToAll(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
+            {/* ✅ BOTÓN MÁGICO: APLICAR PRIMERO A TODOS */}
+            <div style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+              padding: '1.5rem', 
+              borderRadius: '12px', 
+              marginBottom: '1.5rem',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ color: 'white', margin: '0 0 1rem 0', fontSize: '1.1rem' }}>⚡ ¿Todos los productos tienen los mismos datos?</h3>
+              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                Edita el PRIMER producto y luego haz clic aquí para copiar sus valores a todos los demás
+              </p>
+              <button
+                onClick={applyFirstToAll}
+                style={{
+                  background: 'white',
+                  color: '#667eea',
+                  padding: '0.75rem 2rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
               >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                 Copiar primer producto a TODOS los demás
+              </button>
+            </div>
+
+            {/* Selectores rápidos individuales */}
+            <div style={{ 
+              background: '#eff6ff', 
+              padding: '1rem', 
+              borderRadius: '8px', 
+              marginBottom: '1.5rem', 
+              border: '1px solid #bfdbfe',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem'
+            }}>
+              <div>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>💰 Aplicar precio a todos:</label>
+                <input
+                  type="number"
+                  placeholder="Precio"
+                  onChange={(e) => e.target.value && applyPriceToAll(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📦 Aplicar stock a todos:</label>
+                <input
+                  type="number"
+                  placeholder="Stock"
+                  onChange={(e) => e.target.value && applyStockToAll(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📂 Aplicar categoría a todos:</label>
+                <select
+                  onChange={(e) => applyCategoryToAll(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             {imageItems.map((item, index) => (
               <div key={index} style={{ 
-                background: '#f9fafb', 
+                background: index === 0 ? '#fef3c7' : '#f9fafb',
                 padding: '1.5rem', 
                 borderRadius: '8px', 
                 marginBottom: '1rem',
-                border: '1px solid #eee'
+                border: index === 0 ? '2px solid #f59e0b' : '1px solid #eee'
               }}>
+                {index === 0 && (
+                  <div style={{ 
+                    background: '#f59e0b', 
+                    color: 'white', 
+                    padding: '0.5rem', 
+                    borderRadius: '6px', 
+                    marginBottom: '1rem',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem'
+                  }}>
+                    ⭐ PRIMER PRODUCTO - Edita aquí y usa el botón de arriba para copiar a todos
+                  </div>
+                )}
+                
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
                   <img src={item.url} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', marginRight: '1rem' }} />
-                  <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{item.originalName}</span>
+                  <div>
+                    <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{item.originalName}</span>
+                    {index === 0 && <span style={{ display: 'block', fontSize: '0.8rem', color: '#f59e0b', marginTop: '0.25rem' }}>Este es el producto maestro</span>}
+                  </div>
                 </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
