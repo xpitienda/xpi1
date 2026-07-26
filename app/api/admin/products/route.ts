@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 import { randomUUID } from 'crypto';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -29,16 +29,33 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    console.log('📥 POST /api/admin/products - Headers:', Object.fromEntries(request.headers));
-    
     const contentType = request.headers.get('content-type') || '';
-    let body;
-    let image_url = null;
+    let body: any;
+    let image_url: string | null = null;
 
     if (contentType.includes('multipart/form-data')) {
-      console.log('📁 Recibiendo FormData con archivo');
       const formData = await request.formData();
-      
+      const file = formData.get('image');
+
+      // Verificar que sea un File antes de acceder a sus propiedades
+      if (file && file instanceof File && file.size > 0) {
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileName = `${randomUUID()}-${cleanName}`;
+
+        await s3Client.send(new PutObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: fileName,
+          Body: fileBuffer,
+          ContentType: file.type,
+        }));
+
+        const baseUrl = process.env.R2_PUBLIC_URL!.startsWith('http')
+          ? process.env.R2_PUBLIC_URL
+          : `https://${process.env.R2_PUBLIC_URL}`;
+        image_url = `${baseUrl}/${fileName}`;
+      }
+
       body = {
         name: formData.get('name'),
         description: formData.get('description'),
@@ -47,51 +64,20 @@ export async function POST(request: Request) {
         category: formData.get('category'),
         is_active: formData.get('is_active'),
       };
-
-      const file = formData.get('image');
-      console.log('📄 Archivo recibido:', file ? file.name : 'Ninguno');
-
-      if (file && file instanceof File && file.size > 0) {
-        try {
-          console.log('🚀 Subiendo a R2...');
-          console.log('   Bucket:', process.env.R2_BUCKET_NAME);
-          console.log('   Account ID:', process.env.R2_ACCOUNT_ID ? 'Configurado' : 'NO CONFIGURADO');
-          
-          const fileBuffer = Buffer.from(await file.arrayBuffer());
-          const fileName = `${randomUUID()}-${file.name}`;
-          
-          await s3Client.send(new PutObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME,
-            Key: fileName,
-            Body: fileBuffer,
-            ContentType: file.type,
-          }));
-
-          image_url = `https://${process.env.R2_PUBLIC_URL}/${fileName}`;
-          console.log('✅ Imagen subida:', image_url);
-        } catch (uploadError: any) {
-          console.error('❌ ERROR SUBIENDO A R2:', uploadError.message);
-          console.error('   Detalles:', uploadError);
-          // Continuamos sin imagen en lugar de fallar
-          image_url = null;
-        }
-      }
     } else {
-      console.log('📝 Recibiendo JSON');
       body = await request.json();
       image_url = body.image_url || null;
     }
 
     const { name, description, price, stock, category, is_active } = body;
-    
+
     if (!name || price === undefined || stock === undefined) {
       return NextResponse.json({ error: 'Nombre, precio y stock son requeridos' }, { status: 400 });
     }
 
     const newId = randomUUID();
     await turso.execute({
-      sql: `INSERT INTO catalog (id, name, description, price, stock, category, image_url, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: "INSERT INTO catalog (id, name, description, price, stock, category, image_url, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       args: [
         newId,
         name,
@@ -104,18 +90,20 @@ export async function POST(request: Request) {
       ]
     });
 
-    console.log('✅ Producto creado:', name, 'ID:', newId);
     return NextResponse.json({
       id: newId,
       name,
+      description: description || null,
       price: Number(price),
       stock: Number(stock),
-      image_url
+      category: category || null,
+      image_url,
+      is_active: is_active !== undefined ? Number(is_active) : 1
     });
 
   } catch (error: any) {
-    console.error('❌ ERROR EN POST:', error);
-    return NextResponse.json({ error: 'Error: ' + error.message }, { status: 500 });
+    console.error('Error creando producto:', error);
+    return NextResponse.json({ error: 'Error al crear producto: ' + error.message }, { status: 500 });
   }
 }
 
@@ -124,46 +112,18 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    console.log('🗑️ DELETE /api/admin/products - ID recibido:', id);
-    console.log('   URL completa:', request.url);
-
     if (!id || id.trim() === '') {
-      console.error('❌ No se recibió ID válido');
       return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
     }
 
-    // Verificar que existe
-    const checkResult = await turso.execute({
-      sql: 'SELECT id, name FROM catalog WHERE id = ?',
-      args: [id]
-    });
-
-    console.log(' Producto encontrado:', checkResult.rows.length, 'registros');
-
-    if (checkResult.rows.length === 0) {
-      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
-    }
-
-    // Eliminar
     await turso.execute({
       sql: 'DELETE FROM catalog WHERE id = ?',
       args: [id]
     });
 
-    console.log('✅ Producto eliminado de la BD');
-
-    // Verificar que se eliminó
-    const verifyResult = await turso.execute({
-      sql: 'SELECT COUNT(*) as count FROM catalog WHERE id = ?',
-      args: [id]
-    });
-
-    console.log('🔍 Verificación post-eliminación:', verifyResult.rows[0].count, 'registros');
-
-    return NextResponse.json({ success: true });
-    
+    return NextResponse.json({ success: true, message: 'Producto eliminado' });
   } catch (error: any) {
-    console.error('❌ ERROR EN DELETE:', error);
-    return NextResponse.json({ error: 'Error: ' + error.message }, { status: 500 });
+    console.error('Error eliminando producto:', error);
+    return NextResponse.json({ error: 'Error al eliminar: ' + error.message }, { status: 500 });
   }
 }
