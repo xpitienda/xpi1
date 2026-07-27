@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -315,7 +315,7 @@ export default function AdminSales() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>📈 Tendencia de Ventas por Mes</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>📈 Tendencia de Ventas por Semana</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={barData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
