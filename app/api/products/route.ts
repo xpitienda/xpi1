@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 
 const turso = createClient({
@@ -8,11 +8,9 @@ const turso = createClient({
 
 export async function GET() {
   try {
-    // CAMBIO: Usar tabla 'products' en lugar de 'catalog'
     const result = await turso.execute(
-      'SELECT id, name, price, stock, is_active, image_url, category, description FROM products WHERE is_active = 1 ORDER BY name'
+      'SELECT id, name, price, stock, is_active, image_url, category, description FROM catalog WHERE is_active = 1 ORDER BY name'
     );
-
     return NextResponse.json(Array.from(result.rows));
   } catch (error: any) {
     console.error('Error cargando productos:', error);
