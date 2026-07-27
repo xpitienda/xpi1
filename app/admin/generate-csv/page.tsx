@@ -85,7 +85,6 @@ export default function GenerateCsvPage() {
     ));
   };
 
-  // ✅ APLICAR VALORES DEL PRIMER ITEM A TODOS LOS DEMÁS
   const applyFirstToAll = () => {
     if (imageItems.length === 0) return;
     
@@ -104,19 +103,8 @@ export default function GenerateCsvPage() {
     setMessage({ type: 'success', text: `✅ Valores del primer producto aplicados a los ${imageItems.length} productos` });
   };
 
-  // Aplicar categoría específica a todos
   const applyCategoryToAll = (category: string) => {
     setImageItems(prev => prev.map(item => ({ ...item, category })));
-  };
-
-  // Aplicar precio a todos
-  const applyPriceToAll = (price: string) => {
-    setImageItems(prev => prev.map(item => ({ ...item, price })));
-  };
-
-  // Aplicar stock a todos
-  const applyStockToAll = (stock: string) => {
-    setImageItems(prev => prev.map(item => ({ ...item, stock })));
   };
 
   const downloadCsv = () => {
@@ -164,7 +152,6 @@ export default function GenerateCsvPage() {
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ marginBottom: '1rem', color: '#3D1A78' }}>Define los valores para cada producto:</h2>
             
-            {/* ✅ BOTÓN MÁGICO: APLICAR PRIMERO A TODOS */}
             <div style={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
               padding: '1.5rem', 
@@ -195,36 +182,17 @@ export default function GenerateCsvPage() {
               </button>
             </div>
 
-            {/* Selectores rápidos individuales */}
             <div style={{ 
               background: '#eff6ff', 
               padding: '1rem', 
               borderRadius: '8px', 
               marginBottom: '1.5rem', 
               border: '1px solid #bfdbfe',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1rem'
+              display: 'flex',
+              gap: '1rem',
+              alignItems: 'end'
             }}>
-              <div>
-                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>💰 Aplicar precio a todos:</label>
-                <input
-                  type="number"
-                  placeholder="Precio"
-                  onChange={(e) => e.target.value && applyPriceToAll(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📦 Aplicar stock a todos:</label>
-                <input
-                  type="number"
-                  placeholder="Stock"
-                  onChange={(e) => e.target.value && applyStockToAll(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
-                />
-              </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📂 Aplicar categoría a todos:</label>
                 <select
                   onChange={(e) => applyCategoryToAll(e.target.value)}
