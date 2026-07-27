@@ -11,26 +11,24 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const sellerId = searchParams.get('sellerId');
 
-    console.log('[my-sales] Seller ID recibido:', sellerId);
-
     if (!sellerId) {
       return NextResponse.json({ error: 'Seller ID requerido' }, { status: 400 });
     }
 
+    // Ahora sí funcionará porque la columna seller_id existe en la BD
     const result = await turso.execute({
-      sql: `SELECT * FROM sales WHERE seller_id = ? ORDER BY created_at DESC LIMIT 50`,
+      sql: `SELECT id, invoice_number, seller_name, customer_name, customer_phone, items, total_amount, sale_type, status, created_at 
+            FROM sales 
+            WHERE seller_id = ? 
+            ORDER BY created_at DESC 
+            LIMIT 50`,
       args: [sellerId],
     });
 
-    console.log('[my-sales] Ventas encontradas:', result.rows.length);
-
-    const sales = Array.from(result.rows);
-    
-    return NextResponse.json(sales);
+    return NextResponse.json(Array.from(result.rows));
   } catch (error: any) {
-    console.error('[my-sales] Error completo:', error);
-    
-    return NextResponse.json({ 
+    console.error('[my-sales] Error:', error);
+    return NextResponse.json({
       error: 'Error al obtener ventas',
       details: error.message
     }, { status: 500 });
