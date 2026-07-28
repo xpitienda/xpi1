@@ -251,6 +251,13 @@ export default function AdminDashboard() {
             <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #10b981', cursor: 'pointer' }}>📊 Ventas</button>
           </div>
           <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
+        <button 
+          onClick={() => router.push('/admin/banners')} 
+          style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+        >
+          <span>📢</span>
+          <span>Gestión de Banners y Anuncios</span>
+        </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
@@ -398,4 +405,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
