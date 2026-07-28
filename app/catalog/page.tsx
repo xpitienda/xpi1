@@ -39,6 +39,17 @@ async function getCategoriesTree() {
   }
 }
 
+
+async function getBanners() {
+  try {
+    const result = await turso.execute('SELECT * FROM banners WHERE is_active = 1 ORDER BY display_order ASC, created_at DESC');
+    return JSON.parse(JSON.stringify(result.rows || []));
+  } catch (error) {
+    console.error('Error cargando banners:', error);
+    return [];
+  }
+}
+
 export default async function CatalogPage(props: {
   searchParams: Promise<{ q?: string; category?: string; filter?: string }>
 }) {
@@ -110,6 +121,8 @@ export default async function CatalogPage(props: {
     products = [];
   }
 
+  const banners = await getBanners();
+
   const filters = [
     { key: '', label: '🏪 Todos', color: '#5D4037' },
     { key: 'featured', label: '⭐ Destacados', color: '#F59E0B' },
@@ -120,6 +133,34 @@ export default async function CatalogPage(props: {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #FDF6E3, #FFECD2, #FDF6E3)' }}>
       <Header />
+
+      {/* SECCIÓN DE BANNERS Y ANUNCIOS */}
+      {banners.length > 0 && (
+        <>
+          {banners.filter((b: any) => b.type === 'static').map((b: any) => (
+            <div key={b.id} style={{ background: b.background_color, color: b.text_color, padding: '12px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+              {b.link_url ? <a href={b.link_url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{b.text}</a> : b.text}
+            </div>
+          ))}
+          {banners.filter((b: any) => b.type === 'rolling').map((b: any) => (
+            <div key={b.id} style={{ background: b.background_color, color: b.text_color, padding: '12px 0', overflow: 'hidden', whiteSpace: 'nowrap', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+              <div className="marquee-content" style={{ display: 'inline-block', paddingLeft: '100%' }}>
+                <span style={{ marginRight: '50px', fontWeight: 'bold', fontSize: '1.1rem' }}>{b.text}</span>
+                <span style={{ marginRight: '50px', fontWeight: 'bold', fontSize: '1.1rem' }}>{b.text}</span>
+              </div>
+            </div>
+          ))}
+          <style>{`
+            @keyframes scroll-left {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-100%); }
+            }
+            .marquee-content {
+              animation: scroll-left 25s linear infinite;
+            }
+          `}</style>
+        </>
+      )}
       <NavBar />
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1.5rem 1rem 0 1rem' }}>
         
