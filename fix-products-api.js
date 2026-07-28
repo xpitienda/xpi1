@@ -1,4 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿const fs = require('fs');
+const path = require('path');
+
+const content = `import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 import { randomUUID } from 'crypto';
 
@@ -32,8 +35,8 @@ export async function POST(request: Request) {
     const newId = randomUUID();
 
     await turso.execute({
-      sql: `INSERT INTO catalog (id, name, description, price, stock, category, image_url, is_active) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: \`INSERT INTO catalog (id, name, description, price, stock, category, image_url, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)\`,
       args: [
         newId,
         name,
@@ -56,3 +59,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error al crear el producto: ' + error.message }, { status: 500 });
   }
 }
+`;
+
+const filePath = path.join(process.cwd(), 'app', 'api', 'admin', 'products', 'route.ts');
+fs.writeFileSync(filePath, content, 'utf8');
+console.log('✅ Archivo app/api/admin/products/route.ts corregido correctamente.');

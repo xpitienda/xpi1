@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface BatchItem {
@@ -25,6 +25,26 @@ export default function AddProductPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Cargar categorías dinámicamente desde la BD
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/admin/categories', {
+          headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCategories(data.map((c: any) => c.name));
+        }
+      } catch (err) {
+        console.error('Error cargando categorías:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
 
   // --- ESTADOS MODO MASIVO ---
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
@@ -367,12 +387,18 @@ export default function AddProductPage() {
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Categoría</label>
-                  <select name="category" style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box', background: 'white' }}>
-                    <option value="General">General</option>
-                    <option value="Ropa">Ropa</option>
-                    <option value="Calzado">Calzado</option>
-                    <option value="Accesorios">Accesorios</option>
-                  </select>
+                  <select
+                name="category"
+                style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box', background: 'white' }}
+              >
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))
+                ) : (
+                  <option value="General">General</option>
+                )}
+              </select>
                 </div>
               </div>
               <button type="submit" disabled={loading} style={{ background: '#3D1A78', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
