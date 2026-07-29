@@ -70,7 +70,7 @@ export default function AdminAdvancedBanners() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.image_url) {
       alert('⚠️ Primero debes subir una imagen');
