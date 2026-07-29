@@ -1,3 +1,4 @@
+﻿import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 import nodemailer from 'nodemailer';
@@ -12,10 +13,10 @@ export async function POST(request: Request) {
     const { sellerId, seriesId, customer, items } = await request.json();
 
     if (!seriesId) {
-      return NextResponse.json({ error: 'Serie de facturación no asignada' }, { status: 400 });
+      return NextResponse.json({ error: 'Serie de facturaciÃ³n no asignada' }, { status: 400 });
     }
 
-    // 1. Generar Número de Factura Secuencial
+    // 1. Generar NÃºmero de Factura Secuencial
     let invoiceNumber = 'ERR-000';
     let sellerName = 'Vendedor';
     try {
@@ -116,18 +117,18 @@ export async function POST(request: Request) {
 
       const htmlContent = `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb;">
         <div style="background: linear-gradient(135deg, #1e40af, #7c3aed); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
-          <h1 style="margin: 0; color: white; font-size: 28px;">🧾 Factura de Venta</h1>
+          <h1 style="margin: 0; color: white; font-size: 28px;">ðŸ§¾ Factura de Venta</h1>
           <p style="margin: 5px 0 0; color: rgba(255,255,255,0.9);">XPI Tienda - ${sellerName}</p>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
             <div><p style="margin:0; color:#666; font-size:12px">FECHA</p><p style="margin:5px 0 0; font-weight:bold">${dateStr}</p></div>
-            <div style="text-align:right"><p style="margin:0; color:#666; font-size:12px">FACTURA N°</p><p style="margin:5px 0 0; font-weight:bold; color:#1e40af; font-size:18px">${invoiceNumber}</p></div>
+            <div style="text-align:right"><p style="margin:0; color:#666; font-size:12px">FACTURA NÂ°</p><p style="margin:5px 0 0; font-weight:bold; color:#1e40af; font-size:18px">${invoiceNumber}</p></div>
           </div>
           <div style="margin-bottom: 25px">
             <p style="margin:0 0 10px; color:#666; font-size:12px">CLIENTE</p>
             <h3 style="margin:0">${customer.name}</h3>
-            <p style="margin:5px 0">📱 ${customer.phone}</p>
+            <p style="margin:5px 0">ðŸ“± ${customer.phone}</p>
           </div>
           <table style="width:100%; border-collapse:collapse; margin-bottom:25px">
             <thead><tr style="background:#7c3aed; color:white"><th style="padding:12px; text-align:left">Producto</th><th style="padding:12px; text-align:center">Cant.</th><th style="padding:12px; text-align:right">P. Unit.</th><th style="padding:12px; text-align:right">Subtotal</th></tr></thead>
@@ -150,11 +151,11 @@ export async function POST(request: Request) {
       await transporter.sendMail({
         from: `"XPI Tienda" <${process.env.EMAIL_USER}>`,
         to: process.env.ORDER_EMAIL_DESTINO,
-        subject: `🧾 Factura ${invoiceNumber} - Venta de ${customer.name}`,
+        subject: `ðŸ§¾ Factura ${invoiceNumber} - Venta de ${customer.name}`,
         html: htmlContent,
       });
     } catch (emailError: any) {
-      console.error('❌ Error enviando email (pero la venta se guardó):', emailError.message);
+      console.error('âŒ Error enviando email (pero la venta se guardÃ³):', emailError.message);
       // No lanzamos error para no bloquear la venta
     }
 
