@@ -1,4 +1,7 @@
-'use client';
+﻿const fs = require('fs');
+const path = require('path');
+
+const content = `'use client';
 
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -129,7 +132,7 @@ export default function AdminAdvancedBanners() {
   const handleDelete = async (id: string) => {
     if (!confirm('¿Eliminar este banner?')) return;
     try {
-      const res = await fetch(`/api/admin/advanced-banners?id=${id}`, {
+      const res = await fetch(\`/api/admin/advanced-banners?id=\${id}\`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
@@ -274,3 +277,9 @@ export default function AdminAdvancedBanners() {
     </div>
   );
 }
+`;
+
+const dir = path.join(process.cwd(), 'app', 'admin', 'advanced-banners');
+fs.mkdirSync(dir, { recursive: true });
+fs.writeFileSync(path.join(dir, 'page.tsx'), content, 'utf8');
+console.log('✅ Archivo completo reescrito con TODOS los tipos TypeScript correctos.');

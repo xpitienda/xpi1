@@ -1,4 +1,7 @@
-'use client';
+﻿const fs = require('fs');
+const path = require('path');
+
+const content = `'use client';
 
 import { useState, useEffect } from 'react';
 
@@ -78,3 +81,8 @@ export default function AdvancedBannersCarousel({ banners }: AdvancedBannersCaro
     </div>
   );
 }
+`;
+
+const filePath = path.join(process.cwd(), 'components', 'AdvancedBannersCarousel.tsx');
+fs.writeFileSync(filePath, content, 'utf8');
+console.log('✅ Componente AdvancedBannersCarousel reescrito con tipos TypeScript correctos.');
