@@ -1,3 +1,4 @@
+import AdvancedBannersCarousel from '@/components/AdvancedBannersCarousel';
 ﻿import NavBar from '@/components/NavBar';
 import { turso } from '@/lib/turso';
 import ProductCard from '@/components/ProductCard';
@@ -46,6 +47,25 @@ async function getBanners() {
     return JSON.parse(JSON.stringify(result.rows || []));
   } catch (error) {
     console.error('Error cargando banners:', error);
+    return [];
+  }
+}
+
+
+async function getAdvancedBanners() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const result = await turso.execute({
+      sql: `SELECT * FROM advanced_banners 
+            WHERE is_active = 1 
+            AND (start_date IS NULL OR start_date <= ?) 
+            AND (end_date IS NULL OR end_date >= ?)
+            ORDER BY display_order ASC, created_at DESC`,
+      args: [today, today]
+    });
+    return JSON.parse(JSON.stringify(result.rows || []));
+  } catch (error) {
+    console.error('Error cargando banners avanzados:', error);
     return [];
   }
 }
@@ -122,6 +142,7 @@ export default async function CatalogPage(props: {
   }
 
   const banners = await getBanners();
+  const advancedBanners = await getAdvancedBanners();
 
   const filters = [
     { key: '', label: '🏪 Todos', color: '#5D4037' },
@@ -159,6 +180,9 @@ export default async function CatalogPage(props: {
               animation: scroll-left 25s linear infinite;
             }
           `}</style>
+
+      {/* CARRUSEL DE BANNERS VISUALES (IMÁGENES) */}
+      <AdvancedBannersCarousel banners={advancedBanners} />
         </>
       )}
       <NavBar />

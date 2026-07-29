@@ -258,6 +258,14 @@ export default function AdminDashboard() {
           <span>📢</span>
           <span>Gestión de Banners y Anuncios</span>
         </button>
+        <button 
+          onClick={() => router.push('/admin/advanced-banners')} 
+          style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+        >
+          <span>🖼️</span>
+          <span>Gestión de Banners Visuales (Imágenes)</span>
+        </button>
+
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
