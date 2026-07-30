@@ -32,6 +32,8 @@ type CartContextType = {
   clearCustomerInfo: () => void;
   subtotal: number;
   total: number;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -46,6 +48,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     city: ''
   });
   const [saveCustomerData, setSaveCustomerData] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const savedCart = localStorage.getItem('xpitienda-cart');
@@ -143,7 +146,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const total = subtotal;
 
   return (
-    <CartContext.Provider value={{ cart, customerInfo, saveCustomerData, addToCart, removeFromCart, updateQuantity, clearCart, isInCart, updateCustomerInfo, toggleSaveData, clearCustomerInfo, subtotal, total }}>
+    <CartContext.Provider value={{ cart, customerInfo, saveCustomerData, addToCart, removeFromCart, updateQuantity, clearCart, isInCart, updateCustomerInfo, toggleSaveData, clearCustomerInfo, subtotal, total, isCartOpen, setIsCartOpen }}>
       {children}
     </CartContext.Provider>
   );
