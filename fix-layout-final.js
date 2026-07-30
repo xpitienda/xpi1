@@ -1,4 +1,8 @@
-import './globals.css';
+﻿const fs = require('fs');
+const path = require('path');
+
+const filePath = path.join(process.cwd(), 'app', 'layout.tsx');
+const content = `import './globals.css';
 import GlobalCartSidebar from '@/components/GlobalCartSidebar';
 import { Inter } from 'next/font/google';
 import { ToastProvider } from '@/context/ToastContext';
@@ -23,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} font-sans`}>
+      <body className={\`\${inter.variable} font-sans\`}>
         <CartProvider>
           <AdminAuthProvider>
             <ToastProvider>
@@ -38,3 +42,7 @@ export default function RootLayout({
     </html>
   );
 }
+`;
+
+fs.writeFileSync(filePath, content, 'utf8');
+console.log('✅ layout.tsx reescrito correctamente con GlobalCartSidebar dentro del CartProvider.');
