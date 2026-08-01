@@ -32,6 +32,7 @@ export default function RootLayout({
               </ImageModalProvider>
             </ToastProvider>
           </AdminAuthProvider>
+          {/* ✅ ESTO ES LO QUE FALTABA: Renderiza la barra lateral del carrito en toda la app */}
           <GlobalCartSidebar />
         </CartProvider>
       </body>
