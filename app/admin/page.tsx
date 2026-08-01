@@ -249,6 +249,7 @@ export default function AdminDashboard() {
             <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #2E7D32', cursor: 'pointer' }}>🧾 Factureros</button>
             <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #7c3aed', cursor: 'pointer' }}>👥 Vendedores</button>
             <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #10b981', cursor: 'pointer' }}>📊 Ventas</button>
+            <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #FFBE0B', cursor: 'pointer' }}>⭐ Pegatinas</button>
           </div>
           <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
         <button 
@@ -413,5 +414,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
 
