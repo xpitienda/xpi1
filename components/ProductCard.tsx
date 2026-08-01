@@ -105,10 +105,7 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Contenedor de imagen con pegatina y badges */}
       <div 
         style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
-        onClick={() => {
-          console.log('🖼️ Click en imagen:', product.name);
-          openModal(product);
-        }}
+        onClick={() => openModal(product)}
       >
         <img
           src={product.image_url || '/placeholder.jpg'}
@@ -116,7 +113,8 @@ export default function ProductCard({ product }: { product: Product }) {
           style={{
             width: '100%',
             height: '250px',
-            objectFit: 'cover',
+            objectFit: 'contain',  // ✅ CAMBIO: Muestra imagen completa
+            backgroundColor: '#f9f9f9',  // ✅ Fondo gris claro
             transition: 'transform 0.3s ease',
           }}
           onMouseEnter={(e) => {
@@ -173,7 +171,7 @@ export default function ProductCard({ product }: { product: Product }) {
         }}>
           {product.is_featured === 1 && (
             <span className="bg-[#6B2D8B] text-white text-xs font-bold px-2 py-1 rounded shadow-md">
-              ⭐ Destacado
+               Destacado
             </span>
           )}
           {product.offer_type === 'day' && (
@@ -246,7 +244,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
         {/* Stock */}
         <p style={{ fontSize: '0.75rem', color: product.stock === 0 ? '#EF4444' : '#6B7280', marginBottom: '0.75rem' }}>
-          {product.stock === 0 ? '⚠️ Agotado' : `✅ Stock: ${product.stock}`}
+          {product.stock === 0 ? '️ Agotado' : `✅ Stock: ${product.stock}`}
         </p>
 
         {/* Botón agregar al carrito */}
