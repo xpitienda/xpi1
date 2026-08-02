@@ -1,332 +1,182 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Upload, Download, FileSpreadsheet } from 'lucide-react';
 
-interface ImageItem {
-  url: string;
-  originalName: string;
-  name: string;
-  price: string;
-  stock: string;
-  description: string;
-  category: string;
-}
+export default function GenerateCSVPage() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [csvData, setCsvData] = useState<any[]>([]);
 
-export default function GenerateCsvPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [imageItems, setImageItems] = useState<ImageItem[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch('/api/admin/categories', {
-          cache: 'no-store',
-          headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
-        });
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setCategories(data.map((c: any) => c.name));
-        }
-      } catch (err) {
-        console.error('Error cargando categorías:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    setLoading(true);
-    setMessage(null);
-    setImageItems([]);
-
-    try {
-      const formData = new FormData();
-      files.forEach(file => formData.append('files', file));
-
-      const res = await fetch('/api/admin/batch-upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        const items = data.urls.map((u: { url: string; originalName: string }) => ({
-          url: u.url,
-          originalName: u.originalName,
-          name: u.originalName.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
-          price: '',
-          stock: '',
-          description: '',
-          category: categories.length > 0 ? categories[0] : 'General'
-        }));
-        
-        setImageItems(items);
-        setMessage({ type: 'success', text: `✅ ${data.count} imágenes subidas. Define los valores antes de generar el CSV.` });
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Error al subir' });
-      }
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
-    } finally {
-      setLoading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files));
     }
   };
 
-  const handleInputChange = (index: number, field: keyof ImageItem, value: string) => {
-    setImageItems(prev => prev.map((item, i) => 
-      i === index ? { ...item, [field]: value } : item
-    ));
-  };
+  const uploadSingleImage = async (file: File): Promise<{ name: string; url: string } | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file); // Nota: 'file' en singular
 
-  const applyFirstToAll = () => {
-    if (imageItems.length === 0) return;
-    
-    const firstItem = imageItems[0];
-    setImageItems(prev => prev.map((item, index) => 
-      index === 0 ? item : {
-        ...item,
-        name: firstItem.name,
-        price: firstItem.price,
-        stock: firstItem.stock,
-        description: firstItem.description,
-        category: firstItem.category
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Error al subir');
+
+      const data = await response.json();
+      if (data.success) {
+        return { name: file.name, url: data.url };
       }
-    ));
-    
-    setMessage({ type: 'success', text: `✅ Valores del primer producto aplicados a los ${imageItems.length} productos` });
+      return null;
+    } catch (error) {
+      console.error(`Error subiendo ${file.name}:`, error);
+      return null;
+    }
   };
 
-  const applyCategoryToAll = (category: string) => {
-    setImageItems(prev => prev.map(item => ({ ...item, category })));
+  const handleUpload = async () => {
+    if (files.length === 0) return;
+
+    setUploading(true);
+    setProgress(`Preparando ${files.length} imágenes para subir...`);
+
+    try {
+      const results: { name: string; url: string }[] = [];
+      const errors: string[] = [];
+
+      // Subir en lotes de 5 imágenes simultáneas
+      const batchSize = 5;
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+        setProgress(`Subiendo lote ${Math.floor(i / batchSize) + 1} de ${Math.ceil(files.length / batchSize)} (${batch.length} imágenes)...`);
+
+        const batchPromises = batch.map(file => uploadSingleImage(file));
+        const batchResults = await Promise.all(batchPromises);
+
+        batchResults.forEach((result, index) => {
+          if (result) {
+            results.push(result);
+          } else {
+            errors.push(batch[index].name);
+          }
+        });
+
+        // Pequeña pausa entre lotes
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (results.length > 0) {
+        setProgress(`✅ ¡Éxito! ${results.length} imágenes subidas. ${errors.length > 0 ? `${errors.length} fallaron.` : ''}`);
+        
+        // Generar datos para el CSV
+        const newCsvData = results.map((item) => ({
+          name: item.name.replace(/[_-]/g, ' ').replace(/\.[^/.]+$/, ''),
+          image_url: item.url,
+          price: 0,
+          stock: 1,
+          description: 'Pendiente de descripción',
+          category: 'Tecnología'
+        }));
+        
+        setCsvData(newCsvData);
+      } else {
+        setProgress(' Ninguna imagen pudo ser subida.');
+      }
+    } catch (error) {
+      setProgress('❌ Error de conexión al subir las imágenes.');
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const downloadCsv = () => {
-    if (imageItems.length === 0) return;
+  const downloadCSV = () => {
+    if (csvData.length === 0) return;
 
-    let csv = "image_url,name,price,stock,description,category\n";
+    const headers = ['name', 'image_url', 'price', 'stock', 'description', 'category'];
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => 
+        `"${row.name}","${row.image_url}",${row.price},${row.stock},"${row.description}","${row.category}"`
+      )
+    ].join('\n');
 
-    imageItems.forEach(u => {
-      csv += `${u.url},"${u.name}",${u.price || 0},${u.stock || 0},"${u.description}","${u.category}"\n`;
-    });
-
-    const link = document.createElement("a");
-    link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
-    link.download = "productos_con_urls.csv";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'catalogo_productos.csv');
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', padding: '2rem', borderRadius: '12px' }}>
-        <h1 style={{ color: '#3D1A78', marginBottom: '1rem' }}>📸 Generar CSV desde Fotos</h1>
-        <p style={{ marginBottom: '1rem' }}>Sube tus fotos. Define los valores y te daremos un CSV listo.</p>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-[#6B2D8B] flex items-center gap-2">
+        <FileSpreadsheet /> Generar CSV desde Fotos
+      </h1>
 
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleUpload}
-          disabled={loading}
-          style={{ width: '100%', padding: '1rem', border: '2px dashed #ccc', borderRadius: '8px', marginBottom: '1rem' }}
-        />
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+        <label className="block mb-4">
+          <span className="text-lg font-semibold text-gray-700 block mb-2">
+            Selecciona las imágenes del catálogo (Recomendado: 50 a la vez)
+          </span>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={uploading}
+            className="block w-full text-sm text-gray-500
+              file:mr-4 file:py-3 file:px-6
+              file:rounded-lg file:border-0
+              file:text-sm file:font-semibold
+              file:bg-[#6B2D8B] file:text-white
+              hover:file:bg-[#5a2575]
+              disabled:opacity-50 cursor-pointer"
+          />
+        </label>
 
-        {message && (
-          <div style={{
-            padding: '1rem',
-            background: message.type==='success' ? '#dcfce7' : '#fee2e2',
-            borderRadius:'8px',
-            marginBottom:'1rem'
-          }}>
-            {message.text}
-          </div>
-        )}
-
-        {imageItems.length > 0 && (
-          <div style={{ marginBottom: '2rem' }}>
-            <h2 style={{ marginBottom: '1rem', color: '#3D1A78' }}>Define los valores para cada producto:</h2>
-            
-            <div style={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-              padding: '1.5rem', 
-              borderRadius: '12px', 
-              marginBottom: '1.5rem',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <h3 style={{ color: 'white', margin: '0 0 1rem 0', fontSize: '1.1rem' }}>⚡ ¿Todos los productos tienen los mismos datos?</h3>
-              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                Edita el PRIMER producto y luego haz clic aquí para copiar sus valores a todos los demás
-              </p>
-              <button
-                onClick={applyFirstToAll}
-                style={{
-                  background: 'white',
-                  color: '#667eea',
-                  padding: '0.75rem 2rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              >
-                 Copiar primer producto a TODOS los demás
-              </button>
-            </div>
-
-            <div style={{ 
-              background: '#eff6ff', 
-              padding: '1rem', 
-              borderRadius: '8px', 
-              marginBottom: '1.5rem', 
-              border: '1px solid #bfdbfe',
-              display: 'flex',
-              gap: '1rem',
-              alignItems: 'end'
-            }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📂 Aplicar categoría a todos:</label>
-                <select
-                  onChange={(e) => applyCategoryToAll(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            {imageItems.map((item, index) => (
-              <div key={index} style={{ 
-                background: index === 0 ? '#fef3c7' : '#f9fafb',
-                padding: '1.5rem', 
-                borderRadius: '8px', 
-                marginBottom: '1rem',
-                border: index === 0 ? '2px solid #f59e0b' : '1px solid #eee'
-              }}>
-                {index === 0 && (
-                  <div style={{ 
-                    background: '#f59e0b', 
-                    color: 'white', 
-                    padding: '0.5rem', 
-                    borderRadius: '6px', 
-                    marginBottom: '1rem',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '0.9rem'
-                  }}>
-                    ⭐ PRIMER PRODUCTO - Edita aquí y usa el botón de arriba para copiar a todos
-                  </div>
-                )}
-                
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                  <img src={item.url} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', marginRight: '1rem' }} />
-                  <div>
-                    <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{item.originalName}</span>
-                    {index === 0 && <span style={{ display: 'block', fontSize: '0.8rem', color: '#f59e0b', marginTop: '0.25rem' }}>Este es el producto maestro</span>}
-                  </div>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Nombre del producto</label>
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) => handleInputChange(index, 'name', e.target.value)}
-                      style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '6px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Precio ($)</label>
-                    <input
-                      type="number"
-                      value={item.price}
-                      onChange={(e) => handleInputChange(index, 'price', e.target.value)}
-                      style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '6px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Stock</label>
-                    <input
-                      type="number"
-                      value={item.stock}
-                      onChange={(e) => handleInputChange(index, 'stock', e.target.value)}
-                      style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '6px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
-                
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Descripción</label>
-                  <textarea
-                    value={item.description}
-                    onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                    rows={2}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '6px', boxSizing: 'border-box' }}
-                  />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Categoría</label>
-                  <select
-                    value={item.category}
-                    onChange={(e) => handleInputChange(index, 'category', e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '6px', boxSizing: 'border-box', background: 'white' }}
-                  >
-                    {categories.length > 0 ? (
-                      categories.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))
-                    ) : (
-                      <option value="General">General</option>
-                    )}
-                  </select>
-                </div>
-              </div>
-            ))}
-            
-            <button
-              onClick={downloadCsv}
-              style={{
-                background: '#10B981',
-                color: 'white',
-                padding: '1rem 2rem',
-                borderRadius: '8px',
-                border: 'none',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                cursor: 'pointer',
-                width: '100%'
-              }}
-            >
-              📥 Descargar CSV con URLs y valores definidos
-            </button>
-          </div>
+        {files.length > 0 && (
+          <p className="text-sm text-gray-600 mb-4">
+            📁 {files.length} archivos seleccionados
+          </p>
         )}
 
         <button
-          onClick={() => router.push('/admin')}
-          style={{
-            marginTop: '2rem',
-            background: '#eee',
-            border: 'none',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
+          onClick={handleUpload}
+          disabled={uploading || files.length === 0}
+          className="w-full bg-[#1B8A3B] hover:bg-[#156d2e] disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2"
         >
-          ← Volver
+          <Upload size={20} />
+          {uploading ? 'Subiendo...' : 'Subir Imágenes y Generar CSV'}
         </button>
+
+        {progress && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
+            {progress}
+          </div>
+        )}
+
+        {csvData.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <button
+              onClick={downloadCSV}
+              className="w-full bg-[#6B2D8B] hover:bg-[#5a2575] text-white font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2"
+            >
+              <Download size={20} />
+              Descargar CSV ({csvData.length} productos)
+            </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Abre el CSV en Excel, edita los precios y descripciones, y luego usa "Carga Masiva" para importarlos.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
