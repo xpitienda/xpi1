@@ -105,7 +105,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         .dropdown-toggle:active { transform: scale(0.9); background: rgba(255,255,255,0.3) !important; }
         .dropdown-item:active { background: rgba(0,0,0,0.1) !important; }
       `}</style>
-      
+
       <div style={{
         position: 'sticky',
         top: 0,
@@ -136,8 +136,8 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
               alignItems: 'center',
               gap: '0.375rem',
               padding: isMobile ? '0.5rem 1rem' : '0.875rem 1.75rem',
-              background: currentCategory === 'Todas' 
-                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' 
+              background: currentCategory === 'Todas'
+                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
                 : 'rgba(255,255,255,0.1)',
               color: 'white',
               border: `2px solid ${currentCategory === 'Todas' ? '#F59E0B' : 'rgba(255,255,255,0.3)'}`,
@@ -151,7 +151,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                 : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
             }}
           >
-            <span>🏪</span>
+            <span></span>
             <span>Todas</span>
           </button>
 
@@ -181,13 +181,15 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       alignItems: 'center',
                       gap: '0.375rem',
                       padding: isMobile ? '0.5rem 0.75rem' : '0.875rem 1.25rem',
-                      background: isSelected 
+                      background: isSelected
                         ? `linear-gradient(135deg, ${colorScheme.bg} 0%, ${colorScheme.shadow} 100%)`
                         : 'rgba(255,255,255,0.1)',
                       color: 'white',
-                      border: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
+                      borderTop: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
+                      borderBottom: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
+                      borderLeft: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
+                      borderRight: hasChildren ? 'none' : `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
                       borderRadius: hasChildren ? '12px 0 0 12px' : '12px',
-                      borderRight: hasChildren ? 'none' : undefined,
                       fontSize: isMobile ? '0.875rem' : '1rem',
                       fontWeight: 'bold',
                       cursor: 'pointer',
@@ -211,7 +213,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: isMobile ? '0.5rem 0.625rem' : '0.875rem 0.75rem',
-                        background: isSelected 
+                        background: isSelected
                           ? `${colorScheme.shadow}80`
                           : 'rgba(255,255,255,0.1)',
                         color: 'white',
@@ -240,7 +242,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       minWidth: isMobile ? '100%' : '200px',
                       background: 'rgba(255,255,255,0.98)',
                       borderRadius: '12px',
-                      boxShadow: isMobile 
+                      boxShadow: isMobile
                         ? '0 4px 12px rgba(0,0,0,0.2)'
                         : '0 10px 30px rgba(0,0,0,0.3)',
                       border: `2px solid ${colorScheme.bg}`,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, Download, FileSpreadsheet, Save, CheckCircle, Sparkles, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -10,11 +10,35 @@ export default function GenerateCSVPage() {
   const [progress, setProgress] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [csvData, setCsvData] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   
-  const [bulkCategory, setBulkCategory] = useState('Tecnología');
+  const [bulkCategory, setBulkCategory] = useState('');
   const [bulkDescription, setBulkDescription] = useState('Producto de alta calidad. Consulte disponibilidad.');
   const [bulkPrice, setBulkPrice] = useState(0);
   const [bulkStock, setBulkStock] = useState(1);
+
+  // Cargar categorías desde la base de datos
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          // Extraer solo los nombres de las categorías
+          const categoryNames = data.map((cat: any) => cat.name);
+          setCategories(categoryNames);
+          // Establecer la primera categoría como valor por defecto
+          if (categoryNames.length > 0) {
+            setBulkCategory(categoryNames[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando categorías:', error);
+      }
+    };
+    
+    loadCategories();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -412,11 +436,13 @@ export default function GenerateCSVPage() {
                       color: '#374151'
                     }}
                   >
-                    <option>Tecnología</option>
-                    <option>Ropa</option>
-                    <option>Hogar</option>
-                    <option>Deportes</option>
-                    <option>Accesorios</option>
+                    {categories.length === 0 ? (
+                      <option value="">Cargando...</option>
+                    ) : (
+                      categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))
+                    )}
                   </select>
                 </div>
                 
