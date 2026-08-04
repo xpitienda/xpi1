@@ -19,6 +19,10 @@ export default function SellerDashboard() {
   
   // Nuevo estado para el buscador de productos
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // NUEVO: Estado para el modal de imagen ampliada
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
+  const [zoomedProductName, setZoomedProductName] = useState('');
 
   useEffect(() => {
     const session = localStorage.getItem('seller_session');
@@ -126,6 +130,18 @@ export default function SellerDashboard() {
     }
   };
 
+  // NUEVO: Función para abrir el modal de zoom
+  const openImageZoom = (imageUrl: string, productName: string) => {
+    setZoomedImageUrl(imageUrl);
+    setZoomedProductName(productName);
+  };
+
+  // NUEVO: Función para cerrar el modal
+  const closeImageZoom = () => {
+    setZoomedImageUrl(null);
+    setZoomedProductName('');
+  };
+
   // Filtrar productos por búsqueda
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -216,7 +232,7 @@ export default function SellerDashboard() {
               style={{ padding: '0.875rem', border: '2px solid #1e40af', borderRadius: '0.5rem', fontSize: '1rem', outline: 'none' }} 
             />
 
-            {/* CATÁLOGO VISUAL DE PRODUCTOS (Reemplaza al select) */}
+            {/* CATÁLOGO VISUAL DE PRODUCTOS */}
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
@@ -251,22 +267,58 @@ export default function SellerDashboard() {
                         textAlign: 'center'
                       }}
                     >
-                      {/* Imagen del producto */}
-                      <div style={{ 
-                        width: '100%', 
-                        height: '120px', 
-                        background: '#f3f4f6', 
-                        borderRadius: '0.5rem', 
-                        marginBottom: '0.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden'
-                      }}>
+                      {/* Imagen del producto - CLICKABLE PARA ZOOM */}
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (p.image_url) {
+                            openImageZoom(p.image_url, p.name);
+                          }
+                        }}
+                        style={{ 
+                          width: '100%', 
+                          height: '120px', 
+                          background: '#f3f4f6', 
+                          borderRadius: '0.5rem', 
+                          marginBottom: '0.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          cursor: p.image_url ? 'zoom-in' : 'default',
+                          position: 'relative'
+                        }}
+                      >
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <img 
+                            src={p.image_url} 
+                            alt={p.name} 
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'contain',
+                              transition: 'transform 0.2s'
+                            }} 
+                          />
                         ) : (
                           <span style={{ fontSize: '2rem', color: '#9ca3af' }}>📦</span>
+                        )}
+                        
+                        {/* Indicador de zoom */}
+                        {p.image_url && (
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '5px',
+                            right: '5px',
+                            background: 'rgba(30, 64, 175, 0.8)',
+                            color: 'white',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold'
+                          }}>
+                            🔍
+                          </div>
                         )}
                       </div>
                       
@@ -375,6 +427,92 @@ export default function SellerDashboard() {
           </div>
         )}
       </div>
+
+      {/* NUEVO: MODAL DE ZOOM DE IMAGEN */}
+      {zoomedImageUrl && (
+        <div 
+          onClick={closeImageZoom}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out',
+            padding: '2rem'
+          }}
+        >
+          {/* Botón cerrar */}
+          <button
+            onClick={closeImageZoom}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '40px',
+              background: 'white',
+              color: 'black',
+              border: 'none',
+              borderRadius: '50%',
+              width: '50px',
+              height: '50px',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              zIndex: 10000
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Imagen ampliada (4x el tamaño original) */}
+          <div style={{
+            background: 'white',
+            borderRadius: '1rem',
+            padding: '2rem',
+            maxWidth: '90%',
+            maxHeight: '90%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 1rem 0', 
+              fontSize: '1.25rem', 
+              fontWeight: 'bold', 
+              color: '#374151',
+              textAlign: 'center'
+            }}>
+              {zoomedProductName}
+            </h3>
+            <img 
+              src={zoomedImageUrl} 
+              alt={zoomedProductName}
+              style={{
+                width: '200%',  // 2 veces el tamaño
+                maxWidth: '1200px',  // Límite máximo
+                height: 'auto',
+                objectFit: 'contain',
+                borderRadius: '0.5rem'
+              }}
+            />
+            <p style={{ 
+              marginTop: '1rem', 
+              fontSize: '0.875rem', 
+              color: '#6b7280',
+              textAlign: 'center'
+            }}>
+               Haz clic fuera de la imagen o en la X para cerrar
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
