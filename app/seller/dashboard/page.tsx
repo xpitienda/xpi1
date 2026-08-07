@@ -237,7 +237,7 @@ export default function SellerDashboard() {
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
               gap: '1rem', 
-              maxHeight: '400px', 
+              maxHeight: '300px', 
               overflowY: 'auto', 
               padding: '0.5rem',
               border: '1px solid #e5e7eb',
@@ -495,7 +495,7 @@ export default function SellerDashboard() {
               src={zoomedImageUrl} 
               alt={zoomedProductName}
               style={{
-                width: '200%',  // 2 veces el tamaño
+                width: '150%',  // 2 veces el tamaño
                 maxWidth: '1200px',  // Límite máximo
                 height: 'auto',
                 objectFit: 'contain',
