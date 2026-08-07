@@ -296,6 +296,22 @@ export default function AdminDashboard() {
             <button onClick={() => router.push('/admin/featured')} style={{ background: '#fbbf24', color: '#1f2937', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Destacados</button>
             <button onClick={() => router.push('/admin/add-product')} style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Carga Masiva</button>
             <button onClick={() => router.push('/admin/generate-csv')} style={{ background: '#EC4899', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>CSV Fotos</button>
+            {/* ✅ NUEVO BOTÓN: PROCESADOR DE IMÁGENES */}
+            <button 
+              onClick={() => router.push('/admin/process-images')} 
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                color: 'white', 
+                padding: '0.75rem 1.5rem', 
+                borderRadius: '0.5rem', 
+                fontWeight: 'bold', 
+                border: 'none', 
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}
+            >
+              🖼️ Procesar Imágenes
+            </button>
             <button onClick={handleAddNew} style={{ background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>+ Nuevo Producto</button>
           </div>
         </div>
@@ -350,7 +366,7 @@ export default function AdminDashboard() {
 
         {products.length === 0 && (
           <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
             <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
           </div>
@@ -414,4 +430,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
