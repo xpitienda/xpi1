@@ -40,7 +40,6 @@ export default function AdminDashboard() {
 
   const fetchProducts = async () => {
     try {
-      // ✅ CORRECCIÓN 1: Evitar caché de Next.js para siempre traer datos frescos
       const res = await fetch('/api/admin/products', {
         cache: 'no-store',
         headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
@@ -77,7 +76,6 @@ export default function AdminDashboard() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Eliminar "${name}" permanentemente?`)) return;
     try {
-      // ✅ CORRECCIÓN 2: Enviar el ID como parámetro de consulta (?id=...) para que el backend lo lea bien
       const res = await fetch(`/api/admin/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
@@ -138,7 +136,6 @@ export default function AdminDashboard() {
     setUploading(true);
     try {
       const formDataUpload = new FormData();
-      // ✅ CORRECCIÓN 3: Usar 'image' en lugar de 'file' para coincidir con el backend
       formDataUpload.append('image', file);
       
       const res = await fetch('/api/admin/upload', { 
@@ -150,10 +147,9 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (res.ok && data.url) {
         setFormData(prev => ({ ...prev, image_url: data.url }));
-        // No alertamos aquí para no interrumpir el flujo, el usuario ve la preview
       } else {
         alert('Error al subir imagen: ' + (data.error || 'Error desconocido'));
-        setImagePreview(''); // Limpiar preview si falla
+        setImagePreview('');
       }
     } catch (err: any) {
       alert('Error de conexión al subir imagen: ' + err.message);
@@ -203,13 +199,11 @@ export default function AdminDashboard() {
           setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...bodyData, id: editingProduct.id } : p));
           alert('Producto actualizado');
         } else {
-          // ✅ Usamos el ID que devuelve el backend, no Date.now()
           setProducts(prev => [...prev, { ...bodyData, id: responseData.id }]);
           alert('Producto creado correctamente');
         }
         setShowModal(false);
         setImagePreview('');
-        // Recargar para asegurar consistencia
         fetchProducts(); 
       } else {
         alert('Error: ' + (responseData.error || 'Error al guardar'));
@@ -266,7 +260,6 @@ export default function AdminDashboard() {
           <span>🖼️</span>
           <span>Gestión de Banners Visuales (Imágenes)</span>
         </button>
-
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
@@ -292,26 +285,53 @@ export default function AdminDashboard() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Gestión de Productos</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <button onClick={() => router.push('/admin/featured')} style={{ background: '#fbbf24', color: '#1f2937', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Destacados</button>
             <button onClick={() => router.push('/admin/add-product')} style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Carga Masiva</button>
             <button onClick={() => router.push('/admin/generate-csv')} style={{ background: '#EC4899', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>CSV Fotos</button>
-            {/* ✅ NUEVO BOTÓN: PROCESADOR DE IMÁGENES */}
-            <button 
-              onClick={() => router.push('/admin/process-images')} 
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-              }}
-            >
-              🖼️ Procesar Imágenes
-            </button>
+            
+            {/* ✅ SECCIÓN INDEPENDIENTE: PROCESADORES DE IMÁGENES */}
+            <div style={{ display: 'flex', gap: '0.5rem', borderLeft: '2px solid #e5e7eb', paddingLeft: '1rem' }}>
+              <button 
+                onClick={() => router.push('/admin/process-images')} 
+                style={{ 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                  color: 'white', 
+                  padding: '0.75rem 1.5rem', 
+                  borderRadius: '0.5rem', 
+                  fontWeight: 'bold', 
+                  border: 'none', 
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                title="Procesa y comprime imágenes en tu PC, descarga un ZIP"
+              >
+                💻 Procesador Local
+              </button>
+              <button 
+                onClick={() => router.push('/admin/process-images-cloud')} 
+                style={{ 
+                  background: 'linear-gradient(135deg, #059669, #10b981)', 
+                  color: 'white', 
+                  padding: '0.75rem 1.5rem', 
+                  borderRadius: '0.5rem', 
+                  fontWeight: 'bold', 
+                  border: 'none', 
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                title="Comprime y sube imágenes directamente a Cloudflare R2 desde el navegador"
+              >
+                ☁️ Procesador Cloud
+              </button>
+            </div>
+
             <button onClick={handleAddNew} style={{ background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>+ Nuevo Producto</button>
           </div>
         </div>
@@ -366,7 +386,7 @@ export default function AdminDashboard() {
 
         {products.length === 0 && (
           <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
             <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
           </div>
