@@ -11,15 +11,26 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: false,
 });
 
+// 1. OBLIGAMOS A QUE LAS VARIABLES EXISTAN
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'xpitienda-images';
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // <-- CORREGIDO: Usar variable de entorno
 
 export async function POST(request: Request) {
   try {
+    // 2. VALIDACIÓN: Si faltan credenciales, fallamos antes de intentar subir
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_PUBLIC_URL) {
+      console.error("🔴 FALTAN VARIABLES DE ENTORNO DE R2 EN VERCEL");
+      return NextResponse.json(
+        { error: 'Configuración del servidor incompleta (Faltan credenciales R2)' }, 
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
-    const file = formData.get('file') as File; // Nota: 'file' en singular
+    const file = formData.get('file') as File;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -35,8 +46,8 @@ export async function POST(request: Request) {
       region: 'auto',
       endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID!,
-        secretAccessKey: R2_SECRET_ACCESS_KEY!,
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
       },
       requestHandler: new NodeHttpHandler({
         httpsAgent: httpsAgent,
@@ -50,13 +61,17 @@ export async function POST(request: Request) {
       ContentType: file.type,
     }));
 
-    const url = `https://pub-aa262763875e4dc4ab1d8c212bad2fa0.r2.dev/${key}`;
+    // 3. URL CORREGIDA: Usa la variable de entorno, no una fija
+    const url = `${R2_PUBLIC_URL}/${key}`;
 
-    console.log(`✅ Imagen subida: ${url}`);
+    console.log(`✅ Imagen subida exitosamente: ${url}`);
     return NextResponse.json({ success: true, url });
 
   } catch (error: any) {
-    console.error("🔴 ERROR:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("🔴 ERROR UPLOAD R2:", error.message);
+    return NextResponse.json(
+      { error: error.message || 'Error subiendo la imagen a R2' }, 
+      { status: 500 }
+    );
   }
 }
