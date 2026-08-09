@@ -25,6 +25,8 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
+  const [showMainMenu, setShowMainMenu] = useState(false);
+  const [showProductsMenu, setShowProductsMenu] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -236,32 +238,25 @@ export default function AdminDashboard() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #f0fdf4)', padding: '1.5rem' }}>
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Panel de Control</h1>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #16a34a', cursor: 'pointer' }}>📂 Categorías</button>
-            <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #2E7D32', cursor: 'pointer' }}>🧾 Factureros</button>
-            <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #7c3aed', cursor: 'pointer' }}>👥 Vendedores</button>
-            <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #10b981', cursor: 'pointer' }}>📊 Ventas</button>
-            <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #FFBE0B', cursor: 'pointer' }}>⭐ Pegatinas</button>
+        {/* HEADER */}
+        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0 }}>Panel de Control</h1>
+            <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
           </div>
-          <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
-        <button 
-          onClick={() => router.push('/admin/banners')} 
-          style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-        >
-          <span>📢</span>
-          <span>Gestión de Banners y Anuncios</span>
-        </button>
-        <button 
-          onClick={() => router.push('/admin/advanced-banners')} 
-          style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-        >
-          <span>️</span>
-          <span>Gestión de Banners Visuales (Imágenes)</span>
-        </button>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600' }}>
+            <input 
+              type="checkbox" 
+              checked={showMainMenu} 
+              onChange={(e) => setShowMainMenu(e.target.checked)}
+              title="Selecciona para mostrar u ocultar el Menú Principal (Categorías, Factureros, Vendedores, Ventas, Pegatinas, Banners)"
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+            />
+            <span>Mostrar Menú Principal</span>
+          </label>
         </div>
 
+        {/* MÉTRICAS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           <div style={cardStyle}>
             <div style={labelStyle}>Total Productos</div>
@@ -272,7 +267,7 @@ export default function AdminDashboard() {
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: lowStockCount > 0 ? '#d97706' : '#15803d' }}>{lowStockCount}</div>
           </div>
           <div style={{ ...cardStyle, border: outOfStockCount > 0 ? '2px solid #dc2626' : 'none' }}>
-            <div style={labelStyle}> Sin Stock (0)</div>
+            <div style={labelStyle}>🚫 Sin Stock (0)</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: outOfStockCount > 0 ? '#dc2626' : '#15803d' }}>{outOfStockCount}</div>
           </div>
           <div style={cardStyle}>
@@ -283,224 +278,142 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Gestión de Productos</h2>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <button onClick={() => router.push('/admin/featured')} style={{ background: '#fbbf24', color: '#1f2937', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Destacados</button>
-            <button onClick={() => router.push('/admin/add-product')} style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Carga Masiva</button>
-            <button onClick={() => router.push('/admin/generate-csv')} style={{ background: '#EC4899', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>CSV Fotos</button>
-            
-            {/* BOTÓN: Backups */}
-            <button 
-              onClick={() => router.push('/admin/backups')} 
-              style={{ 
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(245, 158, 11, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              title="Crear y gestionar backups de la base de datos e imágenes"
-            >
-              <span>💾</span>
-              <span>Backups</span>
-            </button>
-
-            {/* BOTÓN: Backup ZIP (Descarga directa) */}
-            <button 
-              onClick={() => router.push('/admin/backups-download')} 
-              style={{ 
-                background: 'linear-gradient(135deg, #06b6d4, #0891b2)', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(6, 182, 212, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              title="Crear backup completo y descargarlo como ZIP"
-            >
-              <span>📥</span>
-              <span>Backup ZIP</span>
-            </button>
-
-            {/* BOTÓN: Programar Backups */}
-            <button 
-              onClick={() => router.push('/admin/backup-schedule')} 
-              style={{ 
-                background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(139, 92, 246, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              title="Configurar backups automáticos"
-            >
-              <span>⏰</span>
-              <span>Programar Backups</span>
-            </button>
-
-            {/* BOTÓN: Historial de Backups */}
-            <button 
-              onClick={() => router.push('/admin/backups-history')} 
-              style={{ 
-                background: 'linear-gradient(135deg, #ec4899, #be185d)', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(236, 72, 153, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              title="Ver y gestionar backups automáticos"
-            >
-              <span>📦</span>
-              <span>Historial Backups</span>
-            </button>
-
-            {/* BOTÓN: Eliminación Masiva por Categoría */}
-            <button 
-              onClick={() => router.push('/admin/delete-by-category')} 
-              style={{ 
-                background: 'linear-gradient(135deg, #dc2626, #991b1b)', 
-                color: 'white', 
-                padding: '0.75rem 1.5rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 'bold', 
-                border: '2px solid #7f1d1d',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(220, 38, 38, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              title="Elimina todos los productos de una categoría (incluye imágenes de R2)"
-            >
-              <span>🗑️</span>
-              <span>Borrar por Categoría</span>
-            </button>
-
-            {/* SECCIÓN INDEPENDIENTE: PROCESADORES DE IMÁGENES */}
-            <div style={{ display: 'flex', gap: '0.5rem', borderLeft: '2px solid #e5e7eb', paddingLeft: '1rem' }}>
-              <button 
-                onClick={() => router.push('/admin/process-images')} 
-                style={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                  color: 'white', 
-                  padding: '0.75rem 1.5rem', 
-                  borderRadius: '0.5rem', 
-                  fontWeight: 'bold', 
-                  border: 'none', 
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-                title="Procesa y comprime imágenes en tu PC, descarga un ZIP"
-              >
-                💻 Procesador Local
-              </button>
-              <button 
-                onClick={() => router.push('/admin/process-images-cloud')} 
-                style={{ 
-                  background: 'linear-gradient(135deg, #059669, #10b981)', 
-                  color: 'white', 
-                  padding: '0.75rem 1.5rem', 
-                  borderRadius: '0.5rem', 
-                  fontWeight: 'bold', 
-                  border: 'none', 
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-                title="Comprime y sube imágenes directamente a Cloudflare R2 desde el navegador"
-              >
-                ☁️ Procesador Cloud
-              </button>
+        {/* CONTENEDOR PRINCIPAL CON MENÚS */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+          
+          {/* MENÚ PRINCIPAL (Izquierda) */}
+          {showMainMenu && (
+            <div style={{ 
+              width: '200px', 
+              background: 'white', 
+              padding: '1rem', 
+              borderRadius: '0.75rem', 
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+              position: 'sticky',
+              top: '1rem'
+            }}>
+              <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📂 Categorías</button>
+              <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🧾 Factureros</button>
+              <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>👥 Vendedores</button>
+              <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📊 Ventas</button>
+              <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>⭐ Pegatinas</button>
+              <button onClick={() => router.push('/admin/banners')} style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📢 Banners</button>
+              <button onClick={() => router.push('/admin/advanced-banners')} style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🖼️ Banners Visual</button>
             </div>
+          )}
 
-            <button onClick={handleAddNew} style={{ background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>+ Nuevo Producto</button>
-          </div>
-        </div>
+          {/* CONTENIDO PRINCIPAL */}
+          <div style={{ flex: 1 }}>
+            
+            {/* GESTIÓN DE PRODUCTOS */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Gestión de Productos</h2>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={showProductsMenu} 
+                    onChange={(e) => setShowProductsMenu(e.target.checked)}
+                    title="Selecciona para mostrar u ocultar el Menú de Productos (Destacados, Backups, Procesadores, Nuevo Producto, etc.)"
+                    style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                  />
+                  <span>Mostrar Menú de Productos</span>
+                </label>
+              </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-          {products.map((product) => {
-            const hasImageError = imageError[product.id];
-            const showPlaceholder = !product.image_url || hasImageError;
-            return (
-              <div key={product.id} style={{ background: 'white', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '2px solid #16a34a', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ height: '192px', position: 'relative', background: showPlaceholder ? '#e5e7eb' : '#f3f4f6' }}>
-                  {showPlaceholder ? (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>📷</div>
-                  ) : (
-                    <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
-                  )}
-
-                  {product.stock === 0 && product.is_active === 1 && (
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                      🚫 SIN STOCK
-                    </div>
-                  )}
-                  {product.stock > 0 && product.stock <= 5 && product.is_active === 1 && (
-                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-                      ⚠️ Stock: {product.stock}
-                    </div>
-                  )}
-                  {!product.is_active && (
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                      INACTIVO
-                    </div>
-                  )}
-                </div>
-                <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{product.name}</h3>
-                    <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.5rem' }}>{product.category}</p>
-                    <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '1.3rem' }}>${product.price.toLocaleString()}</p>
-                    <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : (product.stock <= 5 ? '#d97706' : '#16a34a') }}>
-                      Stock: {product.stock}
-                    </p>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                
+                {/* MENÚ DE PRODUCTOS */}
+                {showProductsMenu && (
+                  <div style={{ 
+                    width: '180px', 
+                    background: 'white', 
+                    padding: '1rem', 
+                    borderRadius: '0.75rem', 
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    position: 'sticky',
+                    top: '1rem'
+                  }}>
+                    <button onClick={() => router.push('/admin/featured')} style={{ background: '#fbbf24', color: '#1f2937', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>⭐ Destacados</button>
+                    <button onClick={() => router.push('/admin/add-product')} style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📦 Carga Masiva</button>
+                    <button onClick={() => router.push('/admin/generate-csv')} style={{ background: '#EC4899', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📷 CSV Fotos</button>
+                    <button onClick={() => router.push('/admin/backups')} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>💾 Backups</button>
+                    <button onClick={() => router.push('/admin/backups-download')} style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}> Backup ZIP</button>
+                    <button onClick={() => router.push('/admin/backup-schedule')} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>⏰ Programar</button>
+                    <button onClick={() => router.push('/admin/backups-history')} style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📦 Historial</button>
+                    <button onClick={() => router.push('/admin/delete-by-category')} style={{ background: 'linear-gradient(135deg, #dc2626, #991b1b)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>🗑️ Borrar por Categoría</button>
+                    <button onClick={() => router.push('/admin/process-images')} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>💻 Procesador Local</button>
+                    <button onClick={() => router.push('/admin/process-images-cloud')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>️ Procesador Cloud</button>
+                    <button onClick={handleAddNew} style={{ background: '#16a34a', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>➕ Nuevo Producto</button>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
-                    <button onClick={() => handleDelete(product.id, product.name)} style={{ flex: 1, background: '#dc2626', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Eliminar</button>
-                  </div>
+                )}
+
+                {/* GRID DE PRODUCTOS */}
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                  {products.map((product) => {
+                    const hasImageError = imageError[product.id];
+                    const showPlaceholder = !product.image_url || hasImageError;
+                    return (
+                      <div key={product.id} style={{ background: 'white', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '2px solid #16a34a', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ height: '192px', position: 'relative', background: showPlaceholder ? '#e5e7eb' : '#f3f4f6' }}>
+                          {showPlaceholder ? (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>📷</div>
+                          ) : (
+                            <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
+                          )}
+
+                          {product.stock === 0 && product.is_active === 1 && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                              🚫 SIN STOCK
+                            </div>
+                          )}
+                          {product.stock > 0 && product.stock <= 5 && product.is_active === 1 && (
+                            <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                              ⚠️ Stock: {product.stock}
+                            </div>
+                          )}
+                          {!product.is_active && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                              INACTIVO
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                          <div>
+                            <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{product.name}</h3>
+                            <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.5rem' }}>{product.category}</p>
+                            <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '1.3rem' }}>${product.price.toLocaleString()}</p>
+                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : (product.stock <= 5 ? '#d97706' : '#16a34a') }}>
+                              Stock: {product.stock}
+                            </p>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                            <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
+                            <button onClick={() => handleDelete(product.id, product.name)} style={{ flex: 1, background: '#dc2626', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Eliminar</button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
 
-        {products.length === 0 && (
-          <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
-            <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
+            {products.length === 0 && (
+              <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
+                <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {showModal && (
