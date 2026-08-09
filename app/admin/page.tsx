@@ -272,7 +272,7 @@ export default function AdminDashboard() {
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: lowStockCount > 0 ? '#d97706' : '#15803d' }}>{lowStockCount}</div>
           </div>
           <div style={{ ...cardStyle, border: outOfStockCount > 0 ? '2px solid #dc2626' : 'none' }}>
-            <div style={labelStyle}> Sin Stock (0)</div>
+            <div style={labelStyle}>🚫 Sin Stock (0)</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: outOfStockCount > 0 ? '#dc2626' : '#15803d' }}>{outOfStockCount}</div>
           </div>
           <div style={cardStyle}>
@@ -312,7 +312,7 @@ export default function AdminDashboard() {
               <span>Backups</span>
             </button>
 
-            {/* 🆕 NUEVO BOTÓN: Backup ZIP (Descarga directa) */}
+            {/*  NUEVO BOTÓN: Backup ZIP (Descarga directa) */}
             <button 
               onClick={() => router.push('/admin/backups-download')} 
               style={{ 
@@ -334,7 +334,29 @@ export default function AdminDashboard() {
               <span>Backup ZIP</span>
             </button>
 
-            {/* 🆕 NUEVO BOTÓN: Eliminación Masiva por Categoría */}
+            {/*  NUEVO BOTÓN: Programar Backups */}
+            <button 
+              onClick={() => router.push('/admin/backup-schedule')} 
+              style={{ 
+                background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', 
+                color: 'white', 
+                padding: '0.75rem 1.5rem', 
+                borderRadius: '0.5rem', 
+                fontWeight: 'bold', 
+                border: 'none', 
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(139, 92, 246, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+              title="Configurar backups automáticos"
+            >
+              <span>⏰</span>
+              <span>Programar Backups</span>
+            </button>
+
+            {/*  NUEVO BOTÓN: Eliminación Masiva por Categoría */}
             <button 
               onClick={() => router.push('/admin/delete-by-category')} 
               style={{ 
