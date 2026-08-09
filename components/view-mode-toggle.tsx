@@ -13,7 +13,7 @@ export default function ViewModeToggle() {
 
   const getIcon = () => {
     if (viewMode === 'auto') return '🤖';
-    if (viewMode === 'desktop') return '';
+    if (viewMode === 'desktop') return '💻';
     return '📱';
   };
 
@@ -33,7 +33,7 @@ export default function ViewModeToggle() {
       title={`Modo: ${getLabel()}. Clic para cambiar`}
       style={{
         position: 'fixed',
-        bottom: '20px',
+        bottom: '80px',
         right: '20px',
         width: '60px',
         height: '60px',
