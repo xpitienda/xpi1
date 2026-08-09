@@ -1,11 +1,10 @@
 // app/api/cron/backup/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
 import { Readable } from 'stream';
 
-// Cliente R2 para imágenes
 const R2 = new S3Client({
   region: 'auto',
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -16,21 +15,21 @@ const R2 = new S3Client({
 });
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'xpitienda-images';
-const BACKUP_BUCKET_NAME = 'xpitienda-backups';
 
-export async function POST() {
+// Exportar la función para reutilizarla
+export async function executeBackup() {
   try {
     // 1. Verificar si está habilitado
     const scheduleResult = await turso.execute('SELECT * FROM backup_schedule LIMIT 1');
     
     if (scheduleResult.rows.length === 0) {
-      return NextResponse.json({ skipped: true, message: 'No hay configuración' });
+      return { skipped: true, message: 'No hay configuración' };
     }
 
     const schedule = scheduleResult.rows[0] as any;
     
     if (!schedule.enabled) {
-      return NextResponse.json({ skipped: true, message: 'Backups deshabilitados' });
+      return { skipped: true, message: 'Backups deshabilitados' };
     }
 
     // Verificar si ya se hizo el backup hoy
@@ -40,13 +39,13 @@ export async function POST() {
     if (lastBackup) {
       const hoursSinceLast = (now.getTime() - lastBackup.getTime()) / (1000 * 60 * 60);
       if (hoursSinceLast < 24) {
-        return NextResponse.json({ skipped: true, message: 'Backup ya realizado hoy' });
+        return { skipped: true, message: 'Backup ya realizado hoy' };
       }
     }
 
     // 2. Crear el backup
     const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const zipName = `backup-${timestamp}.zip`;
+    const zipName = `backups/backup-${timestamp}.zip`;  // ← Guardar en carpeta backups/
     const zip = new JSZip();
 
     // Exportar base de datos
@@ -135,11 +134,11 @@ export async function POST() {
     // Generar ZIP
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
-    // 3. SUBIR EL ZIP AL BUCKET DE BACKUPS EN R2
+    // 3. SUBIR EL ZIP AL MISMO BUCKET (en carpeta backups/)
     try {
       await R2.send(new PutObjectCommand({
-        Bucket: BACKUP_BUCKET_NAME,
-        Key: zipName,
+        Bucket: BUCKET_NAME,  // ← Usar el mismo bucket
+        Key: zipName,  // ← Ya incluye "backups/" al inicio
         Body: zipBuffer,
         ContentType: 'application/zip',
       }));
@@ -156,7 +155,7 @@ export async function POST() {
       args: [now.toISOString(), zipBuffer.length],
     });
 
-    return NextResponse.json({
+    return {
       success: true,
       message: `Backup automático completado y guardado en R2`,
       timestamp,
@@ -164,7 +163,7 @@ export async function POST() {
       tables: tables.rows.length,
       images: downloaded,
       zipSize: zipBuffer.length,
-    });
+    };
 
   } catch (error: any) {
     console.error('Error en backup automático:', error);
@@ -181,6 +180,27 @@ export async function POST() {
       console.error('Error actualizando estado:', dbError);
     }
     
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return { error: error.message };
   }
+}
+
+// Aceptar tanto GET como POST
+export async function GET() {
+  const result = await executeBackup();
+  
+  if ('error' in result) {
+    return NextResponse.json(result, { status: 500 });
+  }
+  
+  return NextResponse.json(result);
+}
+
+export async function POST() {
+  const result = await executeBackup();
+  
+  if ('error' in result) {
+    return NextResponse.json(result, { status: 500 });
+  }
+  
+  return NextResponse.json(result);
 }
