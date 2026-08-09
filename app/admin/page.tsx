@@ -257,7 +257,7 @@ export default function AdminDashboard() {
           onClick={() => router.push('/admin/advanced-banners')} 
           style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
         >
-          <span>🖼️</span>
+          <span>️</span>
           <span>Gestión de Banners Visuales (Imágenes)</span>
         </button>
         </div>
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: lowStockCount > 0 ? '#d97706' : '#15803d' }}>{lowStockCount}</div>
           </div>
           <div style={{ ...cardStyle, border: outOfStockCount > 0 ? '2px solid #dc2626' : 'none' }}>
-            <div style={labelStyle}>🚫 Sin Stock (0)</div>
+            <div style={labelStyle}> Sin Stock (0)</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: outOfStockCount > 0 ? '#dc2626' : '#15803d' }}>{outOfStockCount}</div>
           </div>
           <div style={cardStyle}>
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
             <button onClick={() => router.push('/admin/add-product')} style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Carga Masiva</button>
             <button onClick={() => router.push('/admin/generate-csv')} style={{ background: '#EC4899', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>CSV Fotos</button>
             
-            {/*  NUEVO BOTÓN: Backups */}
+            {/* BOTÓN: Backups */}
             <button 
               onClick={() => router.push('/admin/backups')} 
               style={{ 
@@ -312,7 +312,7 @@ export default function AdminDashboard() {
               <span>Backups</span>
             </button>
 
-            {/*  NUEVO BOTÓN: Backup ZIP (Descarga directa) */}
+            {/* BOTÓN: Backup ZIP (Descarga directa) */}
             <button 
               onClick={() => router.push('/admin/backups-download')} 
               style={{ 
@@ -334,7 +334,7 @@ export default function AdminDashboard() {
               <span>Backup ZIP</span>
             </button>
 
-            {/*  NUEVO BOTÓN: Programar Backups */}
+            {/* BOTÓN: Programar Backups */}
             <button 
               onClick={() => router.push('/admin/backup-schedule')} 
               style={{ 
@@ -356,7 +356,29 @@ export default function AdminDashboard() {
               <span>Programar Backups</span>
             </button>
 
-            {/*  NUEVO BOTÓN: Eliminación Masiva por Categoría */}
+            {/* BOTÓN: Historial de Backups */}
+            <button 
+              onClick={() => router.push('/admin/backups-history')} 
+              style={{ 
+                background: 'linear-gradient(135deg, #ec4899, #be185d)', 
+                color: 'white', 
+                padding: '0.75rem 1.5rem', 
+                borderRadius: '0.5rem', 
+                fontWeight: 'bold', 
+                border: 'none', 
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(236, 72, 153, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+              title="Ver y gestionar backups automáticos"
+            >
+              <span>📦</span>
+              <span>Historial Backups</span>
+            </button>
+
+            {/* BOTÓN: Eliminación Masiva por Categoría */}
             <button 
               onClick={() => router.push('/admin/delete-by-category')} 
               style={{ 
@@ -378,7 +400,7 @@ export default function AdminDashboard() {
               <span>Borrar por Categoría</span>
             </button>
 
-            {/* ✅ SECCIÓN INDEPENDIENTE: PROCESADORES DE IMÁGENES */}
+            {/* SECCIÓN INDEPENDIENTE: PROCESADORES DE IMÁGENES */}
             <div style={{ display: 'flex', gap: '0.5rem', borderLeft: '2px solid #e5e7eb', paddingLeft: '1rem' }}>
               <button 
                 onClick={() => router.push('/admin/process-images')} 
