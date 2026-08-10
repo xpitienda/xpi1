@@ -4,7 +4,6 @@ import ProductCard from './ProductCard';
 import { useViewMode } from '@/lib/view-mode-context';
 
 export default function ProductGrid({ products }: { products: any[] }) {
-  // 1. Leemos el modo de vista actual
   const { isDesktop, isMobile } = useViewMode();
 
   if (products.length === 0) {
@@ -18,10 +17,7 @@ export default function ProductGrid({ products }: { products: any[] }) {
     );
   }
 
-  // 2. Definimos estilos dinámicos según el modo
-  // Si es forzado Desktop o Auto en PC (>=1024px)
   const isForcedDesktop = isDesktop;
-  // Si es forzado Móvil
   const isForcedMobile = isMobile;
 
   return (
@@ -29,8 +25,9 @@ export default function ProductGrid({ products }: { products: any[] }) {
       <div 
         className="product-grid"
         style={{
-          // Si el usuario forzó un modo, aplicamos estilos en línea que ganan a CSS
-          ...(isForcedDesktop ? { gridTemplateColumns: 'repeat(5, 1fr)', gap: '1.5rem' } : {}),
+          // 3 columnas en modo PC forzado (equilibrio perfecto para celular)
+          ...(isForcedDesktop ? { gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' } : {}),
+          // 2 columnas en modo móvil forzado
           ...(isForcedMobile ? { gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' } : {}),
         }}
       >
@@ -43,12 +40,10 @@ export default function ProductGrid({ products }: { products: any[] }) {
         .product-grid {
           display: grid;
           margin-top: 2rem;
-          /* Valores por defecto (se usan en modo Auto o si fallan los inline styles) */
           grid-template-columns: repeat(2, 1fr);
           gap: 0.75rem;
         }
         
-        /* 3. Solo aplicamos media queries si NO se forzó un modo específico (Modo Auto) */
         ${!isForcedDesktop && !isForcedMobile ? `
           @media (min-width: 640px) {
             .product-grid {
