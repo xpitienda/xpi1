@@ -1,11 +1,8 @@
-'use client';
+﻿'use client';
 
 import ProductCard from './ProductCard';
-import { useViewMode } from '@/lib/view-mode-context';
 
 export default function ProductGrid({ products }: { products: any[] }) {
-  const { isDesktop, isMobile } = useViewMode();
-
   if (products.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '4rem 0' }}>
@@ -17,47 +14,32 @@ export default function ProductGrid({ products }: { products: any[] }) {
     );
   }
 
-  const isForcedDesktop = isDesktop;
-  const isForcedMobile = isMobile;
-
   return (
     <>
-      <div 
-        className="product-grid"
-        style={{
-          // 3 columnas en modo PC forzado (equilibrio perfecto para celular)
-          ...(isForcedDesktop ? { gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' } : {}),
-          // 2 columnas en modo móvil forzado
-          ...(isForcedMobile ? { gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' } : {}),
-        }}
-      >
+      <div className="product-grid">
         {products.map((product: any) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
-      
       <style jsx>{`
         .product-grid {
           display: grid;
-          margin-top: 2rem;
           grid-template-columns: repeat(2, 1fr);
           gap: 0.75rem;
+          margin-top: 2rem;
         }
-        
-        ${!isForcedDesktop && !isForcedMobile ? `
-          @media (min-width: 640px) {
-            .product-grid {
-              grid-template-columns: repeat(3, 1fr);
-              gap: 1rem;
-            }
+        @media (min-width: 640px) {
+          .product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
           }
-          @media (min-width: 1024px) {
-            .product-grid {
-              grid-template-columns: repeat(5, 1fr);
-              gap: 1.5rem;
-            }
+        }
+        @media (min-width: 1024px) {
+          .product-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
           }
-        ` : ''}
+        }
       `}</style>
     </>
   );
