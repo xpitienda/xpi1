@@ -18,7 +18,8 @@ export default function ProductGrid({ products, viewMode = 'grid' }: ProductGrid
   }
 
   // Estilos del contenedor según el modo de vista
-  const getContainerStyle = () => {
+  // CORRECCIÓN: Agregamos el tipo React.CSSProperties para que TypeScript no se queje
+  const getContainerStyle = (): React.CSSProperties => {
     switch (viewMode) {
       case 'list':
         return {
@@ -35,8 +36,8 @@ export default function ProductGrid({ products, viewMode = 'grid' }: ProductGrid
           scrollSnapType: 'x mandatory',
           scrollbarWidth: 'thin',
           scrollbarColor: '#6B2D8B #F3E8FF',
-          WebkitOverflowScrolling: 'touch', // Suavidad en iOS
-        };
+          WebkitOverflowScrolling: 'touch',
+        } as React.CSSProperties; // Cast de seguridad para propiedades no estándar
       case 'grid':
       default:
         return {
@@ -50,18 +51,15 @@ export default function ProductGrid({ products, viewMode = 'grid' }: ProductGrid
   return (
     <div style={getContainerStyle()}>
       {products.map((product) => (
-        <div 
-          key={product.id} 
+        <div
+          key={product.id}
           style={{
-            // En carrusel, las tarjetas tienen ancho fijo y no se encogen
             flex: viewMode === 'carousel' ? '0 0 280px' : '1',
             scrollSnapAlign: viewMode === 'carousel' ? 'start' : undefined,
-            // En lista, ocupan todo el ancho disponible
             width: viewMode === 'list' ? '100%' : 'auto',
             transition: 'all 0.3s ease',
-          }}
+          } as React.CSSProperties}
         >
-          {/* Pasamos viewMode al ProductCard para que se adapte internamente si lo necesita */}
           <ProductCard product={product} viewMode={viewMode} />
         </div>
       ))}

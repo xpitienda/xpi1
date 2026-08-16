@@ -22,12 +22,16 @@ export async function POST(req: Request) {
 
     // Generar la URL de rastreo web (Opción A - URL simple)
     let trackingUrl = '';
-    if (company.api_endpoint && company.api_endpoint.includes('{tracking}')) {
-      trackingUrl = company.api_endpoint.replace('{tracking}', encodeURIComponent(trackingNumber));
+    
+    // CORRECCIÓN: Convertir a string para evitar el error de TypeScript con valores null
+    const apiEndpoint = String(company.api_endpoint || '');
+    
+    if (apiEndpoint && apiEndpoint.includes('{tracking}')) {
+      trackingUrl = apiEndpoint.replace('{tracking}', encodeURIComponent(trackingNumber));
     } else {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Esta empresa no tiene configurada una URL de rastreo válida',
-        companyName: company.name 
+        companyName: company.name
       }, { status: 400 });
     }
 
