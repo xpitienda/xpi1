@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -10,11 +10,13 @@ export default function NavBar() {
   const router = useRouter();
   const { cart } = useCart();
 
-  // Determinar índice inicial basado en la ruta
+  // Determinar índice inicial basado en la ruta (Actualizado para 6 pestañas)
   const getInitialIndex = () => {
     if (pathname === '/catalog' || pathname?.startsWith('/catalog')) return 1;
     if (pathname === '/vender' || pathname?.startsWith('/vender')) return 2;
-    if (pathname === '/cart') return 3;
+    if (pathname === '/tracking' || pathname?.startsWith('/tracking')) return 3;
+    if (pathname === '/my-orders' || pathname?.startsWith('/my-orders')) return 4;
+    if (pathname === '/cart' || pathname?.startsWith('/cart')) return 5;
     return 0;
   };
 
@@ -23,10 +25,13 @@ export default function NavBar() {
   const cartItems = (cart as any)?.items?.length || 0;
   const cartIcon = cartItems > 0 ? '/car2.png' : '/car1.png';
 
+  // Nuevas pestañas agregadas: Rastrear y Pedidos
   const tabs = [
     { name: 'Inicio', icon: '🏠', path: '/' },
-    { name: 'Catálogo', icon: '', path: '/catalog' },
+    { name: 'Catálogo', icon: '🛍️', path: '/catalog' },
     { name: 'Vender', icon: '💰', path: '/vender' },
+    { name: 'Rastrear', icon: '📍', path: '/tracking' },
+    { name: 'Pedidos', icon: '📋', path: '/my-orders' },
     { name: 'Carrito', icon: cartIcon, isImage: true, path: '/cart' },
   ];
 
@@ -40,14 +45,14 @@ export default function NavBar() {
   };
 
   return (
-    <nav style={{ 
-      position: 'fixed', 
-      bottom: '1rem', 
-      left: '50%', 
+    <nav style={{
+      position: 'fixed',
+      bottom: '1rem',
+      left: '50%',
       transform: 'translateX(-50%)',
       width: '90%',
       maxWidth: '28rem',
-      zIndex: 50 
+      zIndex: 50
     }}>
       {/* Barra Naranja con efecto 3D de Canal (Groove) */}
       <div style={{
@@ -62,18 +67,18 @@ export default function NavBar() {
         border: '1px solid rgba(255,255,255,0.1)',
         padding: '0.5rem 0',
       }}>
-        <div style={{ 
-          display: 'flex', 
-          height: '3.5rem', 
-          position: 'relative' 
+        <div style={{
+          display: 'flex',
+          height: '3.5rem',
+          position: 'relative'
         }}>
-          
+
           {/* Contenedor de la Esfera */}
           <div style={{
             position: 'absolute',
             top: '-1.5rem',
             left: '0',
-            width: '25%',
+            width: '16.666%', /* AJUSTADO: 100% / 6 pestañas */
             height: '3rem',
             transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
             transform: `translateX(${localIndex * 100}%)`,
@@ -93,7 +98,7 @@ export default function NavBar() {
               borderRadius: '50%',
               filter: 'blur(2px)',
             }}></div>
-            
+
             {/* Esfera Metálica 3D */}
             <div style={{
               width: '2.5rem',
@@ -142,7 +147,7 @@ export default function NavBar() {
                   Ya
                 </div>
               </div>
-              
+
               {/* Brillo superior */}
               <div style={{
                 position: 'absolute',
@@ -183,19 +188,19 @@ export default function NavBar() {
               >
                 {tab.isImage ? (
                   <div style={{ width: '1.5rem', height: '1.5rem', position: 'relative', marginBottom: '0.2rem' }}>
-                    <Image 
-                      src={tab.icon} 
-                      alt={tab.name} 
-                      fill 
-                      className="object-contain" 
-                      style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }} 
+                    <Image
+                      src={tab.icon}
+                      alt={tab.name}
+                      fill
+                      className="object-contain"
+                      style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}
                     />
                   </div>
                 ) : (
                   <span style={{ fontSize: '1.25rem', marginBottom: '0.2rem', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}>{tab.icon}</span>
                 )}
                 <span style={{ fontSize: '0.65rem', fontWeight: '600', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))' }}>{tab.name}</span>
-                
+
                 {tab.name === 'Carrito' && cartItems > 0 && (
                   <span style={{
                     position: 'absolute',
@@ -221,7 +226,7 @@ export default function NavBar() {
           })}
         </div>
       </div>
-      
+
       {/* Animaciones CSS */}
       <style>{`
         @keyframes spin {

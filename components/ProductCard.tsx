@@ -1,301 +1,358 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { useToast } from '@/context/ToastContext';
-import { useImageModal } from '@/context/ImageModalContext';
-import { ShoppingCart, Check } from 'lucide-react';
-import CountdownTimer from './CountdownTimer';
-import FlashSticker from './FlashSticker';
 
-type Product = {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  image_url: string;
-  category?: string;
-  stock?: number;
-  is_featured?: number;
-  offer_type?: string | null;
-  offer_price?: number | null;
-};
+interface ProductCardProps {
+  product: any;
+  viewMode?: 'grid' | 'list' | 'carousel';
+}
 
-export default function ProductCard({ product }: { product: Product }) {
-  const { addToCart, cart, setIsCartOpen } = useCart();
-  const { showToast } = useToast();
-  const { openModal } = useImageModal();
-  
-  const [isVisible, setIsVisible] = useState(false);
-  const [activeSticker, setActiveSticker] = useState<any>(null);
+export default function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
+  const { addToCart, isInCart, setIsCartOpen } = useCart();
+  const [showModal, setShowModal] = useState(false);
+  const [added, setAdded] = useState(false);
 
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
-
-  useEffect(() => {
-    const fetchSticker = async () => {
-      try {
-        const res = await fetch('/api/stickers');
-        if (res.ok) {
-          const stickers = await res.json();
-          const sticker = stickers.find((s: any) => s.product_id === product.id);
-          setActiveSticker(sticker || null);
-        }
-      } catch (err) {
-        console.error('Error cargando pegatina:', err);
-      }
-    };
-    fetchSticker();
-  }, [product.id]);
-
-  const currentPrice = product.offer_price && product.offer_price < product.price ? product.offer_price : product.price;
-  const hasDiscount = product.offer_price && product.offer_price < product.price;
-  const discountPercentage = hasDiscount ? Math.round(((product.price - product.offer_price!) / product.price) * 100) : 0;
-  
-  const inCart = cart.some((item: any) => item.id === product.id);
+  const isList = viewMode === 'list';
+  const isCarousel = viewMode === 'carousel';
+  const inCart = isInCart ? isInCart(product.id) : false;
 
   const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (product.stock === 0) {
-      showToast('Producto agotado', 'error');
-      return;
-    }
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: currentPrice,
-      image: product.image_url,
-      quantity: 1,
-    });
-    showToast(`${product.name} agregado al carrito`, 'success');
-    setIsCartOpen(true);
+    addToCart(product);
+    setIsCartOpen(true); // <-- ESTO ABRE EL CARRITO AUTOMÁTICAMENTE
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
-  const getCategoryColor = (cat?: string) => {
-    if (cat === 'Ropa') return 'bg-[#6B2D8B]';
-    if (cat === 'Tecnología') return 'bg-[#1B8A3B]';
-    if (cat === 'Hogar') return 'bg-[#8B45B3]';
-    if (cat === 'Deportes') return 'bg-[#22A84A]';
-    return 'bg-gray-600';
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowModal(true);
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: 'white',
+    borderRadius: '1rem',
+    border: '2px solid #1B8A3B',
+    overflow: 'hidden',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    display: 'flex',
+    flexDirection: isList ? 'row' : 'column',
+    height: isList ? 'auto' : '100%',
+    position: 'relative',
+  };
+
+  const imageContainerStyle: React.CSSProperties = {
+    position: 'relative',
+    width: isList ? '200px' : '100%',
+    height: isList ? '200px' : '240px',
+    flexShrink: 0,
+    background: '#f9fafb',
+    cursor: 'pointer',
+  };
+
+  const contentStyle: React.CSSProperties = {
+    padding: '1rem',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    justifyContent: 'space-between',
   };
 
   return (
-    <div
-      className={`product-card ${isVisible ? 'animate-fade-in-up' : ''}`}
-      style={{
-        background: 'white',
-        borderRadius: '0.75rem',
-        border: '2px solid rgba(107, 45, 139, 0.2)',
-        overflow: 'hidden',
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-        e.currentTarget.style.boxShadow = '0 20px 40px rgba(107, 45, 139, 0.3)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      {/* Contenedor de imagen con pegatina y badges */}
-      <div 
-        style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
-        onClick={() => openModal(product)}
+    <>
+      <div
+        style={cardStyle}
+        onMouseEnter={(e) => {
+          if (!isCarousel) {
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px rgba(107, 45, 139, 0.15)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isCarousel) {
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+          }
+        }}
       >
-        <img
-          src={product.image_url || '/placeholder.jpg'}
-          alt={product.name}
-          style={{
-            width: '100%',
-            height: '250px',
-            objectFit: 'contain',  // ✅ CAMBIO: Muestra imagen completa
-            backgroundColor: '#f9f9f9',  // ✅ Fondo gris claro
-            transition: 'transform 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            (e.target as HTMLImageElement).style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLImageElement).style.transform = 'scale(1)';
-          }}
-        />
+        <div style={imageContainerStyle} onClick={handleImageClick}>
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              className="object-cover"
+              style={{ objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>
+              📦
+            </div>
+          )}
+          
+          {product.on_sale && product.sale_price && (
+            <div style={{
+              position: 'absolute',
+              top: '0.5rem',
+              right: '0.5rem',
+              background: '#ef4444',
+              color: 'white',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}>
+              OFERTA
+            </div>
+          )}
 
-        {/* Pegatina Relámpago */}
-        {activeSticker && (
           <div style={{
             position: 'absolute',
-            top: '10px',
-            right: '10px',
-            zIndex: 20,
-            pointerEvents: 'none',
+            bottom: '0.5rem',
+            right: '0.5rem',
+            background: 'rgba(107, 45, 139, 0.85)',
+            color: 'white',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.7rem',
+            fontWeight: 'bold',
           }}>
-            <FlashSticker
-              message={activeSticker.message}
-              points={activeSticker.points}
-              colorStart={activeSticker.color_start}
-              colorEnd={activeSticker.color_end}
-              textColor={activeSticker.text_color}
-            />
+            🔍 Ver
           </div>
-        )}
-
-        {/* Etiqueta de categoría */}
-        {product.category && (
-          <span
-            className={`${getCategoryColor(product.category)} text-white text-xs font-bold px-2 py-1 rounded`}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              left: '10px',
-              zIndex: 10,
-            }}
-          >
-            {product.category}
-          </span>
-        )}
-
-        {/* Badges de oferta/destacado */}
-        <div style={{ 
-          position: 'absolute', 
-          top: product.category ? '40px' : '10px', 
-          left: '10px', 
-          zIndex: 10, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '4px' 
-        }}>
-          {product.is_featured === 1 && (
-            <span className="bg-[#6B2D8B] text-white text-xs font-bold px-2 py-1 rounded shadow-md">
-               Destacado
-            </span>
-          )}
-          {product.offer_type === 'day' && (
-            <span className="bg-[#1B8A3B] text-white text-xs font-bold px-2 py-1 rounded shadow-md">
-              🔥 Oferta del Día
-            </span>
-          )}
-          {product.offer_type === 'week' && (
-            <span className="bg-[#6B2D8B] text-white text-xs font-bold px-2 py-1 rounded shadow-md">
-              📅 Oferta Semana
-            </span>
-          )}
         </div>
 
-        {/* Etiqueta de descuento */}
-        {hasDiscount && (
-          <span
-            className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-md"
-            style={{
-              position: 'absolute',
-              bottom: '10px',
-              right: '10px',
-              zIndex: 10,
-            }}
-          >
-            -{discountPercentage}% OFF
-          </span>
-        )}
+        <div style={contentStyle}>
+          <div>
+            <h3 style={{ 
+              fontSize: isList ? '1.25rem' : '1.1rem', 
+              fontWeight: 'bold', 
+              color: '#1f2937', 
+              margin: '0 0 0.5rem 0',
+              lineHeight: '1.3',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}>
+              {product.name}
+            </h3>
+            
+            {product.description && isList && (
+              <p style={{ 
+                fontSize: '0.875rem', 
+                color: '#6b7280', 
+                margin: '0 0 1rem 0',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {product.description}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              {product.on_sale && product.sale_price ? (
+                <>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1B8A3B' }}>
+                    ${Number(product.sale_price).toLocaleString('es-CO')}
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#9ca3af', textDecoration: 'line-through' }}>
+                    ${Number(product.original_price || product.price).toLocaleString('es-CO')}
+                  </span>
+                </>
+              ) : (
+                <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1B8A3B' }}>
+                  ${Number(product.price).toLocaleString('es-CO')}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={handleAddToCart}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'center',
+                background: added || inCart ? '#6B2D8B' : '#1B8A3B',
+                color: 'white',
+                padding: '0.75rem',
+                borderRadius: '0.75rem',
+                fontWeight: 'bold',
+                fontSize: '0.9rem',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+              }}
+            >
+              {added ? '✅ Agregado' : inCart ? '🛒 En carrito' : '🛒 Agregar al carrito'}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Contenido de la tarjeta */}
-      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-        <h3 
-          style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#3D2914', margin: '0 0 0.5rem 0', cursor: 'pointer' }}
-          onClick={() => openModal(product)}
-        >
-          {product.name}
-        </h3>
-
-        {product.description && (
-          <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: '0 0 1rem 0', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-            {product.description}
-          </p>
-        )}
-
-        {/* Precios */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          {hasDiscount ? (
-            <>
-              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1B8A3B' }}>
-                ${currentPrice.toLocaleString()}
-              </span>
-              <span style={{ fontSize: '0.875rem', color: '#9CA3AF', textDecoration: 'line-through' }}>
-                ${product.price.toLocaleString()}
-              </span>
-            </>
-          ) : (
-            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3D2914' }}>
-              ${currentPrice.toLocaleString()}
-            </span>
-          )}
-        </div>
-
-        {/* Countdown para ofertas */}
-        {(product.offer_type === 'day' || product.offer_type === 'week') && hasDiscount && (
-          <div style={{ marginBottom: '0.75rem' }}>
-            <CountdownTimer offerType={product.offer_type} />
-          </div>
-        )}
-
-        {/* Stock */}
-        <p style={{ fontSize: '0.75rem', color: product.stock === 0 ? '#EF4444' : '#6B7280', marginBottom: '0.75rem' }}>
-          {product.stock === 0 ? '️ Agotado' : `✅ Stock: ${product.stock}`}
-        </p>
-
-        {/* Botón agregar al carrito */}
-        <button
-          suppressHydrationWarning
-          onClick={handleAddToCart}
-          disabled={product.stock === 0}
+      {showModal && (
+        <div 
           style={{
-            width: '100%',
-            background: product.stock === 0 ? '#D1D5DB' : (inCart ? '#2E7D32' : '#1B8A3B'),
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.5rem',
-            padding: '0.75rem',
-            fontWeight: 'bold',
-            cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem',
-            transition: 'background 0.2s ease',
-            marginTop: 'auto',
+            zIndex: 9999,
+            padding: '1rem',
           }}
-          onMouseEnter={(e) => {
-            if (product.stock !== 0) {
-              (e.target as HTMLButtonElement).style.background = '#156d2e';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (product.stock !== 0) {
-              (e.target as HTMLButtonElement).style.background = inCart ? '#2E7D32' : '#1B8A3B';
-            }
-          }}
+          onClick={() => setShowModal(false)}
         >
-          {inCart ? <Check size={18} /> : <ShoppingCart size={18} />}
-          {product.stock === 0 ? 'Agotado' : (inCart ? 'En el carrito' : 'Agregar al Carrito')}
-        </button>
-      </div>
+          <div 
+            style={{
+              background: 'white',
+              borderRadius: '1.5rem',
+              maxWidth: '700px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              border: '3px solid #1B8A3B',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              background: '#6B2D8B',
+              padding: '1rem 1.5rem',
+              borderRadius: '1.25rem 1.25rem 0 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>
+                {product.name}
+              </h2>
+              <button 
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                ×
+              </button>
+            </div>
 
-      <style jsx>{`
-        @keyframes fade-in-up {
-          0% { opacity: 0; transform: translateY(30px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out forwards;
-        }
-        .product-card {
-          opacity: 0;
-        }
-      `}</style>
-    </div>
+            <div style={{ position: 'relative', width: '100%', height: '400px', background: '#f9fafb' }}>
+              {product.image_url ? (
+                <Image
+                  src={product.image_url}
+                  alt={product.name}
+                  fill
+                  style={{ objectFit: 'contain' }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem' }}>
+                  📦
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: '1.5rem' }}>
+              {product.description && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ color: '#6B2D8B', fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Descripción</h3>
+                  <p style={{ color: '#4b5563', lineHeight: '1.6', margin: 0 }}>{product.description}</p>
+                </div>
+              )}
+
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: '1rem',
+                background: '#F3E8FF',
+                borderRadius: '1rem',
+                border: '2px solid #1B8A3B',
+                marginBottom: '1rem'
+              }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>Precio</p>
+                  {product.on_sale && product.sale_price ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#1B8A3B' }}>
+                        ${Number(product.sale_price).toLocaleString('es-CO')}
+                      </span>
+                      <span style={{ fontSize: '1rem', color: '#9ca3af', textDecoration: 'line-through' }}>
+                        ${Number(product.original_price || product.price).toLocaleString('es-CO')}
+                      </span>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#1B8A3B' }}>
+                      ${Number(product.price).toLocaleString('es-CO')}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={handleAddToCart}
+                  style={{
+                    background: added || inCart ? '#6B2D8B' : '#1B8A3B',
+                    color: 'white',
+                    padding: '1rem 2rem',
+                    borderRadius: '1rem',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  {added ? '✅ Agregado' : inCart ? '🛒 En carrito' : '🛒 Agregar al carrito'}
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  width: '100%',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  padding: '0.75rem',
+                  borderRadius: '0.75rem',
+                  fontWeight: 'bold',
+                  border: '2px solid #d1d5db',
+                  cursor: 'pointer',
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
