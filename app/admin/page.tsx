@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,8 +25,8 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
-  const [showMainMenu, setShowMainMenu] = useState(false);
-  const [showProductsMenu, setShowProductsMenu] = useState(false);
+  const [showMainMenu, setShowMainMenu] = useState(true); // ← AHORA VISIBLE POR DEFECTO
+  const [showProductsMenu, setShowProductsMenu] = useState(true); // ← AHORA VISIBLE POR DEFECTO
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -82,9 +82,9 @@ export default function AdminDashboard() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
       });
-      
+
       const responseData = await res.json();
-      
+
       if (res.ok) {
         setProducts(prev => prev.filter(p => p.id !== id));
         alert('Producto eliminado correctamente');
@@ -130,22 +130,22 @@ export default function AdminDashboard() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
-    
+
     setUploading(true);
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('image', file);
-      
-      const res = await fetch('/api/admin/upload', { 
-        method: 'POST', 
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
         body: formDataUpload,
         headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` }
       });
-      
+
       const data = await res.json();
       if (res.ok && data.url) {
         setFormData(prev => ({ ...prev, image_url: data.url }));
@@ -164,17 +164,17 @@ export default function AdminDashboard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return alert('El nombre es obligatorio');
-    
+
     const priceNum = parseFloat(formData.price);
     const stockNum = parseInt(formData.stock);
-    
+
     if (isNaN(priceNum) || priceNum <= 0) return alert('El precio debe ser mayor a 0');
     if (isNaN(stockNum) || stockNum < 0) return alert('Stock inválido');
 
     try {
       const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : '/api/admin/products';
       const method = editingProduct ? 'PUT' : 'POST';
-      
+
       const bodyData = {
         name: String(formData.name).trim(),
         description: String(formData.description || '').trim(),
@@ -187,13 +187,13 @@ export default function AdminDashboard() {
 
       const res = await fetch(url, {
         method,
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}` 
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}`
         },
         body: JSON.stringify(bodyData),
       });
-      
+
       const responseData = await res.json();
 
       if (res.ok) {
@@ -206,7 +206,7 @@ export default function AdminDashboard() {
         }
         setShowModal(false);
         setImagePreview('');
-        fetchProducts(); 
+        fetchProducts();
       } else {
         alert('Error: ' + (responseData.error || 'Error al guardar'));
       }
@@ -245,14 +245,14 @@ export default function AdminDashboard() {
             <button onClick={handleLogout} style={{ background: '#4b5563', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Cerrar Sesión</button>
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600' }}>
-            <input 
-              type="checkbox" 
-              checked={showMainMenu} 
-              onChange={(e) => setShowMainMenu(e.target.checked)}
-              title="Selecciona para mostrar u ocultar el Menú Principal (Categorías, Factureros, Vendedores, Ventas, Pegatinas, Banners)"
+            <input
+              type="checkbox"
+              checked={!showMainMenu} // ← INVERTIDO: si está marcado, OCULTA el menú
+              onChange={(e) => setShowMainMenu(!e.target.checked)}
+              title="Desmarca para ocultar el Menú Principal (Categorías, Factureros, Vendedores, Ventas, Pegatinas, Banners)"
               style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
             />
-            <span>Mostrar Menú Principal</span>
+            <span>Ocultar Menú Principal</span>
           </label>
         </div>
 
@@ -280,14 +280,14 @@ export default function AdminDashboard() {
 
         {/* CONTENEDOR PRINCIPAL CON MENÚS */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-          
+
           {/* MENÚ PRINCIPAL (Izquierda) */}
           {showMainMenu && (
-            <div style={{ 
-              width: '200px', 
-              background: 'white', 
-              padding: '1rem', 
-              borderRadius: '0.75rem', 
+            <div style={{
+              width: '200px',
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '0.75rem',
               boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
               display: 'flex',
               flexDirection: 'column',
@@ -297,42 +297,43 @@ export default function AdminDashboard() {
             }}>
               <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📂 Categorías</button>
               <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🧾 Factureros</button>
-              <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>👥 Vendedores</button>
+              <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}> Vendedores</button>
               <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📊 Ventas</button>
               <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>⭐ Pegatinas</button>
-              <button onClick={() => router.push('/admin/banners')} style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📢 Banners</button>
+              <button onClick={() => router.push('/admin/banners')} style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}> Banners</button>
               <button onClick={() => router.push('/admin/advanced-banners')} style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🖼️ Banners Visual</button>
+              <button onClick={() => router.push('/admin/couriers')} style={{ background: 'linear-gradient(135deg, #6B2D8B, #1B8A3B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🚚 Empresas Mensajería</button>
             </div>
           )}
 
           {/* CONTENIDO PRINCIPAL */}
           <div style={{ flex: 1 }}>
-            
+
             {/* GESTIÓN DE PRODUCTOS */}
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ marginBottom: '1rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Gestión de Productos</h2>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={showProductsMenu} 
-                    onChange={(e) => setShowProductsMenu(e.target.checked)}
-                    title="Selecciona para mostrar u ocultar el Menú de Productos (Destacados, Backups, Procesadores, Nuevo Producto, etc.)"
+                  <input
+                    type="checkbox"
+                    checked={!showProductsMenu} // ← INVERTIDO: si está marcado, OCULTA el menú
+                    onChange={(e) => setShowProductsMenu(!e.target.checked)}
+                    title="Desmarca para ocultar el Menú de Productos (Destacados, Backups, Procesadores, Nuevo Producto, etc.)"
                     style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                   />
-                  <span>Mostrar Menú de Productos</span>
+                  <span>Ocultar Menú de Productos</span>
                 </label>
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                
+
                 {/* MENÚ DE PRODUCTOS */}
                 {showProductsMenu && (
-                  <div style={{ 
-                    width: '180px', 
-                    background: 'white', 
-                    padding: '1rem', 
-                    borderRadius: '0.75rem', 
+                  <div style={{
+                    width: '180px',
+                    background: 'white',
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
                     boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -344,13 +345,13 @@ export default function AdminDashboard() {
                     <button onClick={() => router.push('/admin/add-product')} style={{ background: '#8B5CF6', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📦 Carga Masiva</button>
                     <button onClick={() => router.push('/admin/generate-csv')} style={{ background: '#EC4899', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📷 CSV Fotos</button>
                     <button onClick={() => router.push('/admin/backups')} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>💾 Backups</button>
-                    <button onClick={() => router.push('/admin/backups-download')} style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}> Backup ZIP</button>
+                    <button onClick={() => router.push('/admin/backups-download')} style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📥 Backup ZIP</button>
                     <button onClick={() => router.push('/admin/backup-schedule')} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>⏰ Programar</button>
-                    <button onClick={() => router.push('/admin/backups-history')} style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📦 Historial</button>
+                    <button onClick={() => router.push('/admin/backups-history')} style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}> Historial</button>
                     <button onClick={() => router.push('/admin/delete-by-category')} style={{ background: 'linear-gradient(135deg, #dc2626, #991b1b)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>🗑️ Borrar por Categoría</button>
                     <button onClick={() => router.push('/admin/process-images')} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>💻 Procesador Local</button>
-                    <button onClick={() => router.push('/admin/process-images-cloud')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>️ Procesador Cloud</button>
-                    <button onClick={handleAddNew} style={{ background: '#16a34a', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>➕ Nuevo Producto</button>
+                    <button onClick={() => router.push('/admin/process-images-cloud')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>☁️ Procesador Cloud</button>
+                    <button onClick={handleAddNew} style={{ background: '#16a34a', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}> Nuevo Producto</button>
                   </div>
                 )}
 
@@ -407,7 +408,7 @@ export default function AdminDashboard() {
 
             {products.length === 0 && (
               <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
                 <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
               </div>

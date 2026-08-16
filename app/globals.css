@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* FORZAR GRID DE PRODUCTOS - 5 COLUMNAS */
 .admin-grid {
   display: grid !important;

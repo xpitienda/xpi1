@@ -14,8 +14,6 @@ export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(true);
   const [showNequiModal, setShowNequiModal] = useState(false);
-  const [mpLogoError, setMpLogoError] = useState(false);
-  const [nequiLogoError, setNequiLogoError] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -39,11 +37,9 @@ export default function CartPage() {
         body: JSON.stringify({ customerInfo, cart, total }),
       });
 
-      if (emailResponse.ok) {
-        showToast('✅ Pedido enviado por correo electrónico', 'success');
-      }
+      if (emailResponse.ok) showToast('✅ Pedido enviado por correo electrónico', 'success');
 
-      const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n*Datos del Cliente:*\n👤 Nombre: ${customerInfo.name}\n📱 Teléfono: ${customerInfo.phone}\n📍 Dirección: ${customerInfo.address}\n${customerInfo.city ? `️ Ciudad: ${customerInfo.city}\n` : ''}\n*Productos:*\n\n${cart.map((item) => `• ${item.name}\n  Cantidad: ${item.quantity}\n  Precio: $${(item.price * item.quantity).toLocaleString('es-CO')}`).join('\n\n')}\n\n*TOTAL: $${total.toLocaleString('es-CO')}*`;
+      const message = `*NUEVO PEDIDO - XPI TIENDA*\n\n*Datos del Cliente:*\n👤 Nombre: ${customerInfo.name}\n📱 Teléfono: ${customerInfo.phone}\n📧 Email: ${customerInfo.email || 'No proporcionado'}\n📍 Dirección: ${customerInfo.address}\n${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}\n*Productos:*\n\n${cart.map((item) => `• ${item.name}\n  Cantidad: ${item.quantity}\n  Precio: $${(item.price * item.quantity).toLocaleString('es-CO')}`).join('\n\n')}\n\n*TOTAL: $${total.toLocaleString('es-CO')}*`;
 
       window.location.href = `https://wa.me/573234475311?text=${encodeURIComponent(message)}`;
       showToast('Redirigiendo a WhatsApp...', 'success');
@@ -71,7 +67,6 @@ export default function CartPage() {
       });
 
       const data = await response.json();
-
       if (response.ok && data.init_point) {
         showToast('Redirigiendo a pasarela de pago segura...', 'success');
         window.location.href = data.init_point;
@@ -97,7 +92,7 @@ export default function CartPage() {
 
   const handleNequiConfirm = () => {
     setShowNequiModal(false);
-    const message = `*PEDIDO XPI TIENDA - PAGO CON NEQUI*\n\n*Datos del Cliente:*\n👤 Nombre: ${customerInfo.name}\n📱 Teléfono: ${customerInfo.phone}\n📍 Dirección: ${customerInfo.address}\n${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}\n*Método de pago:* 💜 Nequi\n*Monto a pagar:* $${total.toLocaleString('es-CO')}\n\n*Productos:*\n${cart.map((item) => `• ${item.name} x${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-CO')}`).join('\n')}\n\n *Ya realicé la transferencia por Nequi al 3234475311*`;
+    const message = `*PEDIDO XPI TIENDA - PAGO CON NEQUI*\n\n*Datos del Cliente:*\n👤 Nombre: ${customerInfo.name}\n📱 Teléfono: ${customerInfo.phone}\n📧 Email: ${customerInfo.email || 'No proporcionado'}\n📍 Dirección: ${customerInfo.address}\n${customerInfo.city ? `🏙️ Ciudad: ${customerInfo.city}\n` : ''}\n*Método de pago:* 💜 Nequi\n*Monto a pagar:* $${total.toLocaleString('es-CO')}\n\n*Productos:*\n${cart.map((item) => `• ${item.name} x${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-CO')}`).join('\n')}\n\n *Ya realicé la transferencia por Nequi al 3234475311*`;
 
     window.location.href = `https://wa.me/573234475311?text=${encodeURIComponent(message)}`;
     showToast('Redirigiendo a WhatsApp para confirmar pago Nequi...', 'success');
@@ -146,6 +141,13 @@ export default function CartPage() {
                   <label style={{ display: 'block', color: 'white', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: '600' }}><Phone style={{ width: '1rem', height: '1rem', display: 'inline', marginRight: '0.5rem' }} />Teléfono de contacto *</label>
                   <input type="tel" value={customerInfo.phone} onChange={(e) => updateCustomerInfo({ phone: e.target.value })} placeholder="300 123 4567" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.75rem', border: '2px solid #F59E0B', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '1rem', boxSizing: 'border-box' }} />
                 </div>
+                
+                {/* CAMPO EMAIL - OPCIONAL (sin required) */}
+                <div>
+                  <label style={{ display: 'block', color: 'white', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: '600' }}><Mail style={{ width: '1rem', height: '1rem', display: 'inline', marginRight: '0.5rem' }} />Correo electrónico <span style={{ opacity: 0.7 }}>(opcional)</span></label>
+                  <input type="email" value={customerInfo.email || ''} onChange={(e) => updateCustomerInfo({ email: e.target.value })} placeholder="tu@email.com" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.75rem', border: '2px solid #F59E0B', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '1rem', boxSizing: 'border-box' }} />
+                </div>
+
                 <div>
                   <label style={{ display: 'block', color: 'white', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: '600' }}><MapPin style={{ width: '1rem', height: '1rem', display: 'inline', marginRight: '0.5rem' }} />Dirección de envío *</label>
                   <input type="text" value={customerInfo.address} onChange={(e) => updateCustomerInfo({ address: e.target.value })} placeholder="Calle 123 #45-67, Barrio" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.75rem', border: '2px solid #F59E0B', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '1rem', boxSizing: 'border-box' }} />
@@ -169,14 +171,14 @@ export default function CartPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             {cart.map((item) => (
               <div key={item.id} style={{ aspectRatio: '1/1', borderRadius: '1rem', overflow: 'hidden', border: '2px solid #2E7D32', boxShadow: '0 0 15px rgba(46,125,50,0.3)', background: '#FDF6E3' }}>
-                <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40">📦</text></svg>'; }} />
+                <img src={item.image || item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect fill="%23e5e7eb" width="120" height="120"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="40">📦</text></svg>'; }} />
               </div>
             ))}
           </div>
 
           {/* Tabla de productos */}
           <div style={{ background: 'rgba(45,27,78,0.8)', borderRadius: '1.5rem', border: '3px solid #2E7D32', boxShadow: '0 0 30px rgba(46,125,50,0.3)', overflow: 'hidden', marginBottom: '2rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 0.5fr', gap: '1rem', padding: '1rem 1.5rem', background: 'linear-gradient(135deg, #4B0082 0%, #2E7D32 100%)', borderBottom: '2px solid #00FF41', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1fr 1fr 0.5fr', gap: '1rem', padding: '1rem 1.5rem', background: 'linear-gradient(135deg, #4B0082 0%, #2E7D32 100%)', borderBottom: '2px solid #00FF41', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>
               <div>Producto</div>
               <div style={{ textAlign: 'center' }}>Cantidad</div>
               <div style={{ textAlign: 'right' }}>Precio Unit.</div>
@@ -184,8 +186,13 @@ export default function CartPage() {
               <div></div>
             </div>
             {cart.map((item, index) => (
-              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 0.5fr', gap: '1rem', padding: '1rem 1.5rem', borderBottom: index !== cart.length - 1 ? '1px solid rgba(46,125,50,0.3)' : 'none', alignItems: 'center', color: '#e9d5ff' }}>
-                <div style={{ fontWeight: '600', color: 'white', fontSize: '1.1rem' }}>{item.name}</div>
+              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1fr 1fr 0.5fr', gap: '1rem', padding: '1rem 1.5rem', borderBottom: index !== cart.length - 1 ? '1px solid rgba(46,125,50,0.3)' : 'none', alignItems: 'center', color: '#e9d5ff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: '0.5rem', overflow: 'hidden', border: '2px solid #2E7D32', background: '#FDF6E3', flexShrink: 0 }}>
+                    <img src={item.image || item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect fill="%23e5e7eb" width="60" height="60"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="30">📦</text></svg>'; }} />
+                  </div>
+                  <span style={{ fontWeight: '600', color: 'white', fontSize: '1.1rem' }}>{item.name}</span>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                   <button onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))} style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(224,122,95,0.2)', border: '2px solid #E07A5F', color: '#E07A5F', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Minus style={{ width: '1rem', height: '1rem' }} /></button>
                   <span style={{ width: '2rem', textAlign: 'center', fontWeight: 'bold', color: 'white', fontSize: '1.1rem' }}>{item.quantity}</span>
@@ -209,31 +216,24 @@ export default function CartPage() {
 
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <button onClick={() => { if (window.confirm("¿Estás seguro de vaciar todo el carrito?")) { clearCart(); } }} style={{ flex: 1, minWidth: '200px', background: 'rgba(255,255,255,0.1)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', border: '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><Trash2 style={{ width: '1.25rem', height: '1.25rem' }} />Vaciar Carrito</button>
-              
-              {/* BOTÓN NEQUI - CON ICONO */}
+
               <button onClick={handleNequiPayment} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #9D00FF 0%, #6B00A8 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(157,0,255,0.4)' }}>
-                <Wallet style={{ width: '1.5rem', height: '1.5rem' }} />
-                💜 Pagar con Nequi
+                <Wallet style={{ width: '1.5rem', height: '1.5rem' }} /> 💜 Pagar con Nequi
               </button>
 
-              {/* BOTÓN MERCADOPAGO - CON ICONO */}
               <button onClick={handleMercadoPagoCheckout} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #009EE3 0%, #007BB5 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(0,158,227,0.4)' }}>
-                <CreditCard style={{ width: '1.5rem', height: '1.5rem' }} />
-                💳 MercadoPago
+                <CreditCard style={{ width: '1.5rem', height: '1.5rem' }} /> 💳 MercadoPago
               </button>
 
-              {/* BOTÓN WHATSAPP */}
               <button onClick={handleCheckout} disabled={sending} style={{ flex: 1, minWidth: '250px', background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', color: 'white', padding: '1rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.125rem', border: 'none', cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: sending ? 0.7 : 1, boxShadow: '0 0 20px rgba(37,211,102,0.4)' }}>
-                <MessageCircle style={{ width: '1.5rem', height: '1.5rem' }} />
-                {sending ? 'Procesando...' : '📱 Pedir por WhatsApp'}
+                <MessageCircle style={{ width: '1.5rem', height: '1.5rem' }} /> {sending ? 'Procesando...' : '📱 Pedir por WhatsApp'}
               </button>
             </div>
           </div>
 
           <div style={{ textAlign: 'center' }}>
             <Link href="/catalog" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(75,0,130,0.6)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '1rem', fontWeight: 'bold', border: '2px solid #4B0082', textDecoration: 'none', transition: 'all 0.3s' }}>
-              <ArrowLeft style={{ width: '1.25rem', height: '1.25rem' }} />
-              Seguir comprando
+              <ArrowLeft style={{ width: '1.25rem', height: '1.25rem' }} /> Seguir comprando
             </Link>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function CartPage() {
                 <p style={{ margin: 0, opacity: 0.9 }}>Monto: <strong style={{ color: '#00FF41', fontSize: '1.3rem' }}>${total.toLocaleString('es-CO')}</strong></p>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.5rem', borderRadius: '1rem', marginBottom: '1rem' }}>
-                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>3️⃣ Confirma tu pago</p>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>3️ Confirma tu pago</p>
                 <p style={{ margin: 0, opacity: 0.9 }}>Te redirigiremos a WhatsApp para que envíes el comprobante</p>
               </div>
             </div>

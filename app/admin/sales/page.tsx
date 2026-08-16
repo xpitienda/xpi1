@@ -1,11 +1,17 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+
+interface CourierCompany {
+  id: number;
+  name: string;
+  code: string;
+}
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#FF6B6B'];
 
@@ -13,12 +19,20 @@ export default function AdminSales() {
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSeller, setExpandedSeller] = useState<string | null>(null);
-  
+  const [couriers, setCouriers] = useState<CourierCompany[]>([]);
+
+  // Modal states
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [pendingSaleId, setPendingSaleId] = useState<string>('');
+  const [selectedCourier, setSelectedCourier] = useState<number | ''>('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [topProducts, setTopProducts] = useState<any[]>([]);
-  
+
   const router = useRouter();
 
   const fetchSales = async () => {
@@ -26,7 +40,7 @@ export default function AdminSales() {
       setLoading(true);
       const salesRes = await fetch('/api/admin/sales');
       const salesData = await salesRes.json();
-      
+
       if (salesRes.ok) {
         setSales(salesData.ventas);
       } else {
@@ -37,6 +51,15 @@ export default function AdminSales() {
       if (topRes.ok) {
         const topData = await topRes.json();
         setTopProducts(topData);
+      }
+
+      // Cargar empresas de mensajería
+      const couriersRes = await fetch('/api/admin/couriers', {
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
+      if (couriersRes.ok) {
+        const couriersData = await couriersRes.json();
+        setCouriers(Array.isArray(couriersData) ? couriersData.filter((c: any) => c.is_active) : []);
       }
     } catch (err) {
       console.error('Error cargando datos:', err);
@@ -54,29 +77,89 @@ export default function AdminSales() {
     setExpandedSeller(expandedSeller === sellerName ? null : sellerName);
   };
 
-  // CORREGIDO: Se agregaron los tipos 'any' para evitar el error de TypeScript
   const handleStatusChange = async (saleId: string, newStatus: string) => {
+    // Si cambia a "Enviado", mostrar modal para agregar shipment
+    if (newStatus === 'Enviado') {
+      setPendingSaleId(saleId);
+      setShowShipmentModal(true);
+      setSelectedCourier('');
+      setTrackingNumber('');
+    } else {
+      // Para otros estados, actualizar directamente
+      try {
+        const res = await fetch('/api/admin/update-sale-status', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ saleId, status: newStatus })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setSales(sales.map((seller: any) => ({
+            ...seller,
+            ventas: seller.ventas.map((v: any) =>
+              v.id === saleId ? { ...v, status: newStatus } : v
+            )
+          })));
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+  };
+
+  const handleShipmentSubmit = async () => {
+    if (!selectedCourier || !trackingNumber.trim()) {
+      alert('Por favor selecciona una empresa e ingresa el número de guía');
+      return;
+    }
+
+    setModalLoading(true);
+
     try {
-      const res = await fetch('/api/admin/update-sale-status', {
-        method: 'PATCH',
+      // 1. Crear el shipment (RUTA CORREGIDA: create-shipments con 's')
+      const shipmentRes = await fetch('/api/admin/create-shipments', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ saleId, status: newStatus })
+        body: JSON.stringify({
+          saleId: pendingSaleId,
+          courierCompanyId: selectedCourier,
+          trackingNumber: trackingNumber.trim()
+        })
       });
 
-      const data = await res.json();
+      const shipmentData = await shipmentRes.json();
 
-      if (res.ok) {
+      if (!shipmentRes.ok) {
+        throw new Error(shipmentData.error || 'Error al crear el envío');
+      }
+
+      // 2. Actualizar el estado del pedido a "Enviado"
+      const statusRes = await fetch('/api/admin/update-sale-status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ saleId: pendingSaleId, status: 'Enviado' })
+      });
+
+      if (statusRes.ok) {
         setSales(sales.map((seller: any) => ({
           ...seller,
-          ventas: seller.ventas.map((v: any) => 
-            v.id === saleId ? { ...v, status: newStatus } : v
+          ventas: seller.ventas.map((v: any) =>
+            v.id === pendingSaleId ? { ...v, status: 'Enviado' } : v
           )
         })));
+        setShowShipmentModal(false);
+        alert('✅ Envío creado correctamente. El cliente ya puede rastrear su pedido.');
       } else {
-        alert('Error: ' + data.error);
+        throw new Error('Error al actualizar el estado');
       }
-    } catch (err) {
-      alert('Error de conexión');
+    } catch (error: any) {
+      alert(' Error: ' + error.message);
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -142,7 +225,7 @@ export default function AdminSales() {
   };
 
   const dateFilteredSales = getFilteredSales();
-  
+
   const filteredSales = searchTerm ? dateFilteredSales.map((seller: any) => {
     const term = searchTerm.toLowerCase();
     const matchingVentas = seller.ventas.filter((v: any) => {
@@ -151,30 +234,30 @@ export default function AdminSales() {
       const phone = (v.customer_phone || '').toLowerCase();
       return invoice.includes(term) || customer.includes(term) || phone.includes(term);
     });
-    
+
     const totalVendedor = matchingVentas.reduce((sum: number, v: any) => sum + Number(v.total_amount), 0);
-    return { 
-      ...seller, 
-      ventas: matchingVentas, 
-      totalVendedor, 
-      cantidadVentas: matchingVentas.length 
+    return {
+      ...seller,
+      ventas: matchingVentas,
+      totalVendedor,
+      cantidadVentas: matchingVentas.length
     };
   }).filter((s: any) => s.ventas.length > 0) : dateFilteredSales;
 
   const handleExportCSV = () => {
     const headers = ['Fecha', 'Factura', 'Vendedor', 'Cliente', 'Telefono', 'Productos', 'Total', 'Tipo', 'Estado'];
     const rows: string[] = [];
-    
+
     filteredSales.forEach((sellerData: any) => {
       sellerData.ventas.forEach((venta: any) => {
         let items = [];
         try { items = JSON.parse(venta.items || '[]'); } catch (e) { items = []; }
-        
+
         const productosStr = items.map((item: any) => `${item.name} (x${item.quantity})`).join(' | ');
         const fecha = new Date(venta.created_at).toLocaleString('es-CO');
         const tipo = venta.sale_type === 'cart' ? 'Carrito/Web' : 'Vendedor';
         const estado = venta.status || 'Pendiente';
-        
+
         rows.push([`"${fecha}"`, `"${venta.invoice_number}"`, `"${sellerData.vendedor}"`, `"${venta.customer_name}"`, `"${venta.customer_phone || 'N/A'}"`, `"${productosStr}"`, `"${Number(venta.total_amount).toLocaleString('es-CO')}"`, `"${tipo}"`, `"${estado}"`].join(','));
       });
     });
@@ -229,7 +312,7 @@ export default function AdminSales() {
   return (
     <div style={{ minHeight: '100vh', background: '#f3f4f6', padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>📊 Dashboard de Ventas</h1>
           <button onClick={() => router.push('/admin')} style={{ background: '#6b7280', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>← Volver al Admin</button>
@@ -238,9 +321,9 @@ export default function AdminSales() {
         <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'end' }}>
           <div style={{ flex: '2', minWidth: '250px' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>🔍 Buscar (Factura, Cliente o Teléfono)</label>
-            <input 
-              type="text" 
-              value={searchTerm} 
+            <input
+              type="text"
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Ej: F-001, Juan Pérez, 300..."
               style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}
@@ -281,12 +364,12 @@ export default function AdminSales() {
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
               {topProducts.map((product, index) => (
-                <div 
-                  key={index} 
-                  style={{ 
-                    background: index === 0 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 
-                               index === 1 ? 'linear-gradient(135deg, #e5e7eb, #9ca3af)' : 
-                               index === 2 ? 'linear-gradient(135deg, #fdba74, #ea580c)' : 
+                <div
+                  key={index}
+                  style={{
+                    background: index === 0 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' :
+                               index === 1 ? 'linear-gradient(135deg, #e5e7eb, #9ca3af)' :
+                               index === 2 ? 'linear-gradient(135deg, #fdba74, #ea580c)' :
                                'linear-gradient(135deg, #f3f4f6, #d1d5db)',
                     padding: '1rem',
                     borderRadius: '0.5rem',
@@ -383,7 +466,7 @@ export default function AdminSales() {
                           let items = [];
                           try { items = JSON.parse(sale.items || '[]'); } catch (e) { items = []; }
                           const currentStatus = sale.status || 'Pendiente';
-                          
+
                           return (
                             <tr key={saleIndex} style={{ borderBottom: '1px solid #e5e7eb' }}>
                               <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#1e40af' }}>{sale.invoice_number}</td>
@@ -391,15 +474,15 @@ export default function AdminSales() {
                                 <div style={{ fontWeight: '600' }}>{sale.customer_name}</div>
                                 {sale.customer_phone && <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{sale.customer_phone}</div>}
                               </td>
-                              <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{items.map((item: any) => <div key={item.name} style={{ marginBottom: '0.25rem' }}>{item.name} x{item.quantity}</div>)}</td>
+                              <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{items.map((item: any, itemIndex: number) => <div key={`${item.name}-${itemIndex}`} style={{ marginBottom: '0.25rem' }}>{item.name} x{item.quantity}</div>)}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>${Number(sale.total_amount).toLocaleString('es-CO')}</td>
                               <td style={{ padding: '0.75rem' }}>
-                                <select 
+                                <select
                                   value={currentStatus}
                                   onChange={(e) => handleStatusChange(sale.id, e.target.value)}
-                                  style={{ 
-                                    padding: '0.4rem', 
-                                    borderRadius: '0.375rem', 
+                                  style={{
+                                    padding: '0.4rem',
+                                    borderRadius: '0.375rem',
                                     border: `2px solid ${getStatusColor(currentStatus)}`,
                                     backgroundColor: getStatusColor(currentStatus) + '20',
                                     fontWeight: 'bold',
@@ -407,23 +490,23 @@ export default function AdminSales() {
                                     cursor: 'pointer'
                                   }}
                                 >
-                                  <option value="Pendiente">🟡 Pendiente</option>
+                                  <option value="Pendiente"> Pendiente</option>
                                   <option value="Enviado">🔵 Enviado</option>
-                                  <option value="Entregado">🟢 Entregado</option>
+                                  <option value="Entregado"> Entregado</option>
                                   <option value="Cancelado">🔴 Cancelado</option>
                                 </select>
                               </td>
                               <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>{new Date(sale.created_at).toLocaleString('es-CO')}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                                <button 
+                                <button
                                   onClick={() => handleVoidSale(sale.id, sale.invoice_number)}
-                                  style={{ 
-                                    background: '#dc2626', 
-                                    color: 'white', 
-                                    padding: '0.4rem 0.8rem', 
-                                    borderRadius: '0.375rem', 
-                                    border: 'none', 
-                                    cursor: 'pointer', 
+                                  style={{
+                                    background: '#dc2626',
+                                    color: 'white',
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '0.375rem',
+                                    border: 'none',
+                                    cursor: 'pointer',
                                     fontWeight: 'bold',
                                     fontSize: '0.8rem'
                                   }}
@@ -443,8 +526,125 @@ export default function AdminSales() {
             </div>
           ))
         )}
-
       </div>
+
+      {/* MODAL PARA CREAR ENVÍO */}
+      {showShipmentModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={() => !modalLoading && setShowShipmentModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '1.5rem',
+              maxWidth: '500px',
+              width: '100%',
+              padding: '2rem',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e40af', marginBottom: '1.5rem', textAlign: 'center' }}>
+               Crear Envío
+            </h2>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>
+                🚚 Empresa de Mensajería *
+              </label>
+              <select
+                value={selectedCourier}
+                onChange={(e) => setSelectedCourier(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                  background: 'white'
+                }}
+              >
+                <option value="">Selecciona una empresa...</option>
+                {couriers.map((courier) => (
+                  <option key={courier.id} value={courier.id}>
+                    {courier.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.5rem' }}>
+                🔢 Número de Guía *
+              </label>
+              <input
+                type="text"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Ej: 123456789"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={handleShipmentSubmit}
+                disabled={modalLoading}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: modalLoading ? 'not-allowed' : 'pointer',
+                  opacity: modalLoading ? 0.7 : 1
+                }}
+              >
+                {modalLoading ? ' Creando...' : '✅ Crear Envío'}
+              </button>
+              <button
+                onClick={() => setShowShipmentModal(false)}
+                disabled={modalLoading}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  background: '#e5e7eb',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: modalLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                 Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
