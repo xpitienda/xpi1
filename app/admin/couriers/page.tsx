@@ -19,6 +19,7 @@ export default function CouriersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<CourierCompany | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -66,6 +67,42 @@ export default function CouriersPage() {
     setShowModal(true);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('folder', ''); // Carpeta vacía = raíz
+      
+      console.log('📤 Subiendo archivo:', file.name);
+      console.log('📂 Folder enviado:', '');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      const data = await res.json();
+      console.log('📥 Respuesta del API:', data);
+
+      if (res.ok && data.url) {
+        console.log('✅ URL recibida:', data.url);
+        setFormData(prev => ({ ...prev, logo_url: data.url }));
+      } else {
+        alert('Error al subir: ' + (data.error || 'Desconocido'));
+      }
+    } catch (error) {
+      console.error('❌ Error subiendo imagen:', error);
+      alert('Error de conexión al subir la imagen');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -84,7 +121,7 @@ export default function CouriersPage() {
       });
 
       if (res.ok) {
-        alert(editingCompany ? 'Empresa actualizada' : 'Empresa creada');
+        alert(editingCompany ? '✅ Empresa actualizada' : '✅ Empresa creada');
         setShowModal(false);
         fetchCompanies();
       } else {
@@ -100,7 +137,7 @@ export default function CouriersPage() {
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Eliminar "${name}"?`)) return;
+    if (!confirm(`¿Eliminar "${name}"?`)) return;
 
     try {
       const res = await fetch(`/api/admin/couriers/${id}`, {
@@ -109,7 +146,7 @@ export default function CouriersPage() {
       });
 
       if (res.ok) {
-        alert('Empresa eliminada');
+        alert('✅ Empresa eliminada');
         fetchCompanies();
       } else {
         alert('Error al eliminar');
@@ -144,7 +181,6 @@ export default function CouriersPage() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-              {/* BOTÓN DE REGRESO */}
               <button
                 onClick={() => router.push('/admin')}
                 style={{
@@ -172,11 +208,11 @@ export default function CouriersPage() {
               >
                 ← Volver
               </button>
-              
+
               <div>
                 <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span style={{ fontSize: '3rem' }}></span>
-                  Empresas de Mensajeria
+                  <span style={{ fontSize: '3rem' }}>🚚</span>
+                  Empresas de Mensajería
                 </h1>
                 <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1.125rem', marginTop: '0.5rem' }}>
                   Gestiona las transportadoras y sus credenciales
@@ -257,9 +293,12 @@ export default function CouriersPage() {
                       justifyContent: 'center',
                     }}>
                       <img
-                        src={`/logos-couriers/${company.logo_url}`}
+                        src={company.logo_url}
                         alt={company.name}
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     </div>
                   ) : (
@@ -274,7 +313,7 @@ export default function CouriersPage() {
                       fontSize: '2.5rem',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
                     }}>
-
+                      🚚
                     </div>
                   )}
                   <div style={{ flex: 1 }}>
@@ -397,7 +436,7 @@ export default function CouriersPage() {
               No hay empresas configuradas
             </h3>
             <p style={{ color: '#6b7280', marginBottom: '2rem', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
-              Comienza agregando tu primera empresa de mensajeria
+              Comienza agregando tu primera empresa de mensajería
             </p>
             <button
               onClick={handleAddNew}
@@ -512,7 +551,7 @@ export default function CouriersPage() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151' }}>
-                    Codigo interno (sin espacios) *
+                    Código interno (sin espacios) *
                   </label>
                   <input
                     type="text"
@@ -539,26 +578,47 @@ export default function CouriersPage() {
                   border: `2px solid ${colors.purple}40`,
                 }}>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: colors.purpleDark }}>
-                    Nombre del archivo del logo
+                    Logo de la empresa
                   </label>
                   <input
-                    type="text"
-                    value={formData.logo_url}
-                    onChange={(e) => setFormData({...formData, logo_url: e.target.value})}
-                    placeholder="ej: servientrega.png"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
                     style={{
                       width: '100%',
-                      padding: '0.875rem',
-                      border: `2px solid ${colors.purple}40`,
+                      padding: '0.75rem',
+                      border: `2px dashed ${colors.purple}40`,
                       borderRadius: '0.75rem',
-                      fontSize: '1rem',
+                      fontSize: '0.9rem',
                       boxSizing: 'border-box',
                       background: 'white',
+                      cursor: uploadingImage ? 'not-allowed' : 'pointer',
                     }}
                   />
-                  <p style={{ fontSize: '0.75rem', color: colors.purpleDark, marginTop: '0.75rem', background: 'rgba(255,255,255,0.7)', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                    <strong>Nota:</strong> Copia el archivo de imagen manualmente a la carpeta <code style={{ background: colors.pastel, padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontFamily: 'monospace' }}>public/logos-couriers/</code>
-                  </p>
+                  {uploadingImage && (
+                    <p style={{ fontSize: '0.875rem', color: colors.purple, marginTop: '0.5rem' }}>
+                      ⏳ Subiendo imagen a la nube...
+                    </p>
+                  )}
+                  {formData.logo_url && !uploadingImage && (
+                    <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem', background: 'white', padding: '0.75rem', borderRadius: '0.5rem' }}>
+                      <img 
+                        src={formData.logo_url} 
+                        alt="Preview" 
+                        style={{ maxHeight: '50px', borderRadius: '0.5rem', border: '1px solid #ddd' }} 
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <div>
+                        <p style={{ fontSize: '0.75rem', color: colors.green, fontWeight: 'bold', margin: 0 }}>
+                          ✅ Imagen cargada correctamente
+                        </p>
+                        <p style={{ fontSize: '0.7rem', color: '#6b7280', margin: '0.25rem 0 0 0', wordBreak: 'break-all' }}>
+                          {formData.logo_url}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -644,7 +704,7 @@ export default function CouriersPage() {
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: `2px solid ${colors.pastelDark}` }}>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploadingImage}
                   style={{
                     flex: 1,
                     padding: '1rem',
@@ -654,9 +714,9 @@ export default function CouriersPage() {
                     borderRadius: '1rem',
                     fontWeight: 'bold',
                     fontSize: '1.125rem',
-                    cursor: loading ? 'not-allowed' : 'pointer',
+                    cursor: (loading || uploadingImage) ? 'not-allowed' : 'pointer',
                     boxShadow: '0 10px 20px rgba(107, 45, 139, 0.3)',
-                    opacity: loading ? 0.7 : 1,
+                    opacity: (loading || uploadingImage) ? 0.7 : 1,
                   }}
                 >
                   {loading ? 'Guardando...' : (editingCompany ? 'Actualizar Empresa' : 'Crear Empresa')}
@@ -664,6 +724,7 @@ export default function CouriersPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
+                  disabled={loading || uploadingImage}
                   style={{
                     flex: 1,
                     padding: '1rem',
@@ -673,7 +734,7 @@ export default function CouriersPage() {
                     borderRadius: '1rem',
                     fontWeight: 'bold',
                     fontSize: '1.125rem',
-                    cursor: 'pointer',
+                    cursor: (loading || uploadingImage) ? 'not-allowed' : 'pointer',
                   }}
                 >
                   Cancelar
