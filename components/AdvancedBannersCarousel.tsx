@@ -19,7 +19,7 @@ interface Overlay {
   animation_speed: number;
   direction: string;
   pause_on_hover: number;
-  position: string; // ✅ CAMPO AGREGADO
+  position?: string; // ✅ AHORA ES OPCIONAL
   starts_at: string;
   ends_at: string;
   is_active: number;
@@ -95,23 +95,21 @@ export default function AdvancedBannersCarousel({ banners, overlays = [] }: Adva
           </div>
         )}
 
-        {/* CAPA DE TEXTOS FLOTANTES (ROLLING) */}
+        {/* ✅ CAPA DE TEXTOS FLOTANTES (ROLLING) */}
         {overlays.map((overlay) => {
           const isLeft = overlay.direction === 'left';
           const animationName = isLeft ? 'rollLeft' : 'rollRight';
           
-          let positionStyle: React.CSSProperties = {};
-          if (overlay.position === 'top-left') { 
-            positionStyle = { top: '10%', left: 0, textAlign: 'left' }; 
-          } else if (overlay.position === 'top-right') { 
-            positionStyle = { top: '10%', right: 0, textAlign: 'right' }; 
-          } else if (overlay.position === 'bottom-left') { 
-            positionStyle = { bottom: '10%', left: 0, textAlign: 'left' }; 
-          } else if (overlay.position === 'bottom-right') { 
-            positionStyle = { bottom: '10%', right: 0, textAlign: 'right' }; 
-          } else { 
-            positionStyle = { top: '50%', transform: 'translateY(-50%)', textAlign: 'center', width: '100%' }; 
-          }
+          // Estilo por defecto (centrado) si no hay posición definida
+          let positionStyle: React.CSSProperties = { 
+            top: '50%', 
+            transform: 'translateY(-50%)', 
+            textAlign: 'center', 
+            width: '100%' 
+          };
+
+          if (overlay.position === 'top') positionStyle = { top: '10%', textAlign: 'center', width: '100%' };
+          if (overlay.position === 'bottom') positionStyle = { bottom: '10%', textAlign: 'center', width: '100%' };
 
           return (
             <div 
