@@ -302,6 +302,10 @@ export default function AdminDashboard() {
               <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>⭐ Pegatinas</button>
               <button onClick={() => router.push('/admin/banners')} style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}> Banners</button>
               <button onClick={() => router.push('/admin/advanced-banners')} style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🖼️ Banners Visual</button>
+              
+              {/* ✅ NUEVO BOTÓN AGREGADO AQUÍ */}
+              <button onClick={() => router.push('/admin/carousel-overlays')} style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📝 Textos Flotantes</button>
+              
               <button onClick={() => router.push('/admin/couriers')} style={{ background: 'linear-gradient(135deg, #6B2D8B, #1B8A3B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🚚 Empresas Mensajería</button>
             </div>
           )}

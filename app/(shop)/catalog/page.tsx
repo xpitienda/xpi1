@@ -3,6 +3,11 @@ import Header from '@/components/Header';
 import AdvancedBannersCarousel from '@/components/AdvancedBannersCarousel';
 import { turso } from '@/lib/turso';
 import CatalogClient from './CatalogClient';
+import SearchBar from '@/components/SearchBar';
+import CategoryFilter from '@/components/CategoryFilter';
+import { Suspense } from 'react';
+import ProductSkeleton from '@/components/ProductSkeleton';
+import ProductGrid from '@/components/ProductGrid';
 
 async function getCategoriesTree() {
   try {
@@ -31,6 +36,7 @@ async function getBanners() {
     const result = await turso.execute('SELECT * FROM banners WHERE is_active = 1 ORDER BY display_order ASC, created_at DESC');
     return JSON.parse(JSON.stringify(result.rows || []));
   } catch (error) {
+    console.error('Error cargando banners:', error);
     return [];
   }
 }
@@ -44,6 +50,22 @@ async function getAdvancedBanners() {
     });
     return JSON.parse(JSON.stringify(result.rows || []));
   } catch (error) {
+    console.error('Error cargando banners avanzados:', error);
+    return [];
+  }
+}
+
+// ✅ NUEVA FUNCIÓN: Obtener textos flotantes activos
+async function getCarouselOverlays() {
+  try {
+    const now = new Date().toISOString();
+    const result = await turso.execute({
+      sql: `SELECT * FROM carousel_overlays WHERE is_active = 1 AND starts_at <= ? AND ends_at >= ? ORDER BY created_at DESC`,
+      args: [now, now]
+    });
+    return JSON.parse(JSON.stringify(result.rows || []));
+  } catch (error) {
+    console.error('Error cargando textos flotantes:', error);
     return [];
   }
 }
@@ -54,7 +76,7 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
   const category = searchParams?.category || '';
   const filter = searchParams?.filter || '';
 
-  const [categoriesTree, productsResult] = await Promise.all([
+  const [categoriesTree, productsResult, advancedBanners, banners, overlays] = await Promise.all([
     getCategoriesTree(),
     (async () => {
       try {
@@ -72,47 +94,151 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         console.error('Error cargando productos:', error);
         return [];
       }
-    })()
+    })(),
+    getAdvancedBanners(),
+    getBanners(),
+    getCarouselOverlays()
   ]);
 
-  const banners = await getBanners();
-  const advancedBanners = await getAdvancedBanners();
+  const filters = [
+    { key: '', label: '🏪 Todos', color: '#5D4037' },
+    { key: 'featured', label: '⭐ Destacados', color: '#F59E0B' },
+    { key: 'day', label: '🔥 Oferta del Día', color: '#10B981' },
+    { key: 'week', label: '📅 Oferta de la Semana', color: '#3B82F6' },
+  ];
 
   return (
-    // FONDO SÓLIDO MORADO (Sin degradados)
-    <div style={{ minHeight: '100vh', background: '#F3E8FF' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #FDF6E3, #FFECD2, #FDF6E3)' }}>
       <Header />
 
+      {/* ✅ BANNERS ORIGINALES (ESTÁTICOS + ROLLING) */}
       {banners.length > 0 && (
         <>
           {banners.filter((b: any) => b.type === 'static').map((b: any) => (
-            <div key={b.id} style={{ background: b.background_color, color: b.text_color, padding: '12px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem' }}>
+            <div key={b.id} style={{ background: b.background_color, color: b.text_color, padding: '12px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               {b.link_url ? <a href={b.link_url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{b.text}</a> : b.text}
             </div>
           ))}
           {banners.filter((b: any) => b.type === 'rolling').map((b: any) => (
-            <div key={b.id} style={{ background: b.background_color, color: b.text_color, padding: '12px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <div key={b.id} style={{ background: b.background_color, color: b.text_color, padding: '12px 0', overflow: 'hidden', whiteSpace: 'nowrap', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               <div className="marquee-content" style={{ display: 'inline-block', paddingLeft: '100%' }}>
                 <span style={{ marginRight: '50px', fontWeight: 'bold', fontSize: '1.1rem' }}>{b.text}</span>
                 <span style={{ marginRight: '50px', fontWeight: 'bold', fontSize: '1.1rem' }}>{b.text}</span>
               </div>
             </div>
           ))}
-          <style>{`@keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } } .marquee-content { animation: scroll-left 25s linear infinite; }`}</style>
-          <AdvancedBannersCarousel banners={advancedBanners} />
+          <style>{`
+            @keyframes scroll-left {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-100%); }
+            }
+            .marquee-content {
+              animation: scroll-left 25s linear infinite;
+            }
+          `}</style>
+
+          {/* CARRUSEL DE BANNERS VISUALES */}
+          <AdvancedBannersCarousel banners={advancedBanners} overlays={overlays} />
         </>
       )}
-      
+
+      {/* Si no hay banners, solo mostrar el carrusel con overlays */}
+      {banners.length === 0 && (
+        <AdvancedBannersCarousel banners={advancedBanners} overlays={overlays} />
+      )}
+
       <NavBar />
-      
-      {/* Pasamos los datos al componente cliente que maneja la vista */}
-      <CatalogClient 
-        initialCategories={categoriesTree} 
-        products={productsResult} 
-        query={query} 
-        category={category} 
-        filter={filter} 
-      />
+      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1.5rem 1rem 0 1rem' }}>
+
+        {/* Título y SearchBar */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '1.5rem'
+        }}>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', margin: 0 }}>
+            <span style={{ color: '#5D4037' }}>Catálogo de </span>
+            <span style={{ color: '#2E7D32' }}>Productos</span>
+          </h1>
+          <div style={{ minWidth: '280px', maxWidth: '360px' }}>
+            <SearchBar />
+          </div>
+        </div>
+
+        {/* Filtros de categoría */}
+        <CategoryFilter initialCategories={categoriesTree} />
+
+        {/* Filtros de productos */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', margin: '2rem 0' }}>
+          {filters.map((f) => {
+            const isActive = filter === f.key;
+            return (
+              <a
+                key={f.key}
+                href={`/catalog?${new URLSearchParams({
+                  ...(query ? { q: query } : {}),
+                  ...(category ? { category } : {}),
+                  ...(f.key ? { filter: f.key } : {}),
+                })}`}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '2rem',
+                  fontWeight: 'bold',
+                  fontSize: '0.95rem',
+                  textDecoration: 'none',
+                  background: isActive ? f.color : 'white',
+                  color: isActive ? 'white' : f.color,
+                  border: `2px solid ${f.color}`,
+                  transition: 'all 0.2s',
+                  boxShadow: isActive ? '0 4px 6px rgba(0,0,0,0.1)' : 'none',
+                }}
+              >
+                {f.label}
+              </a>
+            );
+          })}
+        </div>
+
+        {/* Información de filtros activos */}
+        {(query || (category && category !== 'Todas') || filter) && (
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <p style={{ color: '#5D4037' }}>
+              {query && <span>Buscando: <strong style={{ color: '#2E7D32' }}>"{query}"</strong></span>}
+              {query && (category || filter) && <span> | </span>}
+              {category && category !== 'Todas' && <span>Categoría: <strong style={{ color: '#2E7D32' }}>{category}</strong></span>}
+              {(query || (category && category !== 'Todas')) && filter && <span> | </span>}
+              {filter && (
+                <span>
+                  Filtro:{' '}
+                  <strong style={{ color: filters.find(f => f.key === filter)?.color }}>
+                    {filters.find(f => f.key === filter)?.label}
+                  </strong>
+                </span>
+              )}
+              <span style={{ color: '#8D6E63', marginLeft: '0.5rem' }}>({productsResult.length} productos)</span>
+            </p>
+          </div>
+        )}
+
+        {/* Grid de productos */}
+        <Suspense fallback={
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: '1.5rem',
+            marginTop: '2rem'
+          }}>
+            {[...Array(10)].map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </div>
+        }>
+          <ProductGrid products={productsResult} />
+        </Suspense>
+      </div>
     </div>
   );
 }
