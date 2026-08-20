@@ -1,8 +1,49 @@
+import { Metadata } from 'next';
 import AdvancedBannersCarousel from '@/components/AdvancedBannersCarousel';
 import NavBar from '@/components/NavBar';
 import { turso } from '@/lib/turso';
 import Header from '@/components/Header';
 import CatalogClient from './CatalogClient';
+
+// ✅ Generación dinámica de metadata para SEO (sin duplicar "XPI Tienda")
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string; filter?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const query = params?.q || '';
+  const category = params?.category || '';
+  const filter = params?.filter || '';
+
+  let title = 'Catálogo de Productos';
+  let description = 'Explora nuestra amplia selección de productos con los mejores precios y envíos a todo el país.';
+
+  if (query) {
+    title = `Resultados para "${query}"`;
+    description = `Encuentra los mejores productos relacionados con "${query}" en XPI Tienda. Compra segura y envíos rápidos.`;
+  } else if (category && category !== 'Todas') {
+    title = `Productos de ${category}`;
+    description = `Compra los mejores productos de la categoría ${category} con envío seguro, garantía y los mejores precios.`;
+  } else if (filter === 'featured') {
+    title = 'Productos Destacados';
+    description = 'Descubre nuestra selección especial de productos destacados y las mejores ofertas para ti.';
+  } else if (filter === 'day' || filter === 'week') {
+    const periodo = filter === 'day' ? 'del Día' : 'de la Semana';
+    title = `Ofertas ${periodo}`;
+    description = `Aprovecha nuestras increíbles ofertas ${periodo.toLowerCase()} con descuentos exclusivos por tiempo limitado.`;
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+    },
+  };
+}
 
 async function getCategoriesTree() {
   try {
@@ -133,9 +174,9 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
       )}
 
       <NavBar />
-      
+
       {/* ✅ AQUÍ ESTÁ LA CLAVE: Delegamos la renderización de productos y el selector de vistas a tu CatalogClient original */}
-      <CatalogClient 
+      <CatalogClient
         initialCategories={categoriesTree}
         products={products}
         query={query}
