@@ -82,3 +82,4 @@ export default function RootLayout({
     </html>
   );
 }
+// SEO configurado - 2026-08-20 20:56
