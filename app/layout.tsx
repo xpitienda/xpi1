@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   authors: [{ name: 'XPI Tienda' }],
   creator: 'XPI Tienda',
   publisher: 'XPI Tienda',
+  verification: {
+    google: 'google2159ce80c5529a14',
+  },
   openGraph: {
     type: 'website',
     locale: 'es_CO',
@@ -73,7 +76,6 @@ export default function RootLayout({
               </ImageModalProvider>
             </ToastProvider>
           </AdminAuthProvider>
-          {/* ✅ ESTO ES LO QUE FALTABA: Renderiza la barra lateral del carrito en toda la app */}
           <GlobalCartSidebar />
         </CartProvider>
       </body>
