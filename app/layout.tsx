@@ -1,5 +1,6 @@
 import './globals.css';
 import GlobalCartSidebar from '@/components/GlobalCartSidebar';
+import WhatsAppButton from '@/components/WhatsAppButton';
 import { Inter } from 'next/font/google';
 import { ToastProvider } from '@/context/ToastContext';
 import { CartProvider } from '@/context/CartContext';
@@ -77,9 +78,10 @@ export default function RootLayout({
             </ToastProvider>
           </AdminAuthProvider>
           <GlobalCartSidebar />
+          {/* ✅ Botón de WhatsApp Global (aparece después del splash) */}
+          <WhatsAppButton />
         </CartProvider>
       </body>
     </html>
   );
 }
-// SEO configurado - 2026-08-20 20:56
