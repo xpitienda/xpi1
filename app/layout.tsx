@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   creator: 'XPI Tienda',
   publisher: 'XPI Tienda',
   verification: {
-    google: 'google2159ce80c5529a14',
+    google: 'UOzvJJGEixLIg',  // ✅ Nuevo código de Google
   },
   openGraph: {
     type: 'website',
