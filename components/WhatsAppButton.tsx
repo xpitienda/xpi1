@@ -6,10 +6,10 @@ export default function WhatsAppButton() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Espera 5.5 segundos para no aparecer durante el splash
+    // Espera 3.5 segundos para no aparecer durante el splash
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 5500);
+    }, 3500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -23,7 +23,7 @@ export default function WhatsAppButton() {
       rel="noopener noreferrer"
       style={{
         position: 'fixed',
-        bottom: '20px',
+        bottom: '90px', // ✅ Subido para no tapar el NavBar en celular
         right: '20px',
         width: '60px',
         height: '60px',
