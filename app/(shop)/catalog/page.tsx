@@ -103,6 +103,18 @@ async function getCarouselOverlays() {
   }
 }
 
+// ✅ NUEVO: FUNCIÓN PARA EL CONTADOR DE VISITANTES
+async function getVisitorCount() {
+  try {
+    await turso.execute('UPDATE page_views SET view_count = view_count + 1 WHERE id = 1');
+    const result = await turso.execute('SELECT view_count FROM page_views WHERE id = 1');
+    return result.rows[0]?.view_count || 0;
+  } catch (error) {
+    console.error('Error al obtener contador:', error);
+    return 0;
+  }
+}
+
 export default async function CatalogPage(props: { searchParams: Promise<{ q?: string; category?: string; filter?: string }> }) {
   const searchParams = await props.searchParams;
   const query = searchParams?.q || '';
@@ -110,7 +122,7 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
   const filter = searchParams?.filter || '';
 
   // Obtenemos todos los datos en paralelo
-  const [categoriesTree, products, advancedBanners, banners, overlays] = await Promise.all([
+  const [categoriesTree, products, advancedBanners, banners, overlays, visitorCount] = await Promise.all([
     getCategoriesTree(),
     (async () => {
       try {
@@ -130,7 +142,8 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
     })(),
     getAdvancedBanners(),
     getBanners(),
-    getCarouselOverlays() // ✅ Obtenemos los textos flotantes
+    getCarouselOverlays(), // ✅ Obtenemos los textos flotantes
+    getVisitorCount()      // ✅ Obtenemos el contador de visitas
   ]);
 
   return (
@@ -183,6 +196,67 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         category={category}
         filter={filter}
       />
+
+      {/* ✅ Contador de visitantes - Versión 3D con líneas de neón */}
+      <div style={{
+        marginTop: '40px',
+        padding: '16px 24px',
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85))',
+        border: '2px solid rgba(0, 0, 0, 0.1)',
+        borderRadius: '12px',
+        textAlign: 'center',
+        fontSize: '0.8rem',
+        color: '#666',
+        maxWidth: '450px',
+        margin: '40px auto 40px auto',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1) inset',
+        position: 'relative',
+        overflow: 'hidden',
+        transform: 'translateZ(0)',
+        perspective: '1000px'
+      }}>
+        {/* Línea verde neón (sentido horario) */}
+        <div style={{
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          right: '0',
+          height: '3px',
+          background: 'linear-gradient(90deg, transparent, #00ff00, #39ff14, transparent)',
+          boxShadow: '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #39ff14',
+          animation: 'scanline-clockwise 3s linear infinite',
+        }} />
+        
+        {/* Línea morada neón (sentido antihorario) */}
+        <div style={{
+          position: 'absolute',
+          bottom: '0',
+          left: '0',
+          right: '0',
+          height: '3px',
+          background: 'linear-gradient(90deg, transparent, #9d00ff, #bf00ff, transparent)',
+          boxShadow: '0 0 10px #9d00ff, 0 0 20px #9d00ff, 0 0 30px #bf00ff',
+          animation: 'scanline-counterclockwise 3s linear infinite',
+        }} />
+
+        <span style={{ position: 'relative', zIndex: '1' }}>
+          Eres el visitante nro. <strong style={{ color: '#333', fontSize: '0.9rem' }}>{visitorCount.toLocaleString()}</strong> · Gracias por elegirnos 
+        </span>
+
+        <style>{`
+          @keyframes scanline-clockwise {
+            0% { transform: translateX(-100%) rotate(0deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) rotate(360deg); opacity: 0; }
+          }
+          @keyframes scanline-counterclockwise {
+            0% { transform: translateX(100%) rotate(0deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(-100%) rotate(-360deg); opacity: 0; }
+          }
+        `}</style>
+      </div>
+
     </div>
   );
 }
