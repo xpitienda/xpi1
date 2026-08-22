@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import AdvancedBannersCarousel from '@/components/AdvancedBannersCarousel';
 import NavBar from '@/components/NavBar';
 import { turso } from '@/lib/turso';
@@ -197,6 +198,30 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         filter={filter}
       />
 
+      {/* ✅ NUEVO: Botón para ir a la página de Información (CSS puro, sin onMouseEnter/Leave) */}
+      <div style={{ textAlign: 'center', marginTop: '30px' }}>
+        <Link
+          href="/info"
+          className="info-button"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 24px',
+            background: 'linear-gradient(135deg, #9d00ff, #bf00ff)',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '50px',
+            fontWeight: 'bold',
+            fontSize: '0.95rem',
+            boxShadow: '0 4px 15px rgba(157, 0, 255, 0.3)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+        >
+          ℹ️ Centro de Información y Ayuda
+        </Link>
+      </div>
+
       {/* ✅ Contador de visitantes - Versión 3D con líneas de neón */}
       <div style={{
         marginTop: '40px',
@@ -240,7 +265,7 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         }} />
 
         <span style={{ position: 'relative', zIndex: '1' }}>
-          Eres el visitante nro. <strong style={{ color: '#333', fontSize: '0.9rem' }}>{visitorCount.toLocaleString()}</strong> · Gracias por elegirnos 
+          Eres el visitante nro. <strong style={{ color: '#333', fontSize: '0.9rem' }}>{visitorCount.toLocaleString()}</strong> · Gracias por elegirnos 💚
         </span>
 
         <style>{`
@@ -253,6 +278,11 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
             0% { transform: translateX(100%) rotate(0deg); opacity: 0; }
             50% { opacity: 1; }
             100% { transform: translateX(-100%) rotate(-360deg); opacity: 0; }
+          }
+          /* ✅ Hover del botón de información con CSS puro */
+          .info-button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(157, 0, 255, 0.5) !important;
           }
         `}</style>
       </div>
