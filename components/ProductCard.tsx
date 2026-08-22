@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import ProductImageCarousel from '@/components/ProductImageCarousel';
 
 interface ProductCardProps {
   product: any;
@@ -13,6 +14,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   const { addToCart, isInCart, setIsCartOpen } = useCart();
   const [showModal, setShowModal] = useState(false);
+  const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [added, setAdded] = useState(false);
 
   const isList = viewMode === 'list';
@@ -23,7 +25,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
     e.preventDefault();
     e.stopPropagation();
     addToCart(product);
-    setIsCartOpen(true); // <-- ESTO ABRE EL CARRITO AUTOMÁTICAMENTE
+    setIsCartOpen(true);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -95,7 +97,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               📦
             </div>
           )}
-          
+
           {product.on_sale && product.sale_price && (
             <div style={{
               position: 'absolute',
@@ -130,10 +132,10 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
 
         <div style={contentStyle}>
           <div>
-            <h3 style={{ 
-              fontSize: isList ? '1.25rem' : '1.1rem', 
-              fontWeight: 'bold', 
-              color: '#1f2937', 
+            <h3 style={{
+              fontSize: isList ? '1.25rem' : '1.1rem',
+              fontWeight: 'bold',
+              color: '#1f2937',
               margin: '0 0 0.5rem 0',
               lineHeight: '1.3',
               display: '-webkit-box',
@@ -143,11 +145,11 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             }}>
               {product.name}
             </h3>
-            
+
             {product.description && isList && (
-              <p style={{ 
-                fontSize: '0.875rem', 
-                color: '#6b7280', 
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
                 margin: '0 0 1rem 0',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -210,7 +212,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
       </div>
 
       {showModal && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -224,7 +226,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           }}
           onClick={() => setShowModal(false)}
         >
-          <div 
+          <div
             style={{
               background: 'white',
               borderRadius: '1.5rem',
@@ -248,7 +250,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               <h2 style={{ color: 'white', margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>
                 {product.name}
               </h2>
-              <button 
+              <button
                 onClick={() => setShowModal(false)}
                 style={{
                   background: 'rgba(255,255,255,0.2)',
@@ -266,7 +268,14 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               </button>
             </div>
 
-            <div style={{ position: 'relative', width: '100%', height: '400px', background: '#f9fafb' }}>
+            {/* ✅ IMAGEN CLICKABLE PARA ABRIR CARRUSEL 3D */}
+            <div 
+              style={{ position: 'relative', width: '100%', height: '400px', background: '#f9fafb', cursor: 'pointer' }}
+              onClick={() => {
+                console.log(' Click en imagen - Abriendo carrusel');
+                setIsCarouselOpen(true);
+              }}
+            >
               {product.image_url ? (
                 <Image
                   src={product.image_url}
@@ -276,9 +285,35 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem' }}>
-                  📦
+                  
                 </div>
               )}
+              
+              {/* Indicador visual de zoom */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.5')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+              >
+                <div style={{
+                  background: 'rgba(255,255,255,0.9)',
+                  borderRadius: '50%',
+                  padding: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  fontSize: '1.5rem'
+                }}>
+                  🔍
+                </div>
+              </div>
             </div>
 
             <div style={{ padding: '1.5rem' }}>
@@ -289,10 +324,10 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 </div>
               )}
 
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 padding: '1rem',
                 background: '#F3E8FF',
                 borderRadius: '1rem',
@@ -352,6 +387,20 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             </div>
           </div>
         </div>
+      )}
+
+      {/* ✅ CARRUSEL 3D - Se abre al hacer clic en la imagen del modal */}
+      {isCarouselOpen && (
+        <ProductImageCarousel
+          images={product.additionalImages || []}
+          productName={product.name}
+          price={product.price}
+          description={product.description || ''}
+          onClose={() => {
+            console.log(' Cerrando carrusel');
+            setIsCarouselOpen(false);
+          }}
+        />
       )}
     </>
   );
