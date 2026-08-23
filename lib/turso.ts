@@ -17,6 +17,7 @@ export const turso = isTursoConfigured
 // Función para inicializar la base de datos
 export async function initDatabase() {
   try {
+    // 1. Tabla existente (NO SE MODIFICA)
     await turso.execute(`
       CREATE TABLE IF NOT EXISTS catalog (
         id TEXT PRIMARY KEY,
@@ -34,7 +35,24 @@ export async function initDatabase() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('✅ Base de datos inicializada correctamente');
+
+    // 2. NUEVA TABLA: Imágenes adicionales de productos
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS product_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id TEXT NOT NULL,
+        image_url TEXT NOT NULL,
+        display_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES catalog(id) ON DELETE CASCADE
+      )
+    `);
+
+    // 3. Índices para mejorar la velocidad de búsqueda
+    await turso.execute(`CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id)`);
+    await turso.execute(`CREATE INDEX IF NOT EXISTS idx_product_images_display_order ON product_images(display_order)`);
+
+    console.log('✅ Base de datos inicializada correctamente (incluyendo product_images)');
   } catch (error) {
     console.error('❌ Error inicializando base de datos:', error);
   }

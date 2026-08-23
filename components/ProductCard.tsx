@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import ProductImageCarousel from '@/components/ProductImageCarousel';
+import ProductCarouselWithThumbnails from '@/components/ProductCarouselWithThumbnails';
 
 interface ProductCardProps {
   product: any;
@@ -205,7 +205,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
               }}
             >
-              {added ? '✅ Agregado' : inCart ? '🛒 En carrito' : '🛒 Agregar al carrito'}
+              {added ? '✅ Agregado' : inCart ? '🛒 En carrito' : ' Agregar al carrito'}
             </button>
           </div>
         </div>
@@ -268,7 +268,6 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               </button>
             </div>
 
-            {/* ✅ IMAGEN CLICKABLE PARA ABRIR CARRUSEL 3D */}
             <div 
               style={{ position: 'relative', width: '100%', height: '400px', background: '#f9fafb', cursor: 'pointer' }}
               onClick={() => {
@@ -289,7 +288,6 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 </div>
               )}
               
-              {/* Indicador visual de zoom */}
               <div 
                 style={{
                   position: 'absolute',
@@ -389,21 +387,20 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
         </div>
       )}
 
-      {/* ✅ CARRUSEL 3D - Se abre al hacer clic en la imagen del modal */}
+      {/* CARRUSEL 3D CON MINIATURAS */}
       {isCarouselOpen && (
-        <ProductImageCarousel
+        <ProductCarouselWithThumbnails
           images={product.additionalImages || []}
           productName={product.name}
           price={product.price}
           description={product.description || ''}
           onClose={() => {
-            console.log('🔕 Cerrando carrusel');
+            console.log(' Cerrando carrusel');
             setIsCarouselOpen(false);
           }}
           onAddToCart={(selectedImage) => {
             console.log('🛒 Agregando al carrito', selectedImage ? `con imagen ${selectedImage}` : '');
             
-            // Crear producto con la imagen seleccionada si existe
             const productToAdd = {
               ...product,
               image: selectedImage || product.image_url

@@ -6,7 +6,7 @@ import { turso } from '@/lib/turso';
 import Header from '@/components/Header';
 import CatalogClient from './CatalogClient';
 
-// ✅ Generación dinámica de metadata para SEO (sin duplicar "XPI Tienda")
+// ✅ Generación dinámica de metadata para SEO
 export async function generateMetadata({
   searchParams,
 }: {
@@ -90,7 +90,6 @@ async function getAdvancedBanners() {
   }
 }
 
-// ✅ FUNCIÓN PARA OBTENER TEXTOS FLOTANTES
 async function getCarouselOverlays() {
   try {
     const now = new Date().toISOString();
@@ -104,7 +103,6 @@ async function getCarouselOverlays() {
   }
 }
 
-// ✅ NUEVO: FUNCIÓN PARA EL CONTADOR DE VISITANTES
 async function getVisitorCount() {
   try {
     await turso.execute('UPDATE page_views SET view_count = view_count + 1 WHERE id = 1');
@@ -113,6 +111,58 @@ async function getVisitorCount() {
   } catch (error) {
     console.error('Error al obtener contador:', error);
     return 0;
+  }
+}
+
+// ✅ NUEVA FUNCIÓN: Obtener productos CON imágenes adicionales
+async function getProductsWithImages(query: string, category: string, filter: string) {
+  try {
+    // 1. Obtener productos básicos
+    let sql = 'SELECT * FROM catalog WHERE is_active = 1';
+    let args: (string | number)[] = [];
+    
+    if (query) { sql += ' AND (name LIKE ? OR description LIKE ?)'; args.push(`%${query}%`, `%${query}%`); }
+    if (category && category !== 'Todas') { sql += ' AND category = ?'; args.push(category); }
+    if (filter === 'featured') { sql += ' AND is_featured = 1'; }
+    else if (filter === 'day') { sql += ' AND offer_type = ?'; args.push('day'); }
+    else if (filter === 'week') { sql += ' AND offer_type = ?'; args.push('week'); }
+    sql += ' ORDER BY created_at DESC';
+    
+    const productsResult = await turso.execute({ sql, args });
+    const products = JSON.parse(JSON.stringify(productsResult.rows || []));
+
+    // 2. Obtener todas las imágenes adicionales de todos los productos
+    const productIds = products.map((p: any) => p.id);
+    if (productIds.length === 0) return [];
+
+    const imagesResult = await turso.execute({
+      sql: 'SELECT product_id, id, image_url, display_order FROM product_images WHERE product_id IN (' + productIds.map(() => '?').join(',') + ') ORDER BY display_order ASC',
+      args: productIds
+    });
+
+    // 3. Agrupar imágenes por product_id
+    const imagesByProduct = new Map();
+    (imagesResult.rows || []).forEach((img: any) => {
+      if (!imagesByProduct.has(img.product_id)) {
+        imagesByProduct.set(img.product_id, []);
+      }
+      imagesByProduct.get(img.product_id).push({
+        id: Number(img.id),
+        product_id: img.product_id,
+        image_url: img.image_url,
+        display_order: Number(img.display_order)
+      });
+    });
+
+    // 4. Agregar additionalImages a cada producto
+    return products.map((product: any) => ({
+      ...product,
+      additionalImages: imagesByProduct.get(product.id) || []
+    }));
+
+  } catch (error) {
+    console.error('Error obteniendo productos con imágenes:', error);
+    return [];
   }
 }
 
@@ -125,33 +175,17 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
   // Obtenemos todos los datos en paralelo
   const [categoriesTree, products, advancedBanners, banners, overlays, visitorCount] = await Promise.all([
     getCategoriesTree(),
-    (async () => {
-      try {
-        let sql = 'SELECT * FROM catalog WHERE is_active = 1';
-        let args: (string | number)[] = [];
-        if (query) { sql += ' AND (name LIKE ? OR description LIKE ?)'; args.push(`%${query}%`, `%${query}%`); }
-        if (category && category !== 'Todas') { sql += ' AND category = ?'; args.push(category); }
-        if (filter === 'featured') { sql += ' AND is_featured = 1'; }
-        else if (filter === 'day') { sql += ' AND offer_type = ?'; args.push('day'); }
-        else if (filter === 'week') { sql += ' AND offer_type = ?'; args.push('week'); }
-        sql += ' ORDER BY created_at DESC';
-        const result = await turso.execute({ sql, args });
-        return JSON.parse(JSON.stringify(result.rows || []));
-      } catch (error) {
-        return [];
-      }
-    })(),
+    getProductsWithImages(query, category, filter), // ✅ USAR LA NUEVA FUNCIÓN
     getAdvancedBanners(),
     getBanners(),
-    getCarouselOverlays(), // ✅ Obtenemos los textos flotantes
-    getVisitorCount()      // ✅ Obtenemos el contador de visitas
+    getCarouselOverlays(),
+    getVisitorCount()
   ]);
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #FDF6E3, #FFECD2, #FDF6E3)' }}>
       <Header />
 
-      {/* SECCIÓN DE BANNERS Y ANUNCIOS ORIGINALES */}
       {banners.length > 0 && (
         <>
           {banners.filter((b: any) => b.type === 'static').map((b: any) => (
@@ -177,19 +211,16 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
             }
           `}</style>
 
-          {/* CARRUSEL DE BANNERS VISUALES + TEXTOS FLOTANTES */}
           <AdvancedBannersCarousel banners={advancedBanners} overlays={overlays} />
         </>
       )}
 
-      {/* Si no hay banners normales, mostrar solo el carrusel visual con textos flotantes */}
       {banners.length === 0 && (
         <AdvancedBannersCarousel banners={advancedBanners} overlays={overlays} />
       )}
 
       <NavBar />
 
-      {/* ✅ AQUÍ ESTÁ LA CLAVE: Delegamos la renderización de productos y el selector de vistas a tu CatalogClient original */}
       <CatalogClient
         initialCategories={categoriesTree}
         products={products}
@@ -198,7 +229,6 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         filter={filter}
       />
 
-      {/* ✅ NUEVO: Botón para ir a la página de Información (CSS puro, sin onMouseEnter/Leave) */}
       <div style={{ textAlign: 'center', marginTop: '30px' }}>
         <Link
           href="/info"
@@ -222,7 +252,6 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         </Link>
       </div>
 
-      {/* ✅ Contador de visitantes - Versión 3D con líneas de neón */}
       <div style={{
         marginTop: '40px',
         padding: '16px 24px',
@@ -240,7 +269,6 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         transform: 'translateZ(0)',
         perspective: '1000px'
       }}>
-        {/* Línea verde neón (sentido horario) */}
         <div style={{
           position: 'absolute',
           top: '0',
@@ -251,8 +279,7 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
           boxShadow: '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #39ff14',
           animation: 'scanline-clockwise 3s linear infinite',
         }} />
-        
-        {/* Línea morada neón (sentido antihorario) */}
+
         <div style={{
           position: 'absolute',
           bottom: '0',
@@ -279,7 +306,6 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
             50% { opacity: 1; }
             100% { transform: translateX(-100%) rotate(-360deg); opacity: 0; }
           }
-          /* ✅ Hover del botón de información con CSS puro */
           .info-button:hover {
             transform: translateY(-2px) !important;
             box-shadow: 0 8px 25px rgba(157, 0, 255, 0.5) !important;
