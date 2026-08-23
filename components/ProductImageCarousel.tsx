@@ -277,7 +277,7 @@ export default function ProductImageCarousel({
             >
               <ShoppingCart size={24} />
               {selectedImageIndex !== null 
-                ? '✅ Agregar esta imagen al carrito' 
+                ? '✅ Agregar Producto al Carrito' 
                 : '🛒 Agregar al carrito'}
             </button>
           </div>
