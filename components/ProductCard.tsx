@@ -397,8 +397,23 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           price={product.price}
           description={product.description || ''}
           onClose={() => {
-            console.log(' Cerrando carrusel');
+            console.log('🔕 Cerrando carrusel');
             setIsCarouselOpen(false);
+          }}
+          onAddToCart={(selectedImage) => {
+            console.log('🛒 Agregando al carrito', selectedImage ? `con imagen ${selectedImage}` : '');
+            
+            // Crear producto con la imagen seleccionada si existe
+            const productToAdd = {
+              ...product,
+              image: selectedImage || product.image_url
+            };
+            
+            addToCart(productToAdd);
+            setIsCartOpen(true);
+            setIsCarouselOpen(false);
+            setAdded(true);
+            setTimeout(() => setAdded(false), 2000);
           }}
         />
       )}
