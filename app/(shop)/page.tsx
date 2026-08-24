@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 
 interface Product {
@@ -13,6 +13,43 @@ interface Product {
   stock: number;
   is_active: number;
 }
+
+// Componente de video optimizado (memoizado para evitar re-renders)
+const SplashVideo = memo(() => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current && !isLoaded) {
+      videoRef.current.load();
+      setIsLoaded(true);
+    }
+  }, [isLoaded]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        zIndex: -2
+      }}
+    >
+      <source src="/video-splash.mp4" type="video/mp4" />
+    </video>
+  );
+});
+
+SplashVideo.displayName = 'SplashVideo';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,8 +84,8 @@ export default function Home() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
+    <div style={{
+      minHeight: '100vh',
       position: 'relative',
       overflow: 'hidden',
       display: 'flex',
@@ -56,23 +93,8 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          zIndex: -2
-        }}
-      >
-        <source src="/video-splash.mp4" type="video/mp4" />
-      </video>
+      {/* Video splash optimizado */}
+      <SplashVideo />
 
       <div style={{
         position: 'absolute',
@@ -90,7 +112,7 @@ export default function Home() {
             const delay = Math.random() * 3;
             const duration = 4 + Math.random() * 4;
             const size = 6 + Math.random() * 8;
-            
+
             return (
               <div
                 key={i}
@@ -112,25 +134,8 @@ export default function Home() {
         </div>
       )}
 
-      <div style={{
-        position: 'relative',
-        zIndex: 10,
-        marginBottom: '1.5rem',
-        animation: 'logoFloat 6s ease-in-out infinite'
-      }}>
-        <img 
-          src="/logo1.png" 
-          alt="XPI Tienda"
-          style={{
-            width: 'clamp(300px, 50vw, 600px)',
-            height: 'auto',
-            filter: 'drop-shadow(0 0 30px rgba(147, 51, 234, 0.8)) drop-shadow(0 0 50px rgba(34, 197, 94, 0.6))'
-          }}
-        />
-      </div>
-
-      <h1 style={{ 
-        fontSize: 'clamp(4.5rem, 14vw, 9rem)', 
+      <h1 style={{
+        fontSize: 'clamp(4.5rem, 14vw, 9rem)',
         fontWeight: 'bold',
         background: 'linear-gradient(90deg, #00FF88, #00CED1, #9370DB, #FF69B4, #FF1493, #00FF88)',
         backgroundSize: '200% auto',
@@ -147,15 +152,15 @@ export default function Home() {
         Bienvenidos
       </h1>
 
-      <div style={{ 
-        display: 'flex', 
-        gap: '2rem', 
+      <div style={{
+        display: 'flex',
+        gap: '2rem',
         justifyContent: 'center',
         flexWrap: 'wrap',
         zIndex: 10,
         marginBottom: '2.5rem'
       }}>
-        <Link 
+        <Link
           href="/catalog"
           style={{
             background: 'rgba(0, 0, 0, 0.7)',
@@ -177,7 +182,7 @@ export default function Home() {
           Explorar
         </Link>
 
-        <Link 
+        <Link
           href="/login-seller"
           style={{
             background: 'rgba(0, 0, 0, 0.7)',
@@ -199,7 +204,7 @@ export default function Home() {
           Vendedores
         </Link>
 
-        <Link 
+        <Link
           href="/admin/login"
           style={{
             background: 'rgba(0, 0, 0, 0.7)',
@@ -222,13 +227,13 @@ export default function Home() {
         </Link>
       </div>
 
-      <div style={{ 
-        textAlign: 'center', 
+      <div style={{
+        textAlign: 'center',
         zIndex: 10,
         marginTop: '1rem'
       }}>
-        <p style={{ 
-          fontSize: 'clamp(2.5rem, 7vw, 4rem)', 
+        <p style={{
+          fontSize: 'clamp(2.5rem, 7vw, 4rem)',
           fontWeight: 'bold',
           background: 'linear-gradient(90deg, #00FF00, #FFD700, #FF69B4, #00FFFF, #9370DB, #00FF00)',
           backgroundSize: '200% auto',
@@ -244,21 +249,6 @@ export default function Home() {
       </div>
 
       <style>{`
-        @keyframes logoFloat {
-          0%, 100% { 
-            transform: translateY(0) rotate(0deg) scale(1);
-          }
-          25% {
-            transform: translateY(-10px) rotate(2deg) scale(1.02);
-          }
-          50% { 
-            transform: translateY(-5px) rotate(0deg) scale(1);
-          }
-          75% {
-            transform: translateY(-10px) rotate(-2deg) scale(1.02);
-          }
-        }
-        
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
