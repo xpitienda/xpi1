@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import CircularProgress from '@/components/CircularProgress';
 
 export default function ProcessImagesPage() {
   const router = useRouter();
@@ -9,9 +10,30 @@ export default function ProcessImagesPage() {
   const [watermark, setWatermark] = useState('XPI Tienda');
   const [targetSize, setTargetSize] = useState('800');
   const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ NUEVO: Animación del progreso mientras se procesa
+  useEffect(() => {
+    if (!processing) {
+      setProgress(0);
+      return;
+    }
+
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        // Simulación inteligente: avanza rápido al inicio, más lento al final
+        const increment = prev < 50 ? 3 : 1.5;
+        const next = prev + increment + Math.random() * 2;
+        return next >= 95 ? 95 : next; // Se detiene en 95% hasta que termine
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [processing]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -49,6 +71,7 @@ export default function ProcessImagesPage() {
       const data = await response.json();
 
       if (data.success) {
+        setProgress(100); // ✅ Completado al 100%
         setResult(data);
         setFiles([]);
         if (fileInputRef.current) {
@@ -71,7 +94,7 @@ export default function ProcessImagesPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f3f4f6', padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
+
         {/* Header con botón de volver */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
           <button
@@ -100,7 +123,7 @@ export default function ProcessImagesPage() {
           >
             ← Volver al Panel
           </button>
-          
+
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
               🖼️ Procesador de Imágenes
@@ -110,6 +133,16 @@ export default function ProcessImagesPage() {
             </p>
           </div>
         </div>
+
+        {/* ✅ NUEVO: Círculo de progreso neón (solo visible mientras procesa) */}
+        {processing && (
+          <CircularProgress 
+            progress={progress} 
+            size={220} 
+            strokeWidth={14}
+            label="Procesando"
+          />
+        )}
 
         {/* Panel de configuración */}
         <div style={{ background: 'white', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
@@ -215,7 +248,7 @@ export default function ProcessImagesPage() {
               transition: 'opacity 0.2s'
             }}
           >
-            {processing ? '⏳ Procesando...' : `🚀 Procesar ${files.length} imagen${files.length !== 1 ? 'es' : ''}`}
+            {processing ? ' Procesando...' : `🚀 Procesar ${files.length} imagen${files.length !== 1 ? 'es' : ''}`}
           </button>
 
           {error && (
@@ -251,7 +284,7 @@ export default function ProcessImagesPage() {
 
             {/* Lista de imágenes procesadas */}
             <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#374151', marginBottom: '0.75rem' }}>
-              📁 Imágenes guardadas temporalmente
+               Imágenes guardadas temporalmente
             </h3>
             <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
               {result.data.map((item: any, index: number) => (
@@ -296,11 +329,11 @@ export default function ProcessImagesPage() {
               📥 Descargar todas las imágenes procesadas (.zip)
             </button>
 
-            <p style={{ 
-              textAlign: 'center', 
-              color: '#6b7280', 
-              fontSize: '0.875rem', 
-              marginTop: '0.5rem' 
+            <p style={{
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '0.875rem',
+              marginTop: '0.5rem'
             }}>
               El ZIP contendrá todas las imágenes comprimidas y listas para carga masiva
             </p>
