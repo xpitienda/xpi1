@@ -18,42 +18,37 @@ export default function DeleteByCategoryPage() {
   const [error, setError] = useState('');
   const [orphanImages, setOrphanImages] = useState<string[]>([]);
   const [showOrphans, setShowOrphans] = useState(false);
+  const [orphanStats, setOrphanStats] = useState({ totalR2: 0, totalDB: 0, totalOrphans: 0 });
 
   // Cargar categorías y contar productos
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 1. Obtener categorías reales
         const catRes = await fetch('/api/admin/categories', {
           headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
         });
         const categoriesData = await catRes.json();
-        
-        // 2. Obtener todos los productos
+
         const prodRes = await fetch('/api/admin/products', {
           headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
         });
         const productsData = await prodRes.json();
 
-        // 3. Contar productos por categoría
         const categoryMap: Record<string, number> = {};
-        
-        // Inicializar con categorías existentes
+
         categoriesData.forEach((cat: any) => {
           categoryMap[cat.name] = 0;
         });
 
-        // Contar productos por categoría
         productsData.forEach((product: any) => {
           const cat = product.category || 'Sin categoría';
           categoryMap[cat] = (categoryMap[cat] || 0) + 1;
         });
 
-        // Convertir a array
         const categoryList = Object.entries(categoryMap)
-          .filter(([_, count]) => count > 0) // Solo categorías con productos
+          .filter(([_, count]) => count > 0)
           .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count); // Ordenar por cantidad
+          .sort((a, b) => b.count - a.count);
 
         setCategories(categoryList);
       } catch (err) {
@@ -64,18 +59,23 @@ export default function DeleteByCategoryPage() {
     loadData();
   }, []);
 
-  // Cargar imágenes huérfanas de R2
+  // ✅ NUEVO: Cargar imágenes huérfanas de R2 usando la API correcta
   const loadOrphanImages = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/orphan-images', {
+      const res = await fetch('/api/admin/find-orphans', {
         headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
       const data = await res.json();
-      
+
       if (res.ok) {
         setOrphanImages(data.orphans || []);
+        setOrphanStats({
+          totalR2: data.totalR2 || 0,
+          totalDB: data.totalDB || 0,
+          totalOrphans: data.totalOrphans || 0
+        });
         setShowOrphans(true);
       } else {
         setError(data.error || 'Error cargando imágenes huérfanas');
@@ -111,7 +111,7 @@ export default function DeleteByCategoryPage() {
     try {
       const res = await fetch('/api/admin/delete-by-category', {
         method: 'DELETE',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD
         },
@@ -123,13 +123,12 @@ export default function DeleteByCategoryPage() {
       if (res.ok) {
         setMessage(`✅ ${data.message}\n📦 ${data.productsDeleted} productos eliminados\n🖼️ ${data.imagesDeleted} imágenes borradas de R2`);
         setSelectedCategory('');
-        // Recargar datos
         setTimeout(() => window.location.reload(), 2000);
       } else {
         setError(`❌ Error: ${data.error}`);
       }
     } catch (err: any) {
-      setError(` Error de conexión: ${err.message}`);
+      setError(`❌ Error de conexión: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -154,7 +153,7 @@ export default function DeleteByCategoryPage() {
     try {
       const res = await fetch('/api/admin/delete-orphans', {
         method: 'DELETE',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD
         },
@@ -184,7 +183,6 @@ export default function DeleteByCategoryPage() {
       padding: '2rem'
     }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        {/* Botón de regreso */}
         <button
           onClick={() => router.push('/admin')}
           style={{
@@ -223,7 +221,6 @@ export default function DeleteByCategoryPage() {
             Elimina todos los productos de una categoría específica, incluyendo sus imágenes en la nube.
           </p>
 
-          {/* Selector de categoría */}
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
               display: 'block',
@@ -256,7 +253,6 @@ export default function DeleteByCategoryPage() {
             </select>
           </div>
 
-          {/* Botón de eliminar categoría */}
           <button
             onClick={handleDelete}
             disabled={!selectedCategory || loading}
@@ -327,6 +323,48 @@ export default function DeleteByCategoryPage() {
               </button>
             ) : (
               <div>
+                {/* ✅ NUEVO: Estadísticas */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '1rem',
+                  marginBottom: '1rem'
+                }}>
+                  <div style={{
+                    background: '#eff6ff',
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e40af' }}>
+                      {orphanStats.totalR2}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#1e3a8a' }}>En R2</div>
+                  </div>
+                  <div style={{
+                    background: '#f0fdf4',
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#16a34a' }}>
+                      {orphanStats.totalDB}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#166534' }}>En BD</div>
+                  </div>
+                  <div style={{
+                    background: '#fef3c7',
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#d97706' }}>
+                      {orphanStats.totalOrphans}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#92400e' }}>Huérfanas</div>
+                  </div>
+                </div>
+
                 <div style={{
                   background: '#f3f4f6',
                   padding: '1rem',
@@ -371,14 +409,13 @@ export default function DeleteByCategoryPage() {
                       opacity: loading ? 0.5 : 1
                     }}
                   >
-                    ️ Eliminar {orphanImages.length} Imágenes Huérfanas
+                    🗑️ Eliminar {orphanImages.length} Imágenes Huérfanas
                   </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* Mensajes */}
           {message && (
             <div style={{
               marginTop: '1.5rem',
@@ -412,7 +449,6 @@ export default function DeleteByCategoryPage() {
             </div>
           )}
 
-          {/* Advertencia */}
           <div style={{
             marginTop: '1.5rem',
             padding: '1rem',
@@ -421,7 +457,7 @@ export default function DeleteByCategoryPage() {
             borderRadius: '0.5rem'
           }}>
             <p style={{ color: '#92400e', fontSize: '0.875rem', margin: 0 }}>
-              ️ <strong>Advertencia:</strong> Estas acciones son permanentes. Las imágenes eliminadas de R2 no se pueden recuperar (por eso es importante tener backups).
+              ⚠️ <strong>Advertencia:</strong> Estas acciones son permanentes. Las imágenes eliminadas de R2 no se pueden recuperar (por eso es importante tener backups).
             </p>
           </div>
         </div>
