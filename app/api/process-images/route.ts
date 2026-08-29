@@ -11,6 +11,13 @@ if (!fs.existsSync(PROCESSED_DIR)) fs.mkdirSync(PROCESSED_DIR, { recursive: true
 
 export async function POST(request: NextRequest) {
   try {
+    // ✅ SOLUCIÓN: Limpiar la carpeta de procesados ANTES de empezar
+    // Esto evita que se acumulen imágenes de sesiones anteriores
+    const filesInDir = fs.readdirSync(PROCESSED_DIR);
+    for (const file of filesInDir) {
+      fs.unlinkSync(path.join(PROCESSED_DIR, file));
+    }
+
     const formData = await request.formData();
     const files = formData.getAll('images') as File[];
     const watermarkText = (formData.get('watermark') as string) || 'XPI Tienda';
@@ -28,13 +35,13 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       try {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
         let image = sharp(buffer);
-        
+
         image = image.resize(targetSize, targetSize, {
           fit: 'inside',
           withoutEnlargement: true
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
             </text>
           </svg>
         `;
-        
+
         image = image.composite([
           {
             input: Buffer.from(svgWatermark),
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
           .jpeg({ quality: 85, mozjpeg: true })
           .toBuffer();
 
-        // ✅ CAMBIO: Conservar nombre original
+        // Conservar nombre original
         const originalName = file.name.replace(/\.[^/.]+$/, '');
         const filename = `${originalName}.jpg`;
         const outputPath = path.join(PROCESSED_DIR, filename);
