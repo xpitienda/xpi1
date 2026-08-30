@@ -1,7 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import CategoryIcon from '@/components/CategoryIcon';
 
 interface CategoryNode {
   id: string;
@@ -71,6 +72,12 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     setActiveDropdown(activeDropdown === categoryId ? null : categoryId);
   };
 
+  // ✅ Función para truncar nombres largos
+  const truncateName = (name: string, maxLength: number = 9): string => {
+    if (name.length <= maxLength) return name;
+    return name.substring(0, maxLength) + '..';
+  };
+
   const modernColors = [
     { bg: '#8B5CF6', shadow: '#6D28D9', hover: '#A78BFA' },
     { bg: '#10B981', shadow: '#059669', hover: '#34D399' },
@@ -79,19 +86,6 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     { bg: '#3B82F6', shadow: '#2563EB', hover: '#60A5FA' },
     { bg: '#EF4444', shadow: '#DC2626', hover: '#F87171' },
   ];
-
-  const icons: Record<string, string> = {
-    'Todas': '🏪',
-    'Ropa': '👕',
-    'Calzado': '👟',
-    'Tecnologia': '📱',
-    'Tecnología': '📱',
-    'Accesorios': '💍',
-    'Bisutería': '💎',
-    'Deportes': '⚽',
-    'General': '📦',
-    'Hogar': '🏠',
-  };
 
   if (loading) {
     return <div style={{ padding: '1rem', textAlign: 'center', background: 'white', margin: '1rem', borderRadius: '12px' }}>⏳ Cargando...</div>;
@@ -131,6 +125,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
           <button
             onClick={() => handleCategoryChange('Todas')}
             className="nav-category"
+            title="Ver todos los productos"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -151,17 +146,17 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                 : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
             }}
           >
-            <span></span>
+            <span style={{ fontSize: '1.5rem' }}>🏪</span>
             <span>Todas</span>
           </button>
 
-          {/* Categorías principales */}
+          {/* Categorías principales - ICONO 3D + TEXTO SUPERPUESTO LEGIBLE */}
           {categoryTree.map((cat, index) => {
             const colorScheme = modernColors[index % modernColors.length];
-            const icon = icons[cat.name] || '🏷️';
             const hasChildren = cat.children && cat.children.length > 0;
             const isActive = activeDropdown === cat.id;
             const isSelected = currentCategory === cat.name;
+            const truncatedName = truncateName(cat.name, 9);
 
             return (
               <div
@@ -172,35 +167,81 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                 }}
               >
                 <div style={{ display: 'flex', gap: 0 }}>
-                  {/* Botón de categoría */}
+                  {/* ✅ Botón con icono 3D + texto superpuesto legible */}
                   <button
                     onClick={() => handleCategoryChange(cat.name)}
                     className="nav-category"
+                    title={cat.name}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.375rem',
-                      padding: isMobile ? '0.5rem 0.75rem' : '0.875rem 1.25rem',
-                      background: isSelected
-                        ? `linear-gradient(135deg, ${colorScheme.bg} 0%, ${colorScheme.shadow} 100%)`
-                        : 'rgba(255,255,255,0.1)',
+                      justifyContent: 'center',
+                      padding: 0,
+                      background: 'transparent',
                       color: 'white',
-                      borderTop: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
-                      borderBottom: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
-                      borderLeft: `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
-                      borderRight: hasChildren ? 'none' : `2px solid ${isSelected ? colorScheme.bg : colorScheme.shadow}`,
-                      borderRadius: hasChildren ? '12px 0 0 12px' : '12px',
-                      fontSize: isMobile ? '0.875rem' : '1rem',
-                      fontWeight: 'bold',
+                      border: `3px solid ${isSelected ? colorScheme.bg : 'rgba(255,255,255,0.3)'}`,
+                      borderRadius: '12px',
                       cursor: 'pointer',
                       backdropFilter: 'blur(10px)',
                       boxShadow: isSelected
                         ? `0 6px 0 ${colorScheme.shadow}, 0 8px 16px rgba(0,0,0,0.3)`
                         : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
+                      width: isMobile ? '70px' : '90px',
+                      height: isMobile ? '70px' : '90px',
+                      transition: 'all 0.3s ease',
+                      overflow: 'hidden',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px) scale(1.05)';
+                      (e.currentTarget as HTMLButtonElement).style.boxShadow = isSelected
+                        ? `0 8px 0 ${colorScheme.shadow}, 0 12px 20px rgba(0,0,0,0.4)`
+                        : `0 6px 0 rgba(0,0,0,0.3), 0 10px 16px rgba(0,0,0,0.3)`;
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0) scale(1)';
+                      (e.currentTarget as HTMLButtonElement).style.boxShadow = isSelected
+                        ? `0 6px 0 ${colorScheme.shadow}, 0 8px 16px rgba(0,0,0,0.3)`
+                        : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)';
                     }}
                   >
-                    <span>{icon}</span>
-                    <span>{cat.name}</span>
+                    {/* Icono 3D que llena todo el botón */}
+                    <CategoryIcon 
+                      categoryName={cat.name} 
+                      size={isMobile ? 70 : 90} 
+                      showEmoji={true}
+                      fill={true}
+                    />
+                    
+                    {/* ✅ Fondo degradado oscuro para legibilidad */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+                        padding: '12px 4px 6px 4px',
+                        zIndex: 10,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: 'white',
+                          fontSize: isMobile ? '0.75rem' : '0.9rem',
+                          fontWeight: '900',
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        {truncatedName}
+                      </div>
+                    </div>
                   </button>
 
                   {/* Botón de flecha */}
@@ -208,11 +249,12 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                     <button
                       onClick={(e) => handleDropdownToggle(cat.id, e)}
                       className="dropdown-toggle"
+                      title={`Ver subcategorías de ${cat.name}`}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: isMobile ? '0.5rem 0.625rem' : '0.875rem 0.75rem',
+                        padding: isMobile ? '0.5rem 0.625rem' : '0.75rem 0.75rem',
                         background: isSelected
                           ? `${colorScheme.shadow}80`
                           : 'rgba(255,255,255,0.1)',
@@ -224,6 +266,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                         cursor: 'pointer',
                         backdropFilter: 'blur(10px)',
                         minWidth: '2rem',
+                        height: isMobile ? '70px' : '90px',
                       }}
                     >
                       {isActive ? '▲' : '▼'}
@@ -231,7 +274,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                   )}
                 </div>
 
-                {/* Dropdown - En móvil se muestra debajo en flujo normal */}
+                {/* Dropdown con texto */}
                 {hasChildren && isActive && (
                   <div
                     style={{
@@ -239,7 +282,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       top: isMobile ? 'auto' : '100%',
                       left: 0,
                       marginTop: isMobile ? '0.5rem' : '0',
-                      minWidth: isMobile ? '100%' : '200px',
+                      minWidth: isMobile ? '100%' : '220px',
                       background: 'rgba(255,255,255,0.98)',
                       borderRadius: '12px',
                       boxShadow: isMobile
@@ -252,7 +295,6 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                     }}
                   >
                     {cat.children.map((child) => {
-                      const childIcon = icons[child.name] || '📁';
                       const isChildSelected = currentCategory === child.name;
                       return (
                         <button
@@ -275,7 +317,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                             textAlign: 'left',
                           }}
                         >
-                          <span>{childIcon}</span>
+                          <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
                           <span style={{ flex: 1 }}>{child.name}</span>
                           {isChildSelected && <span style={{ color: colorScheme.bg }}>●</span>}
                         </button>
