@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { CheckCircle, Sparkles } from 'lucide-react';
 
 interface BatchItem {
   file: File;
@@ -27,18 +28,22 @@ export default function AddProductPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'single' | 'batch'>('single');
 
-  // --- ESTADOS MODO INDIVIDUAL ---
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState<string[]>([]);
-  
-  // NUEVOS ESTADOS PARA IMÁGENES ADICIONALES
+
   const [createdProductId, setCreatedProductId] = useState<string | null>(null);
   const [additionalImages, setAdditionalImages] = useState<AdditionalImage[]>([]);
   const [uploadingAdditional, setUploadingAdditional] = useState(false);
   const additionalFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [bulkName, setBulkName] = useState('');
+  const [bulkCategory, setBulkCategory] = useState('General');
+  const [bulkDescription, setBulkDescription] = useState('Producto de alta calidad. Consulte disponibilidad.');
+  const [bulkPrice, setBulkPrice] = useState(0);
+  const [bulkStock, setBulkStock] = useState(1);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -48,7 +53,11 @@ export default function AddProductPage() {
         });
         const data = await res.json();
         if (Array.isArray(data)) {
-          setCategories(data.map((c: any) => c.name));
+          const categoryNames = data.map((c: any) => c.name);
+          setCategories(categoryNames);
+          if (categoryNames.length > 0 && bulkCategory === 'General') {
+            setBulkCategory(categoryNames[0]);
+          }
         }
       } catch (err) {
         console.error('Error cargando categorías:', err);
@@ -57,7 +66,6 @@ export default function AddProductPage() {
     fetchCategories();
   }, []);
 
-  // Cargar imágenes adicionales si hay un producto creado
   useEffect(() => {
     if (createdProductId) {
       loadAdditionalImages(createdProductId);
@@ -78,7 +86,6 @@ export default function AddProductPage() {
     }
   };
 
-  // --- LÓGICA MODO INDIVIDUAL ---
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -95,7 +102,7 @@ export default function AddProductPage() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    setCreatedProductId(null); // Resetear estado anterior
+    setCreatedProductId(null);
     try {
       const form = e.currentTarget;
       const formData = new FormData(form);
@@ -107,7 +114,6 @@ export default function AddProductPage() {
         return;
       }
 
-      // 1. Subir imagen principal
       const imageFormData = new FormData();
       imageFormData.append('image', file);
       const uploadRes = await fetch('/api/admin/upload', {
@@ -118,7 +124,6 @@ export default function AddProductPage() {
       const uploadData = await uploadRes.json();
       if (!uploadData.url) throw new Error(uploadData.error || 'Error al subir imagen');
 
-      // 2. Guardar producto
       const productData = {
         name: formData.get('name'),
         description: formData.get('description'),
@@ -140,37 +145,23 @@ export default function AddProductPage() {
       const productDataRes = await productRes.json();
       if (!productRes.ok) throw new Error(productDataRes.error || 'Error al guardar');
 
-      // 🔍 LOGS DE DEPURACIÓN
-      console.log('✅ Producto guardado. Response:', productDataRes);
       setMessage({ type: 'success', text: '✅ Producto guardado exitosamente' });
 
-      // 🎯 OBTENER EL ID DEL PRODUCTO RECIENTEMENTE CREADO
       if (productDataRes.id) {
-        console.log('🆔 ID recibido directamente de la API:', productDataRes.id);
         setCreatedProductId(productDataRes.id);
       } else {
-        console.log('⚠️ La API no devolvió ID, buscando por nombre...');
         const productName = formData.get('name') as string;
         try {
           const allRes = await fetch('/api/admin/products', {
             headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
           });
           const allData = await allRes.json();
-          console.log('📦 Todos los productos recibidos:', allData);
-          
           if (allData.products && allData.products.length > 0) {
             const match = allData.products.find((p: any) => p.name === productName);
-            if (match) {
-              console.log('✅ Producto encontrado por nombre:', match);
-              setCreatedProductId(match.id);
-            } else {
-              console.log('❌ No se encontró el producto por nombre en la lista.');
-            }
-          } else {
-            console.log('❌ La lista de productos está vacía o no tiene formato esperado.');
+            if (match) setCreatedProductId(match.id);
           }
         } catch (err) {
-          console.error("❌ Error buscando producto:", err);
+          console.error("Error buscando producto:", err);
         }
       }
 
@@ -184,13 +175,9 @@ export default function AddProductPage() {
     }
   };
 
-  // --- LÓGICA IMÁGENES ADICIONALES ---
   const handleAdditionalImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length === 0 || !createdProductId) {
-      console.log('⚠️ No hay archivos o no hay createdProductId:', createdProductId);
-      return;
-    }
+    if (files.length === 0 || !createdProductId) return;
 
     setUploadingAdditional(true);
     try {
@@ -200,8 +187,6 @@ export default function AddProductPage() {
           continue;
         }
 
-        console.log('📸 Subiendo imagen adicional:', file.name);
-        // 1. Subir imagen a Cloudflare R2 / Storage
         const imgFormData = new FormData();
         imgFormData.append('image', file);
         const uploadRes = await fetch('/api/admin/upload', {
@@ -210,14 +195,10 @@ export default function AddProductPage() {
           headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
         });
         const uploadData = await uploadRes.json();
-        console.log('📸 Respuesta de subida de imagen:', uploadData);
-        
+
         if (uploadData.url) {
-          // 2. Guardar referencia en la base de datos
           const order = additionalImages.length;
-          console.log('💾 Guardando en BD:', { product_id: createdProductId, image_url: uploadData.url, display_order: order });
-          
-          const saveRes = await fetch('/api/admin/product-images', {
+          await fetch('/api/admin/product-images', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -229,17 +210,13 @@ export default function AddProductPage() {
               display_order: order
             })
           });
-          const saveData = await saveRes.json();
-          console.log('💾 Respuesta de guardado en BD:', saveData);
         }
       }
-      
-      // Recargar la lista de imágenes
+
       await loadAdditionalImages(createdProductId);
       if (additionalFileInputRef.current) additionalFileInputRef.current.value = '';
       setMessage({ type: 'success', text: '✅ Imágenes adicionales agregadas correctamente' });
     } catch (error: any) {
-      console.error('❌ Error en handleAdditionalImagesUpload:', error);
       setMessage({ type: 'error', text: error.message || 'Error al subir imágenes adicionales' });
     } finally {
       setUploadingAdditional(false);
@@ -262,7 +239,6 @@ export default function AddProductPage() {
     }
   };
 
-  // --- ESTADOS MODO MASIVO Y CSV ---
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchMessage, setBatchMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -274,9 +250,30 @@ export default function AddProductPage() {
   const [csvMessage, setCsvMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [assignedFiles, setAssignedFiles] = useState<Record<string, File>>({});
 
+  const applyBulkChangesToBatch = () => {
+    setBatchItems(prev => prev.map((item, idx) => ({
+      ...item,
+      name: bulkName.trim() ? `${bulkName.trim()} ${idx + 1}` : item.name,
+      category: bulkCategory,
+      description: bulkDescription,
+      price: bulkPrice.toString(),
+      stock: bulkStock.toString()
+    })));
+    
+    setBatchMessage({ 
+      type: 'success', 
+      text: `✅ Datos aplicados a ${batchItems.length} productos` 
+    });
+    
+    setTimeout(() => setBatchMessage(null), 3000);
+  };
+
   const handleBatchFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    console.log('📂 Total de archivos seleccionados:', files.length);
+    
     if (files.length === 0) return;
+    
     const newItems: BatchItem[] = files.map(file => ({
       file,
       preview: URL.createObjectURL(file),
@@ -284,11 +281,18 @@ export default function AddProductPage() {
       price: '',
       description: '',
       stock: '1',
-      category: 'General',
+      category: categories.length > 0 ? categories[0] : 'General',
       uploading: false,
       uploaded: false,
     }));
-    setBatchItems(prev => [...prev, ...newItems]);
+    
+    console.log('✅ Items creados:', newItems.length);
+    setBatchItems(prev => {
+      const updated = [...prev, ...newItems];
+      console.log('📊 Total de items en el lote:', updated.length);
+      return updated;
+    });
+    
     setBatchMessage(null);
     if (batchFileInputRef.current) batchFileInputRef.current.value = '';
   };
@@ -454,7 +458,6 @@ export default function AddProductPage() {
     link.click();
   };
 
-  // --- RENDERIZADO ---
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -462,16 +465,50 @@ export default function AddProductPage() {
           ← Volver al Panel
         </button>
 
+        {/* ✅ BOTONES: Morado por defecto, Verde con hendidura al seleccionar */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', background: 'white', padding: '0.5rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <button onClick={() => setMode('single')} style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', background: mode === 'single' ? '#3D1A78' : 'transparent', color: mode === 'single' ? 'white' : '#666' }}>
+          <button 
+            onClick={() => setMode('single')} 
+            style={{ 
+              flex: 1, 
+              padding: '1rem', 
+              borderRadius: '8px', 
+              border: 'none', 
+              cursor: 'pointer', 
+              fontWeight: 'bold', 
+              fontSize: '1rem', 
+              // ✅ Morado por defecto, Verde cuando está activo
+              background: mode === 'single' ? '#10B981' : '#6B2D8B', 
+              color: 'white',
+              boxShadow: mode === 'single' ? 'inset 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.1)' : 'none',
+              transform: mode === 'single' ? 'translateY(1px)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
             ➕ Agregar Uno (Normal)
           </button>
-          <button onClick={() => setMode('batch')} style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', background: mode === 'batch' ? '#006B3C' : 'transparent', color: mode === 'batch' ? 'white' : '#666' }}>
-             📦 Carga Masiva (Lote)
+          <button 
+            onClick={() => setMode('batch')} 
+            style={{ 
+              flex: 1, 
+              padding: '1rem', 
+              borderRadius: '8px', 
+              border: 'none', 
+              cursor: 'pointer', 
+              fontWeight: 'bold', 
+              fontSize: '1rem',
+              // ✅ Morado por defecto, Verde cuando está activo
+              background: mode === 'batch' ? '#10B981' : '#6B2D8B', 
+              color: 'white',
+              boxShadow: mode === 'batch' ? 'inset 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.1)' : 'none',
+              transform: mode === 'batch' ? 'translateY(1px)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            📦 Carga Masiva (Imágenes)
           </button>
         </div>
 
-        {/* MODO INDIVIDUAL */}
         {mode === 'single' && (
           <div>
             {message && (
@@ -479,10 +516,9 @@ export default function AddProductPage() {
                 {message.text}
               </div>
             )}
-            
-            {/* Formulario Principal */}
+
             <form onSubmit={handleSubmitSingle} style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3D1A78', margin: 0 }}>Nuevo Producto</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#6B2D8B', margin: 0 }}>Nuevo Producto</h2>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Imagen Principal *</label>
                 <input ref={fileInputRef} type="file" name="image" accept="image/*" onChange={handleImageChange} required style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px' }} />
@@ -512,12 +548,11 @@ export default function AddProductPage() {
                   </select>
                 </div>
               </div>
-              <button type="submit" disabled={loading} style={{ background: '#3D1A78', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+              <button type="submit" disabled={loading} style={{ background: '#6B2D8B', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
                 {loading ? '⏳ Guardando...' : '💾 Guardar Producto'}
               </button>
             </form>
 
-            {/* NUEVA SECCIÓN: Imágenes Adicionales (Solo aparece si hay un producto creado) */}
             {createdProductId && (
               <div style={{ marginTop: '2rem', background: '#f0fdf4', padding: '2rem', borderRadius: '12px', border: '2px solid #16a34a' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#166534', marginBottom: '1rem' }}>
@@ -526,17 +561,17 @@ export default function AddProductPage() {
                 <p style={{ color: '#15803d', marginBottom: '1rem', fontSize: '0.9rem' }}>
                   Estas imágenes aparecerán en el carrusel 3D del producto. Sube de 1 a 5 fotos extra.
                 </p>
-                
-                <input 
-                  ref={additionalFileInputRef} 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  onChange={handleAdditionalImagesUpload} 
+
+                <input
+                  ref={additionalFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleAdditionalImagesUpload}
                   disabled={uploadingAdditional}
-                  style={{ marginBottom: '1rem', width: '100%' }} 
+                  style={{ marginBottom: '1rem', width: '100%' }}
                 />
-                
+
                 {uploadingAdditional && <p style={{ color: '#16a34a', fontWeight: 'bold' }}>⏳ Subiendo imágenes...</p>}
 
                 {additionalImages.length > 0 && (
@@ -544,7 +579,7 @@ export default function AddProductPage() {
                     {additionalImages.map((img, idx) => (
                       <div key={img.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
                         <img src={img.image_url} alt={`Extra ${idx + 1}`} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
-                        <button 
+                        <button
                           onClick={() => deleteAdditionalImage(img.id)}
                           style={{
                             position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: 'white',
@@ -565,27 +600,246 @@ export default function AddProductPage() {
           </div>
         )}
 
-        {/* MODO MASIVO */}
         {mode === 'batch' && (
-           <div>
+          <div>
             {batchMessage && (
               <div style={{ padding: '1rem', marginBottom: '1rem', borderRadius: '8px', background: batchMessage.type === 'success' ? '#dcfce7' : '#fee2e2', color: batchMessage.type === 'success' ? '#166534' : '#991b1b' }}>
                 {batchMessage.text}
               </div>
             )}
+            
             <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
               <button onClick={() => setShowCsvModal(true)} style={{ background: '#3B82F6', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}>
                 📄 Importar Datos (Excel/CSV)
               </button>
             </div>
-            <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center', border: '2px dashed #ccc', marginBottom: '2rem' }}>
-              <input ref={batchFileInputRef} type="file" multiple accept="image/*" onChange={handleBatchFiles} style={{ display: 'none' }} id="batch-upload" />
-              <label htmlFor="batch-upload" style={{ cursor: 'pointer', display: 'block' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📸</div>
-                <p style={{ fontWeight: 'bold', color: '#3D1A78', margin: '0 0 0.5rem 0' }}>Haz clic para seleccionar múltiples imágenes</p>
-                <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>O arrastra tus fotos aquí (JPG, PNG, WebP)</p>
+
+            {batchItems.length > 0 && (
+              <div style={{
+                marginBottom: '2rem',
+                padding: '1.5rem',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                borderRadius: '1rem',
+                boxShadow: '0 8px 25px rgba(59, 130, 246, 0.3)',
+                border: '2px solid #93c5fd'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                  <Sparkles size={28} style={{ color: '#fde047' }} />
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
+                    Plantilla de Datos Masivos
+                  </h3>
+                </div>
+                <p style={{ color: '#dbeafe', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                  Define los valores que se aplicarán a TODOS los productos del lote.
+                </p>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '1rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#dbeafe', marginBottom: '0.5rem' }}>
+                      Nombre del Producto
+                    </label>
+                    <input
+                      type="text"
+                      value={bulkName}
+                      onChange={(e) => setBulkName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'white',
+                        border: '2px solid #93c5fd',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#374151',
+                        boxSizing: 'border-box'
+                      }}
+                      placeholder="Ej: Zapatillas Nike (se numerarán automáticamente)"
+                    />
+                    <p style={{ color: '#bfdbfe', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                      💡 Si lo dejas vacío, se usará el nombre del archivo
+                    </p>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#dbeafe', marginBottom: '0.5rem' }}>
+                      Categoría
+                    </label>
+                    <select
+                      value={bulkCategory}
+                      onChange={(e) => setBulkCategory(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'white',
+                        border: '2px solid #93c5fd',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#374151'
+                      }}
+                    >
+                      {categories.length === 0 ? (
+                        <option value="">Cargando...</option>
+                      ) : (
+                        categories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#dbeafe', marginBottom: '0.5rem' }}>
+                      Precio
+                    </label>
+                    <input
+                      type="number"
+                      value={bulkPrice}
+                      onChange={(e) => setBulkPrice(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        background: 'white',
+                        border: '2px solid #93c5fd',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#374151'
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#dbeafe', marginBottom: '0.5rem' }}>
+                      Stock
+                    </label>
+                    <input
+                      type="number"
+                      value={bulkStock}
+                      onChange={(e) => setBulkStock(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        background: 'white',
+                        border: '2px solid #93c5fd',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#374151'
+                      }}
+                      placeholder="1"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#dbeafe', marginBottom: '0.5rem' }}>
+                      Descripción
+                    </label>
+                    <input
+                      type="text"
+                      value={bulkDescription}
+                      onChange={(e) => setBulkDescription(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'white',
+                        border: '2px solid #93c5fd',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#374151'
+                      }}
+                      placeholder="Descripción del producto"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={applyBulkChangesToBatch}
+                  style={{
+                    width: '100%',
+                    background: 'linear-gradient(135deg, #facc15 0%, #f97316 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    fontSize: '1.125rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    boxShadow: '0 4px 15px rgba(250, 204, 21, 0.4)',
+                    transition: 'transform 0.2s'
+                  }}
+                >
+                  <CheckCircle size={24} />
+                  Aplicar a TODOS los {batchItems.length} productos
+                </button>
+              </div>
+            )}
+
+            <div style={{ 
+              background: 'white', 
+              padding: '3rem 2rem', 
+              borderRadius: '12px', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.05)', 
+              textAlign: 'center', 
+              border: batchItems.length > 0 ? '3px solid #10B981' : '3px dashed #6B2D8B', 
+              marginBottom: '2rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}>
+              <input 
+                ref={batchFileInputRef} 
+                type="file" 
+                multiple 
+                accept="image/*"
+                style={{ display: 'none' }} 
+                id="batch-upload"
+                onChange={handleBatchFiles}
+              />
+              <label 
+                htmlFor="batch-upload" 
+                style={{ 
+                  cursor: 'pointer', 
+                  display: 'block',
+                  padding: '2rem'
+                }}
+              >
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📸</div>
+                <p style={{ fontWeight: 'bold', color: '#6B2D8B', margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>
+                  Haz clic para seleccionar múltiples imágenes
+                </p>
+                <p style={{ color: '#666', fontSize: '1rem', margin: 0 }}>
+                  Soporta 100+ imágenes (JPG, PNG, WebP)
+                </p>
+                <p style={{ color: '#999', fontSize: '0.875rem', margin: '0.5rem 0 0 0' }}>
+                  O arrastra tus fotos aquí
+                </p>
+                {batchItems.length > 0 && (
+                  <div style={{ 
+                    marginTop: '1.5rem', 
+                    padding: '1rem', 
+                    background: '#f0fdf4', 
+                    borderRadius: '0.5rem',
+                    border: '2px solid #10B981'
+                  }}>
+                    <p style={{ color: '#16a34a', fontWeight: 'bold', margin: 0, fontSize: '1.125rem' }}>
+                      ✅ {batchItems.length} archivo{batchItems.length !== 1 ? 's' : ''} seleccionado{batchItems.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
               </label>
             </div>
+
             {batchItems.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {batchItems.map((item, index) => (
@@ -599,31 +853,49 @@ export default function AddProductPage() {
                       <input type="text" placeholder="Nombre del producto" value={item.name} onChange={(e) => updateBatchItem(index, 'name', e.target.value)} style={{ gridColumn: '1 / -1', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }} />
                       <input type="number" placeholder="Precio" value={item.price} onChange={(e) => updateBatchItem(index, 'price', e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }} />
                       <input type="number" placeholder="Stock" value={item.stock} onChange={(e) => updateBatchItem(index, 'stock', e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }} />
-                      <select value={item.category} onChange={(e) => updateBatchItem(index, 'category', e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', gridColumn: '1 / -1' }}>
-                        <option value="General">General</option>
-                        <option value="Ropa">Ropa</option>
-                        <option value="Calzado">Calzado</option>
-                        <option value="Accesorios">Accesorios</option>
+                      <select value={item.category} onChange={(e) => updateBatchItem(index, 'category', e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', gridColumn: '1 / -1', background: 'white' }}>
+                        {categories.length > 0 ? (
+                          categories.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        ) : (
+                          <option value="General">General</option>
+                        )}
                       </select>
                       <textarea placeholder="Descripción breve..." value={item.description} onChange={(e) => updateBatchItem(index, 'description', e.target.value)} rows={1} style={{ gridColumn: '1 / -1', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', resize: 'vertical' }} />
                     </div>
                     <button onClick={() => removeBatchItem(index)} style={{ background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '6px', width: '30px', height: '30px', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
                   </div>
                 ))}
-                <button onClick={handleBatchSubmit} disabled={batchLoading || batchItems.length === 0} style={{ background: '#006B3C', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '1.1rem', cursor: batchLoading ? 'not-allowed' : 'pointer', opacity: batchLoading ? 0.7 : 1, marginTop: '1rem', boxShadow: '0 4px 6px rgba(0,107,60,0.3)' }}>
+                <button 
+                  onClick={handleBatchSubmit} 
+                  disabled={batchLoading || batchItems.length === 0} 
+                  style={{ 
+                    background: '#6B2D8B', 
+                    color: 'white', 
+                    padding: '1rem', 
+                    borderRadius: '8px', 
+                    border: 'none', 
+                    fontWeight: 'bold', 
+                    fontSize: '1.1rem', 
+                    cursor: batchLoading ? 'not-allowed' : 'pointer', 
+                    opacity: batchLoading ? 0.7 : 1, 
+                    marginTop: '1rem', 
+                    boxShadow: '0 4px 6px rgba(107,45,139,0.3)' 
+                  }}
+                >
                   {batchLoading ? '⏳ Subiendo y guardando...' : `🚀 Guardar ${batchItems.length} Productos`}
                 </button>
               </div>
             )}
-           </div>
+          </div>
         )}
 
-        {/* Modal Importar CSV */}
         {showCsvModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
             <div style={{ background: 'white', borderRadius: '16px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
               <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
-                <h3 style={{ margin: 0, color: '#3D1A78' }}>📄 Importar Datos Masivos</h3>
+                <h3 style={{ margin: 0, color: '#6B2D8B' }}>📄 Importar Datos Masivos</h3>
                 <button onClick={() => setShowCsvModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
               </div>
               <div style={{ padding: '1.5rem' }}>
@@ -668,7 +940,7 @@ export default function AddProductPage() {
                         </tbody>
                       </table>
                     </div>
-                    <button onClick={handleSaveCsvBatch} disabled={csvLoading} style={{ marginTop: '1rem', width: '100%', background: '#006B3C', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: csvLoading ? 'not-allowed' : 'pointer' }}>
+                    <button onClick={handleSaveCsvBatch} disabled={csvLoading} style={{ marginTop: '1rem', width: '100%', background: '#6B2D8B', color: 'white', padding: '1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: csvLoading ? 'not-allowed' : 'pointer' }}>
                       {csvLoading ? '⏳ Subiendo y Guardando...' : '💾 Guardar Todo'}
                     </button>
                   </>
