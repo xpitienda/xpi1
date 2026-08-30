@@ -1,516 +1,436 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-interface Overlay {
+interface OverlayText {
   id: number;
   text: string;
   font_size: number;
   font_color: string;
-  font_weight: string;
-  background_color: string;
   animation_speed: number;
   direction: string;
+  background_color: string;
+  starts_at?: string;
+  ends_at?: string;
   pause_on_hover: number;
-  starts_at: string;
-  ends_at: string;
   is_active: number;
 }
 
-export default function CarouselOverlaysAdmin() {
-  const [overlays, setOverlays] = useState<Overlay[]>([]);
+export default function CarouselOverlaysPage() {
+  const router = useRouter();
+  const [texts, setTexts] = useState<OverlayText[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  
+  // ✅ Estados alineados EXACTAMENTE con la API
   const [formData, setFormData] = useState({
     text: 'NUEVA COLECCIÓN',
     font_size: 48,
     font_color: '#FFFFFF',
     font_weight: 'bold',
-    background_color: 'transparent',
     animation_speed: 30,
     direction: 'left',
-    pause_on_hover: 1,
+    background_color: 'transparent',
+    bg_color_hex: '#6B2D8B',
     starts_at: '',
     ends_at: '',
+    pause_on_hover: 1,
     is_active: 1
   });
 
-  useEffect(() => { fetchOverlays(); }, []);
+  useEffect(() => {
+    fetchTexts();
+  }, []);
 
-  const fetchOverlays = async () => {
-    try {
-      const res = await fetch('/api/admin/carousel-overlays');
-      const data = await res.json();
-      setOverlays(data);
-    } catch (error) { console.error(error); }
-    finally { setLoading(false); }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchTexts = async () => {
     try {
       const res = await fetch('/api/admin/carousel-overlays', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
       if (res.ok) {
-        alert('✅ Texto creado exitosamente');
-        setShowForm(false);
-        fetchOverlays();
-      } else {
-        alert('❌ Error al crear el texto');
+        const data = await res.json();
+        setTexts(data || []);
       }
-    } catch (error) { alert('❌ Error al crear'); }
+    } catch (error) {
+      console.error('Error cargando textos:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleActive = async (id: number, current: number) => {
+  const handleSave = async () => {
     try {
-      await fetch(`/api/admin/carousel-overlays/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: current === 1 ? 0 : 1 })
+      // ✅ Formatear fechas como las espera la API: "YYYY-MM-DDTHH:mm"
+      const formatDateTime = (dateStr: string) => {
+        if (!dateStr) return null;
+        return dateStr + 'T00:00';
+      };
+
+      const res = await fetch('/api/admin/carousel-overlays', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD
+        },
+        body: JSON.stringify({
+          text: formData.text,
+          font_size: formData.font_size,
+          font_color: formData.font_color,
+          font_weight: formData.font_weight,
+          background_color: formData.background_color,
+          animation_speed: formData.animation_speed,
+          direction: formData.direction,
+          pause_on_hover: formData.pause_on_hover,
+          starts_at: formatDateTime(formData.starts_at),
+          ends_at: formatDateTime(formData.ends_at),
+          is_active: formData.is_active
+        })
       });
-      fetchOverlays();
-    } catch (error) { console.error(error); }
+      
+      if (res.ok) {
+        setFormData({
+          text: 'NUEVA COLECCIÓN',
+          font_size: 48,
+          font_color: '#FFFFFF',
+          font_weight: 'bold',
+          animation_speed: 30,
+          direction: 'left',
+          background_color: 'transparent',
+          bg_color_hex: '#6B2D8B',
+          starts_at: '',
+          ends_at: '',
+          pause_on_hover: 1,
+          is_active: 1
+        });
+        setShowForm(false);
+        fetchTexts();
+      } else {
+        const errorData = await res.json();
+        console.error('Error de la API:', errorData);
+        alert('Error al guardar: ' + errorData.error);
+      }
+    } catch (error) {
+      console.error('Error guardando texto:', error);
+      alert('Error de conexión al guardar');
+    }
   };
 
-  const deleteOverlay = async (id: number) => {
-    if (!confirm('¿Eliminar este texto?')) return;
+  const toggleActive = async (id: number, currentStatus: number) => {
     try {
-      await fetch(`/api/admin/carousel-overlays/${id}`, { method: 'DELETE' });
-      fetchOverlays();
-    } catch (error) { console.error(error); }
+      const res = await fetch(`/api/admin/carousel-overlays/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD
+        },
+        body: JSON.stringify({ is_active: currentStatus === 1 ? 0 : 1 })
+      });
+      if (res.ok) fetchTexts();
+    } catch (error) {
+      console.error('Error actualizando:', error);
+    }
   };
 
-  // Estilos base
-  const containerStyle: React.CSSProperties = {
-    minHeight: '100vh',
-    background: '#F3E8FF',
-    padding: '2rem',
-    fontFamily: 'system-ui, -apple-system, sans-serif'
+  const deleteText = async (id: number) => {
+    if (!confirm('¿Estás seguro de eliminar este texto?')) return;
+    try {
+      const res = await fetch(`/api/admin/carousel-overlays/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
+      if (res.ok) fetchTexts();
+    } catch (error) {
+      console.error('Error eliminando:', error);
+    }
   };
 
-  const titleStyle: React.CSSProperties = {
-    textAlign: 'center',
-    color: '#6B2D8B',
-    fontSize: '2.5rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem'
+  const updateField = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
-
-  const subtitleStyle: React.CSSProperties = {
-    textAlign: 'center',
-    color: '#6b7280',
-    marginBottom: '2rem'
-  };
-
-  const cardStyle: React.CSSProperties = {
-    background: 'white',
-    borderRadius: '1.5rem',
-    padding: '2rem',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-    maxWidth: '500px',
-    margin: '0 auto 2rem auto'
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    border: '2px solid #E9D5FF',
-    borderRadius: '0.75rem',
-    padding: '0.75rem 1rem',
-    fontSize: '1rem',
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: '0.5rem'
-  };
-
-  const selectStyle: React.CSSProperties = {
-    width: '100%',
-    border: '2px solid #E9D5FF',
-    borderRadius: '0.75rem',
-    padding: '0.75rem 1rem',
-    fontSize: '1rem',
-    background: 'white',
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3E8FF' }}>
-      <p style={{ color: '#6B2D8B', fontWeight: 'bold', fontSize: '1.25rem' }}>Cargando...</p>
-    </div>
-  );
 
   return (
-    <div style={containerStyle}>
-      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#faf5ff', padding: '2rem' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         
-        {/* Título */}
-        <h1 style={titleStyle}>Textos Flotantes del Carrusel</h1>
-        <p style={subtitleStyle}>Crea textos animados que se desplazan sobre el carrusel</p>
+        <button 
+          onClick={() => router.push('/admin')} 
+          style={{ 
+            marginBottom: '1.5rem', 
+            background: '#6B2D8B', 
+            color: 'white', 
+            border: 'none', 
+            padding: '0.75rem 1.5rem', 
+            borderRadius: '8px', 
+            cursor: 'pointer', 
+            fontWeight: 'bold', 
+            fontSize: '1rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 4px 6px rgba(107,45,139,0.3)'
+          }}
+        >
+          ← Volver al Panel
+        </button>
 
-        {/* Botón toggle */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#6B2D8B', margin: '0 0 0.5rem 0' }}>
+            Textos Flotantes del Carrusel
+          </h1>
+          <p style={{ color: '#6b7280', fontSize: '1.1rem', margin: 0 }}>
+            Crea textos animados que se desplazan sobre el carrusel
+          </p>
+        </div>
+
         {!showForm && (
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <button 
               onClick={() => setShowForm(true)}
-              style={{
-                background: '#6B2D8B',
-                color: 'white',
-                padding: '0.75rem 2rem',
-                borderRadius: '0.75rem',
-                border: 'none',
-                fontWeight: 'bold',
+              style={{ 
+                background: '#6B2D8B', 
+                color: 'white', 
+                border: 'none', 
+                padding: '0.75rem 2rem', 
+                borderRadius: '8px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold', 
                 fontSize: '1rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(107, 45, 139, 0.3)'
+                boxShadow: '0 4px 6px rgba(107,45,139,0.3)'
               }}
             >
-               Nuevo Texto
+              ✨ Nuevo Texto
             </button>
           </div>
         )}
 
-        {/* Formulario */}
         {showForm && (
-          <div style={cardStyle}>
-            <h2 style={{ color: '#6B2D8B', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '2rem', marginBottom: '2rem', boxShadow: '0 10px 25px rgba(107,45,139,0.1)' }}>
+            <h2 style={{ color: '#6B2D8B', marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.75rem' }}>
               Configurar Texto Rolling
             </h2>
-            
-            <form onSubmit={handleSubmit}>
-              {/* Texto */}
-              <div style={{ marginBottom: '1rem' }}>
-                <input 
-                  type="text" 
-                  value={formData.text}
-                  onChange={(e) => setFormData({...formData, text: e.target.value})}
-                  placeholder="Ej: NUEVA COLECCIÓN"
-                  style={inputStyle}
-                  required 
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <input
+                type="text"
+                value={formData.text}
+                onChange={(e) => updateField('text', e.target.value)}
+                placeholder="Nombre del texto"
+                style={{ width: '100%', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box', fontWeight: 'bold' }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Tamaño (px)</label>
+                <input
+                  type="number"
+                  value={formData.font_size}
+                  onChange={(e) => updateField('font_size', Number(e.target.value))}
+                  style={{ width: '100%', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }}
                 />
               </div>
-
-              {/* Fila: Tamaño y Color */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Tamaño (px)</label>
-                  <input 
-                    type="number" 
-                    value={formData.font_size || 48}
-                    onChange={(e) => setFormData({...formData, font_size: parseInt(e.target.value) || 48})}
-                    style={inputStyle}
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Color del texto</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="color"
+                    value={formData.font_color}
+                    onChange={(e) => updateField('font_color', e.target.value)}
+                    style={{ width: '60px', height: '46px', border: '2px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}
                   />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Color del texto</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input 
-                      type="color" 
-                      value={formData.font_color}
-                      onChange={(e) => setFormData({...formData, font_color: e.target.value})}
-                      style={{ height: '42px', width: '60px', border: '2px solid #E9D5FF', borderRadius: '0.75rem', cursor: 'pointer' }}
-                    />
-                    <input 
-                      type="text" 
-                      value={formData.font_color}
-                      onChange={(e) => setFormData({...formData, font_color: e.target.value})}
-                      style={{ ...inputStyle, flex: 1, fontFamily: 'monospace', fontSize: '0.875rem' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Fila: Velocidad y Dirección */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Velocidad</label>
-                  <select 
-                    value={formData.animation_speed || 30}
-                    onChange={(e) => setFormData({...formData, animation_speed: parseInt(e.target.value) || 30})}
-                    style={selectStyle}
-                  >
-                    <option value="15"> Rápido (15s)</option>
-                    <option value="30">🚶 Normal (30s)</option>
-                    <option value="60">🐢 Lento (60s)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Dirección</label>
-                  <select 
-                    value={formData.direction}
-                    onChange={(e) => setFormData({...formData, direction: e.target.value})}
-                    style={selectStyle}
-                  >
-                    <option value="left">⬅️ Derecha a Izquierda</option>
-                    <option value="right">➡️ Izquierda a Derecha</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Color de fondo */}
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={labelStyle}>Color de fondo del texto</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({...formData, background_color: 'transparent'})}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '0.5rem',
-                      border: formData.background_color === 'transparent' ? '2px solid #6B2D8B' : '2px solid #E5E7EB',
-                      background: formData.background_color === 'transparent' ? '#F3E8FF' : 'white',
-                      color: formData.background_color === 'transparent' ? '#6B2D8B' : '#6b7280',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    Transparente
-                  </button>
-                  <input 
-                    type="color" 
-                    value={formData.background_color === 'transparent' ? '#6B2D8B' : formData.background_color}
-                    onChange={(e) => setFormData({...formData, background_color: e.target.value + 'CC'})}
-                    style={{ height: '42px', width: '60px', border: '2px solid #E9D5FF', borderRadius: '0.75rem', cursor: 'pointer' }}
-                  />
-                  <input 
-                    type="text" 
-                    value={formData.background_color}
-                    onChange={(e) => setFormData({...formData, background_color: e.target.value})}
-                    placeholder="transparent o #6B2D8BCC"
-                    style={{ ...inputStyle, flex: 1, fontFamily: 'monospace', fontSize: '0.875rem' }}
-                  />
-                </div>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                   Tip: Agrega "CC" al final del hex para transparencia (ej: #6B2D8BCC = 80% opaco)
-                </p>
-              </div>
-
-              {/* Fila: Fechas */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Inicio</label>
-                  <input 
-                    type="datetime-local" 
-                    value={formData.starts_at}
-                    onChange={(e) => setFormData({...formData, starts_at: e.target.value})}
-                    style={inputStyle}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Fin</label>
-                  <input 
-                    type="datetime-local" 
-                    value={formData.ends_at}
-                    onChange={(e) => setFormData({...formData, ends_at: e.target.value})}
-                    style={inputStyle}
-                    required
+                  <input
+                    type="text"
+                    value={formData.font_color}
+                    onChange={(e) => updateField('font_color', e.target.value)}
+                    style={{ flex: 1, padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', fontSize: '0.9rem' }}
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Checkbox Pausar */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
-                background: '#F3E8FF', 
-                padding: '0.75rem 1rem', 
-                borderRadius: '0.75rem',
-                marginBottom: '1.5rem'
-              }}>
-                <input 
-                  type="checkbox" 
-                  checked={formData.pause_on_hover === 1}
-                  onChange={(e) => setFormData({...formData, pause_on_hover: e.target.checked ? 1 : 0})}
-                  style={{ width: '1.25rem', height: '1.25rem', accentColor: '#6B2D8B' }}
-                />
-                <label style={{ fontWeight: 'bold', color: '#6B2D8B', margin: 0, cursor: 'pointer' }}>
-                  Pausar animación al pasar el mouse
-                </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Velocidad (segundos)</label>
+                <select
+                  value={formData.animation_speed}
+                  onChange={(e) => updateField('animation_speed', Number(e.target.value))}
+                  style={{ width: '100%', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', background: 'white', boxSizing: 'border-box' }}
+                >
+                  <option value={15}>Rápida (15s)</option>
+                  <option value={30}>Normal (30s)</option>
+                  <option value={60}>Lenta (60s)</option>
+                </select>
               </div>
-
-              {/* Preview en vivo */}
-              <div style={{ 
-                border: '2px dashed #6B2D8B', 
-                borderRadius: '1rem', 
-                padding: '1rem', 
-                marginBottom: '1.5rem',
-                background: '#F9FAFB'
-              }}>
-                <p style={{ 
-                  fontSize: '0.75rem', 
-                  fontWeight: 'bold', 
-                  color: '#6B2D8B', 
-                  marginBottom: '0.75rem', 
-                  textAlign: 'center',
-                  textTransform: 'uppercase'
-                }}>
-                  👁️ Vista Previa en Vivo
-                </p>
-                <div style={{ 
-                  overflow: 'hidden', 
-                  borderRadius: '0.75rem', 
-                  padding: '1.5rem 1rem', 
-                  position: 'relative',
-                  background: 'linear-gradient(135deg, #A855F7, #7C3AED)',
-                  minHeight: '80px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <style>{`
-                    @keyframes rollTextPreview {
-                      0% { transform: translateX(100%); }
-                      100% { transform: translateX(-100%); }
-                    }
-                    .rolling-preview {
-                      animation: rollTextPreview ${formData.animation_speed}s linear infinite;
-                      animation-direction: ${formData.direction === 'left' ? 'normal' : 'reverse'};
-                      white-space: nowrap;
-                      position: absolute;
-                    }
-                    .rolling-preview:hover {
-                      animation-play-state: ${formData.pause_on_hover ? 'paused' : 'running'};
-                    }
-                  `}</style>
-                  <div 
-                    className="rolling-preview"
-                    style={{
-                      color: formData.font_color,
-                      fontSize: '1.5rem',
-                      fontWeight: formData.font_weight,
-                      backgroundColor: formData.background_color,
-                      padding: formData.background_color !== 'transparent' ? '0.5rem 1rem' : '0',
-                      borderRadius: '0.5rem'
-                    }}
-                  >
-                    {formData.text || 'TU TEXTO AQUÍ'}
-                  </div>
-                </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Dirección</label>
+                <select
+                  value={formData.direction}
+                  onChange={(e) => updateField('direction', e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', background: 'white', boxSizing: 'border-box' }}
+                >
+                  <option value="left">Derecha a Izquierda</option>
+                  <option value="right">Izquierda a Derecha</option>
+                </select>
               </div>
+            </div>
 
-              {/* Botones */}
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button 
-                  type="submit" 
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Color de fondo del texto</label>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => { updateField('background_color', 'transparent'); updateField('bg_color_hex', '#6B2D8B'); }}
                   style={{
-                    flex: 1,
-                    background: '#1B8A3B',
-                    color: 'white',
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
+                    padding: '0.5rem 1rem',
+                    background: formData.background_color === 'transparent' ? '#6B2D8B' : '#f3f4f6',
+                    color: formData.background_color === 'transparent' ? 'white' : '#374151',
+                    border: '2px solid #ddd',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(27, 138, 59, 0.3)'
+                    fontWeight: 'bold'
                   }}
                 >
-                  💾 Guardar Texto
+                  Transparente
                 </button>
-                <button 
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  style={{
-                    background: '#9CA3AF',
-                    color: 'white',
-                    padding: '1rem 1.5rem',
-                    borderRadius: '0.75rem',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancelar
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={formData.bg_color_hex}
+                    onChange={(e) => {
+                      updateField('bg_color_hex', e.target.value);
+                      updateField('background_color', e.target.value);
+                    }}
+                    style={{ width: '50px', height: '42px', border: '2px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}
+                  />
+                  <input
+                    type="text"
+                    value={formData.bg_color_hex}
+                    onChange={(e) => {
+                      updateField('bg_color_hex', e.target.value);
+                      updateField('background_color', e.target.value);
+                    }}
+                    style={{ width: '120px', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', fontSize: '0.9rem' }}
+                  />
+                </div>
               </div>
-            </form>
+              <p style={{ color: '#6b7280', fontSize: '0.8rem', margin: '0.5rem 0 0 0' }}>
+                Tip: Agrega "80" al final del hex para transparencia (ej: #6B2D8B80 = 50% opaco)
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Inicio (opcional)</label>
+                <input
+                  type="date"
+                  value={formData.starts_at}
+                  onChange={(e) => updateField('starts_at', e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#374151', fontSize: '0.9rem' }}>Fin (opcional)</label>
+                <input
+                  type="date"
+                  value={formData.ends_at}
+                  onChange={(e) => updateField('ends_at', e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', border: '2px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ background: '#faf5ff', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <input
+                type="checkbox"
+                checked={formData.pause_on_hover === 1}
+                onChange={(e) => updateField('pause_on_hover', e.target.checked ? 1 : 0)}
+                id="pause-hover"
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              />
+              <label htmlFor="pause-hover" style={{ fontWeight: 'bold', color: '#6B2D8B', cursor: 'pointer', flex: 1 }}>
+                Pausar animación al pasar el mouse
+              </label>
+            </div>
+
+            <div style={{ border: '2px dashed #6B2D8B', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', background: '#faf5ff', position: 'relative' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#6B2D8B', marginBottom: '1rem', fontWeight: 'bold' }}>
+                👁️ VISTA PREVIA EN VIVO
+              </div>
+              
+              <div style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%)', padding: '2rem 1rem', borderRadius: '8px', minHeight: '100px', display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div 
+                  style={{
+                    whiteSpace: 'nowrap',
+                    color: formData.font_color,
+                    fontSize: `${Math.min(formData.font_size, 40)}px`,
+                    fontWeight: formData.font_weight as any,
+                    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    animation: `scrollText ${formData.animation_speed}s linear infinite`,
+                    animationPlayState: formData.pause_on_hover === 1 ? 'paused' : 'running',
+                    position: 'relative',
+                    ...(formData.direction === 'left' ? { left: '100%' } : { right: '100%' })
+                  }}
+                >
+                  {formData.text || 'NUEVA COLECCIÓN'}
+                </div>
+              </div>
+
+              <style>{`
+                @keyframes scrollText {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(${formData.direction === 'left' ? '-200%' : '200%'}); }
+                }
+              `}</style>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={handleSave}
+                style={{ flex: 1, background: '#10B981', color: 'white', border: 'none', padding: '1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                💾 Guardar Texto
+              </button>
+              <button 
+                onClick={() => setShowForm(false)}
+                style={{ background: '#9ca3af', color: 'white', border: 'none', padding: '1rem 2rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Lista de Textos Activos */}
-        <div style={{ ...cardStyle, padding: '1.5rem' }}>
-          <h2 style={{ color: '#6B2D8B', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-            Textos Activos
-          </h2>
-          
-          {overlays.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem 0' }}>
-              No hay textos creados aún.
-            </p>
+        <div style={{ background: 'white', borderRadius: '16px', padding: '2rem', boxShadow: '0 10px 25px rgba(107,45,139,0.1)' }}>
+          <h2 style={{ color: '#6B2D8B', marginTop: 0, marginBottom: '1.5rem' }}>Textos Activos</h2>
+
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#6b7280' }}>Cargando textos...</p>
+          ) : texts.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>No hay textos flotantes configurados.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {overlays.map((o) => (
-                <div 
-                  key={o.id} 
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '1rem',
-                    border: '2px solid #F3E8FF',
-                    borderRadius: '0.75rem',
-                    background: '#FAFAFA'
-                  }}
-                >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {texts.map((item) => (
+                <div key={item.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
-                    <p style={{ 
-                      fontWeight: 'bold', 
-                      fontSize: '1rem', 
-                      marginBottom: '0.25rem',
-                      color: o.font_color,
-                      backgroundColor: o.background_color !== 'transparent' ? o.background_color : 'transparent',
-                      padding: o.background_color !== 'transparent' ? '0.25rem 0.75rem' : '0',
-                      borderRadius: '0.5rem',
-                      display: 'inline-block'
-                    }}>
-                      {o.text}
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: 'bold', color: item.is_active === 1 ? '#1e3a8a' : '#6b7280' }}>
+                      {item.text}
                     </p>
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>
-                      {o.animation_speed}s • {o.direction === 'left' ? '⬅️' : '➡️'}
-                    </p>
+                    <div style={{ display: 'flex', gap: '1rem', color: '#6b7280', fontSize: '0.85rem' }}>
+                      <span>⏱️ {item.animation_speed}s</span>
+                      <span>📏 {item.font_size}px</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button 
-                      onClick={() => toggleActive(o.id, o.is_active)}
-                      style={{
-                        background: o.is_active === 1 ? '#1B8A3B' : '#D1D5DB',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '0.5rem',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        fontSize: '0.875rem',
-                        cursor: 'pointer'
-                      }}
+                      onClick={() => toggleActive(item.id, item.is_active)}
+                      style={{ background: item.is_active === 1 ? '#10B981' : '#d1d5db', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
-                      {o.is_active === 1 ? 'Activo' : 'Inactivo'}
+                      {item.is_active === 1 ? 'Activo' : 'Inactivo'}
                     </button>
                     <button 
-                      onClick={() => deleteOverlay(o.id)}
-                      style={{
-                        background: '#EF4444',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '0.5rem',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        fontSize: '0.875rem',
-                        cursor: 'pointer'
-                      }}
+                      onClick={() => deleteText(item.id)}
+                      style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
                       Eliminar
                     </button>
@@ -520,7 +440,6 @@ export default function CarouselOverlaysAdmin() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
