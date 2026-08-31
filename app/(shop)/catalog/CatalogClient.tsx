@@ -26,7 +26,7 @@ export default function CatalogClient({ initialCategories, products, query, cate
 
   return (
     <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1.5rem 1rem 0 1rem' }}>
-      
+
       {/* Título y Buscador */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', margin: 0, color: '#6B2D8B' }}>
@@ -63,8 +63,30 @@ export default function CatalogClient({ initialCategories, products, query, cate
         ))}
       </div>
 
-      {/* Filtros de oferta */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', margin: '1.5rem 0' }}>
+      {/* ✅ Filtros de oferta - Horizontal scroll en móvil */}
+      <style>{`
+        .filter-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .filter-scroll::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      
+      <div 
+        className="filter-scroll"
+        style={{ 
+          display: 'flex', 
+          flexWrap: 'nowrap',          // ✅ Sin salto de línea
+          gap: '0.5rem', 
+          justifyContent: 'flex-start', // ✅ Alinear a la izquierda para scroll
+          margin: '1rem 0',
+          overflowX: 'auto',            // ✅ Scroll horizontal
+          padding: '0 1rem',            // ✅ Padding para que no se corte el borde
+          WebkitOverflowScrolling: 'touch' // ✅ Scroll suave en iOS
+        }}
+      >
         {filters.map((f) => {
           const isActive = filter === f.key;
           return (
@@ -76,15 +98,18 @@ export default function CatalogClient({ initialCategories, products, query, cate
                 ...(f.key ? { filter: f.key } : {}),
               })}`}
               style={{
-                padding: '0.75rem 1.5rem',
+                padding: '0.6rem 1.25rem',
                 borderRadius: '2rem',
                 fontWeight: 'bold',
-                fontSize: '0.95rem',
+                fontSize: '0.85rem',
                 textDecoration: 'none',
                 background: isActive ? f.color : 'white',
                 color: isActive ? 'white' : f.color,
                 border: `2px solid ${f.color}`,
                 transition: 'all 0.2s',
+                whiteSpace: 'nowrap',   // ✅ Evitar que el texto se rompa
+                flexShrink: 0,          // ✅ Evitar que los botones se encojan
+                boxShadow: isActive ? `0 4px 6px ${f.color}40` : 'none'
               }}
             >
               {f.label}
@@ -107,9 +132,9 @@ export default function CatalogClient({ initialCategories, products, query, cate
         </div>
       )}
 
-      {/* Grid de Productos (Pasa el viewMode para que ProductGrid sepa cómo renderizar) */}
+      {/* Grid de Productos */}
       <ProductGrid products={products} viewMode={viewMode} />
-      
+
     </div>
   );
 }

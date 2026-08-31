@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import CategoryIcon from '@/components/CategoryIcon';
 
 interface CategoryNode {
@@ -28,6 +28,9 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   const [loading, setLoading] = useState(() => {
     return !initialCategories || initialCategories.length === 0;
   });
+  
+  // ✅ REFERENCIA para detectar clics fuera del componente
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -59,6 +62,20 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     return () => window.removeEventListener('resize', checkMobile);
   }, [initialCategories]);
 
+  // ✅ EFECTO para cerrar el dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleCategoryChange = (category: string) => {
     const params = new URLSearchParams();
     if (category !== 'Todas') params.set('category', category);
@@ -72,19 +89,18 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     setActiveDropdown(activeDropdown === categoryId ? null : categoryId);
   };
 
-  // ✅ Función para truncar nombres largos
   const truncateName = (name: string, maxLength: number = 9): string => {
     if (name.length <= maxLength) return name;
     return name.substring(0, maxLength) + '..';
   };
 
   const modernColors = [
-    { bg: '#8B5CF6', shadow: '#6D28D9', hover: '#A78BFA' },
-    { bg: '#10B981', shadow: '#059669', hover: '#34D399' },
-    { bg: '#F59E0B', shadow: '#D97706', hover: '#FBBF24' },
-    { bg: '#EC4899', shadow: '#DB2777', hover: '#F472B6' },
-    { bg: '#3B82F6', shadow: '#2563EB', hover: '#60A5FA' },
-    { bg: '#EF4444', shadow: '#DC2626', hover: '#F87171' },
+    { bg: '#8B5CF6', shadow: '#6D28D9' },
+    { bg: '#10B981', shadow: '#059669' },
+    { bg: '#F59E0B', shadow: '#D97706' },
+    { bg: '#EC4899', shadow: '#DB2777' },
+    { bg: '#3B82F6', shadow: '#2563EB' },
+    { bg: '#EF4444', shadow: '#DC2626' },
   ];
 
   if (loading) {
@@ -98,29 +114,43 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         .nav-category:hover { transform: translateY(-2px); }
         .dropdown-toggle:active { transform: scale(0.9); background: rgba(255,255,255,0.3) !important; }
         .dropdown-item:active { background: rgba(0,0,0,0.1) !important; }
+        .category-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .category-scroll::-webkit-scrollbar {
+          display: none;
+        }
       `}</style>
 
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-        background: 'linear-gradient(135deg, #3D1A78 0%, #2A1155 50%, #006B3C 100%)',
-        boxShadow: '0 10px 0 rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.4)',
-        padding: isMobile ? '0.75rem 0' : '1.25rem 0',
-        marginBottom: isMobile ? '1rem' : '2rem',
-        borderRadius: '0 0 20px 20px',
-        border: '3px solid rgba(255,255,255,0.1)',
-        borderBottom: 'none'
-      }}>
+      {/* ✅ Agregamos ref={containerRef} aquí */}
+      <div 
+        ref={containerRef}
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          background: 'linear-gradient(135deg, #3D1A78 0%, #2A1155 50%, #006B3C 100%)',
+          boxShadow: '0 10px 0 rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.4)',
+          padding: isMobile ? '0.5rem 0' : '1.25rem 0',
+          marginBottom: isMobile ? '0.5rem' : '2rem',
+          borderRadius: '0 0 20px 20px',
+          border: '3px solid rgba(255,255,255,0.1)',
+          borderBottom: 'none'
+        }}
+      >
         <div style={{
           maxWidth: '80rem',
           margin: '0 auto',
           padding: `0 ${isMobile ? '0.5rem' : '1rem'}`,
           display: 'flex',
-          flexWrap: 'wrap',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
           gap: isMobile ? '0.5rem' : '0.75rem',
-          alignItems: 'flex-start'
-        }}>
+          alignItems: 'flex-start',
+          overflowX: isMobile ? 'auto' : 'visible',
+        }}
+        className="category-scroll"
+        >
           {/* Botón Todas */}
           <button
             onClick={() => handleCategoryChange('Todas')}
@@ -130,27 +160,28 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.375rem',
-              padding: isMobile ? '0.5rem 1rem' : '0.875rem 1.75rem',
+              padding: isMobile ? '0.5rem 0.75rem' : '0.875rem 1.75rem',
               background: currentCategory === 'Todas'
                 ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
                 : 'rgba(255,255,255,0.1)',
               color: 'white',
               border: `2px solid ${currentCategory === 'Todas' ? '#F59E0B' : 'rgba(255,255,255,0.3)'}`,
               borderRadius: '12px',
-              fontSize: isMobile ? '0.875rem' : '1rem',
+              fontSize: isMobile ? '0.75rem' : '1rem',
               fontWeight: 'bold',
               cursor: 'pointer',
               backdropFilter: 'blur(10px)',
               boxShadow: currentCategory === 'Todas'
                 ? '0 6px 0 #92400E, 0 8px 16px rgba(0,0,0,0.3)'
                 : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
+              flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: '1.5rem' }}>🏪</span>
+            <span style={{ fontSize: '1.2rem' }}>🏪</span>
             <span>Todas</span>
           </button>
 
-          {/* Categorías principales - ICONO 3D + TEXTO SUPERPUESTO LEGIBLE */}
+          {/* Categorías principales */}
           {categoryTree.map((cat, index) => {
             const colorScheme = modernColors[index % modernColors.length];
             const hasChildren = cat.children && cat.children.length > 0;
@@ -164,10 +195,11 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                 style={{
                   position: 'relative',
                   display: 'inline-block',
+                  flexShrink: 0,
                 }}
               >
                 <div style={{ display: 'flex', gap: 0 }}>
-                  {/* ✅ Botón con icono 3D + texto superpuesto legible */}
+                  {/* Botón con icono 3D + texto superpuesto */}
                   <button
                     onClick={() => handleCategoryChange(cat.name)}
                     className="nav-category"
@@ -186,34 +218,26 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       boxShadow: isSelected
                         ? `0 6px 0 ${colorScheme.shadow}, 0 8px 16px rgba(0,0,0,0.3)`
                         : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
-                      width: isMobile ? '70px' : '90px',
-                      height: isMobile ? '70px' : '90px',
+                      width: isMobile ? '65px' : '90px',
+                      height: isMobile ? '65px' : '90px',
                       transition: 'all 0.3s ease',
                       overflow: 'hidden',
                       position: 'relative',
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px) scale(1.05)';
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow = isSelected
-                        ? `0 8px 0 ${colorScheme.shadow}, 0 12px 20px rgba(0,0,0,0.4)`
-                        : `0 6px 0 rgba(0,0,0,0.3), 0 10px 16px rgba(0,0,0,0.3)`;
                     }}
                     onMouseLeave={(e) => {
                       (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0) scale(1)';
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow = isSelected
-                        ? `0 6px 0 ${colorScheme.shadow}, 0 8px 16px rgba(0,0,0,0.3)`
-                        : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)';
                     }}
                   >
-                    {/* Icono 3D que llena todo el botón */}
                     <CategoryIcon 
                       categoryName={cat.name} 
-                      size={isMobile ? 70 : 90} 
+                      size={isMobile ? 65 : 90} 
                       showEmoji={true}
                       fill={true}
                     />
                     
-                    {/* ✅ Fondo degradado oscuro para legibilidad */}
                     <div
                       style={{
                         position: 'absolute',
@@ -221,7 +245,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                         left: 0,
                         right: 0,
                         background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
-                        padding: '12px 4px 6px 4px',
+                        padding: '10px 4px 5px 4px',
                         zIndex: 10,
                         pointerEvents: 'none',
                       }}
@@ -229,7 +253,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       <div
                         style={{
                           color: 'white',
-                          fontSize: isMobile ? '0.75rem' : '0.9rem',
+                          fontSize: isMobile ? '0.65rem' : '0.9rem',
                           fontWeight: '900',
                           textAlign: 'center',
                           whiteSpace: 'nowrap',
@@ -254,7 +278,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: isMobile ? '0.5rem 0.625rem' : '0.75rem 0.75rem',
+                        padding: isMobile ? '0.4rem 0.5rem' : '0.75rem 0.75rem',
                         background: isSelected
                           ? `${colorScheme.shadow}80`
                           : 'rgba(255,255,255,0.1)',
@@ -265,8 +289,8 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                         fontWeight: 'bold',
                         cursor: 'pointer',
                         backdropFilter: 'blur(10px)',
-                        minWidth: '2rem',
-                        height: isMobile ? '70px' : '90px',
+                        minWidth: '1.8rem',
+                        height: isMobile ? '65px' : '90px',
                       }}
                     >
                       {isActive ? '▲' : '▼'}
@@ -274,15 +298,16 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                   )}
                 </div>
 
-                {/* Dropdown con texto */}
+                {/* Dropdown */}
                 {hasChildren && isActive && (
                   <div
                     style={{
-                      position: isMobile ? 'relative' : 'absolute',
+                      position: isMobile ? 'fixed' : 'absolute',
                       top: isMobile ? 'auto' : '100%',
-                      left: 0,
+                      left: isMobile ? '10px' : 0,
+                      right: isMobile ? '10px' : 'auto',
                       marginTop: isMobile ? '0.5rem' : '0',
-                      minWidth: isMobile ? '100%' : '220px',
+                      minWidth: isMobile ? 'auto' : '220px',
                       background: 'rgba(255,255,255,0.98)',
                       borderRadius: '12px',
                       boxShadow: isMobile
@@ -291,7 +316,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       border: `2px solid ${colorScheme.bg}`,
                       overflow: 'hidden',
                       zIndex: 1001,
-                      width: isMobile ? '100%' : 'auto',
+                      width: isMobile ? 'calc(100% - 20px)' : 'auto',
                     }}
                   >
                     {cat.children.map((child) => {
