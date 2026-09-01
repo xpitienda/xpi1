@@ -359,3 +359,4 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+// Build forzado: 2026-09-01 17:27:35
