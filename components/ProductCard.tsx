@@ -21,6 +21,9 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   const isCarousel = viewMode === 'carousel';
   const inCart = isInCart ? isInCart(product.id) : false;
 
+  // ✅ Detectar si es imagen de R2
+  const isR2Image = product.image_url?.includes('r2.dev');
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -91,6 +94,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               fill
               className="object-cover"
               style={{ objectFit: 'cover' }}
+              unoptimized={isR2Image} // ✅ Desactivar optimización para R2
             />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>
@@ -205,7 +209,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
               }}
             >
-              {added ? '✅ Agregado' : inCart ? '🛒 En carrito' : ' Agregar al carrito'}
+              {added ? '✅ Agregado' : inCart ? ' En carrito' : ' Agregar al carrito'}
             </button>
           </div>
         </div>
@@ -281,6 +285,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                   alt={product.name}
                   fill
                   style={{ objectFit: 'contain' }}
+                  unoptimized={isR2Image} // ✅ Desactivar optimización para R2
                 />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem' }}>
