@@ -114,24 +114,62 @@ async function getVisitorCount() {
   }
 }
 
-// ✅ NUEVA FUNCIÓN: Obtener productos CON imágenes adicionales
+// ✅ FUNCIÓN MEJORADA: Búsqueda recursiva de TODA la jerarquía de categorías
 async function getProductsWithImages(query: string, category: string, filter: string) {
   try {
-    // 1. Obtener productos básicos
+    // 1. Obtener todas las categorías para mapear la jerarquía
+    const catsResult = await turso.execute('SELECT id, name, parent_id FROM categories');
+    const allCats = catsResult.rows || [];
+
+    // 2. Función recursiva para obtener TODAS las subcategorías (hijos, nietos, bisnietos...)
+    function getAllSubcategoryNames(categoryName: string): string[] {
+      const catRecord = allCats.find((c: any) => c.name === categoryName);
+      if (!catRecord) return [categoryName];
+      
+      const names: string[] = [categoryName];
+      
+      // Buscar hijos directos
+      const directChildren = allCats.filter((c: any) => c.parent_id === catRecord.id);
+      
+      // Para cada hijo, obtener sus subcategorías recursivamente
+      for (const child of directChildren) {
+        names.push(...getAllSubcategoryNames(child.name));
+      }
+      
+      return names;
+    }
+
     let sql = 'SELECT * FROM catalog WHERE is_active = 1';
     let args: (string | number)[] = [];
-    
-    if (query) { sql += ' AND (name LIKE ? OR description LIKE ?)'; args.push(`%${query}%`, `%${query}%`); }
-    if (category && category !== 'Todas') { sql += ' AND category = ?'; args.push(category); }
+
+    if (query) { 
+      sql += ' AND (name LIKE ? OR description LIKE ?)'; 
+      args.push(`%${query}%`, `%${query}%`); 
+    }
+
+    // ✅ Buscar TODA la jerarquía de categorías (padre + hijos + nietos)
+    if (category && category !== 'Todas') {
+      const allCategoryNames = getAllSubcategoryNames(category);
+      
+      if (allCategoryNames.length === 1) {
+        sql += ' AND category = ?';
+        args.push(allCategoryNames[0]);
+      } else {
+        sql += ` AND category IN (${allCategoryNames.map(() => '?').join(',')})`;
+        args.push(...allCategoryNames);
+      }
+    }
+
     if (filter === 'featured') { sql += ' AND is_featured = 1'; }
     else if (filter === 'day') { sql += ' AND offer_type = ?'; args.push('day'); }
     else if (filter === 'week') { sql += ' AND offer_type = ?'; args.push('week'); }
-    sql += ' ORDER BY created_at DESC';
     
+    sql += ' ORDER BY created_at DESC';
+
     const productsResult = await turso.execute({ sql, args });
     const products = JSON.parse(JSON.stringify(productsResult.rows || []));
 
-    // 2. Obtener todas las imágenes adicionales de todos los productos
+    // 3. Obtener todas las imágenes adicionales de todos los productos
     const productIds = products.map((p: any) => p.id);
     if (productIds.length === 0) return [];
 
@@ -140,7 +178,7 @@ async function getProductsWithImages(query: string, category: string, filter: st
       args: productIds
     });
 
-    // 3. Agrupar imágenes por product_id
+    // 4. Agrupar imágenes por product_id
     const imagesByProduct = new Map();
     (imagesResult.rows || []).forEach((img: any) => {
       if (!imagesByProduct.has(img.product_id)) {
@@ -154,7 +192,7 @@ async function getProductsWithImages(query: string, category: string, filter: st
       });
     });
 
-    // 4. Agregar additionalImages a cada producto
+    // 5. Agregar additionalImages a cada producto
     return products.map((product: any) => ({
       ...product,
       additionalImages: imagesByProduct.get(product.id) || []
@@ -175,7 +213,7 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
   // Obtenemos todos los datos en paralelo
   const [categoriesTree, products, advancedBanners, banners, overlays, visitorCount] = await Promise.all([
     getCategoriesTree(),
-    getProductsWithImages(query, category, filter), // ✅ USAR LA NUEVA FUNCIÓN
+    getProductsWithImages(query, category, filter),
     getAdvancedBanners(),
     getBanners(),
     getCarouselOverlays(),

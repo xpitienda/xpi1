@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import CategoryIcon from '@/components/CategoryIcon';
 
 interface CategoryNode {
@@ -25,14 +24,12 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     return initialCategories && initialCategories.length > 0 ? initialCategories : [];
   });
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [loading, setLoading] = useState(() => {
     return !initialCategories || initialCategories.length === 0;
   });
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   useEffect(() => {
     const checkMobile = () => {
@@ -64,45 +61,16 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     return () => window.removeEventListener('resize', checkMobile);
   }, [initialCategories]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setActiveDropdown(null);
-        setDropdownPosition(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const handleCategoryChange = (category: string) => {
     const params = new URLSearchParams();
     if (category !== 'Todas') params.set('category', category);
     if (currentSearch) params.set('q', currentSearch);
     router.push(`/catalog?${params.toString()}`);
     setActiveDropdown(null);
-    setDropdownPosition(null);
   };
 
-  const handleDropdownToggle = (categoryId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (activeDropdown === categoryId) {
-      setActiveDropdown(null);
-      setDropdownPosition(null);
-    } else {
-      // ✅ Calcular posición del botón de la flecha
-      const button = buttonRefs.current[categoryId];
-      if (button) {
-        const rect = button.getBoundingClientRect();
-        setDropdownPosition({
-          top: rect.bottom + 8, // 8px debajo del botón
-          left: rect.left
-        });
-      }
-      setActiveDropdown(categoryId);
-    }
+  const handleDropdownToggle = (categoryId: string) => {
+    setActiveDropdown(activeDropdown === categoryId ? null : categoryId);
   };
 
   const truncateName = (name: string, maxLength: number = 9): string => {
@@ -120,13 +88,8 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   ];
 
   if (loading) {
-    return <div style={{ padding: '1rem', textAlign: 'center', background: 'white', margin: '1rem', borderRadius: '12px' }}>⏳ Cargando...</div>;
+    return <div style={{ padding: '1rem', textAlign: 'center', background: 'white', margin: '1rem', borderRadius: '12px' }}>Cargando...</div>;
   }
-
-  // ✅ Encontrar la categoría activa para el portal
-  const activeCat = activeDropdown ? categoryTree.find(c => c.id === activeDropdown) : null;
-  const activeColorIndex = activeCat ? categoryTree.indexOf(activeCat) : 0;
-  const activeColorScheme = modernColors[activeColorIndex % modernColors.length];
 
   return (
     <>
@@ -280,8 +243,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
 
                   {hasChildren && (
                     <button
-                      ref={(el) => { buttonRefs.current[cat.id] = el; }}
-                      onClick={(e) => handleDropdownToggle(cat.id, e)}
+                      onClick={() => handleDropdownToggle(cat.id)}
                       className="dropdown-toggle"
                       title={`Ver subcategorías de ${cat.name}`}
                       style={{
@@ -308,60 +270,60 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                     </button>
                   )}
                 </div>
+
+                {/* ✅ Dropdown renderizado DENTRO del contenedor, sin portal */}
+                {hasChildren && activeDropdown === cat.id && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: '0.5rem',
+                      minWidth: '220px',
+                      background: 'rgba(255,255,255,0.98)',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                      border: `2px solid ${colorScheme.bg}`,
+                      overflow: 'hidden',
+                      zIndex: 2000,
+                      width: 'auto',
+                    }}
+                  >
+                    {cat.children.map((child) => {
+                      const isChildSelected = currentCategory === child.name;
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => handleCategoryChange(child.name)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            width: '100%',
+                            padding: '0.75rem 1.25rem',
+                            background: isChildSelected ? `${colorScheme.bg}20` : 'transparent',
+                            color: '#3D1A78',
+                            border: 'none',
+                            borderBottom: '1px solid rgba(0,107,60,0.1)',
+                            fontSize: '0.875rem',
+                            fontWeight: isChildSelected ? 'bold' : '500',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
+                          <span style={{ flex: 1 }}>{child.name}</span>
+                          {isChildSelected && <span style={{ color: colorScheme.bg }}>●</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
-
-      {/* ✅ PORTAL: Dropdown renderizado en el body, fuera de cualquier overflow */}
-      {activeDropdown && dropdownPosition && activeCat && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            minWidth: '220px',
-            background: 'rgba(255,255,255,0.98)',
-            borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-            border: `2px solid ${activeColorScheme.bg}`,
-            overflow: 'hidden',
-            zIndex: 9999,
-            width: 'auto',
-          }}
-        >
-          {activeCat.children.map((child) => {
-            const isChildSelected = currentCategory === child.name;
-            return (
-              <button
-                key={child.id}
-                onClick={() => handleCategoryChange(child.name)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  width: '100%',
-                  padding: '0.75rem 1.25rem',
-                  background: isChildSelected ? `${activeColorScheme.bg}20` : 'transparent',
-                  color: '#3D1A78',
-                  border: 'none',
-                  borderBottom: '1px solid rgba(0,107,60,0.1)',
-                  fontSize: '0.875rem',
-                  fontWeight: isChildSelected ? 'bold' : '500',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
-                <span style={{ flex: 1 }}>{child.name}</span>
-                {isChildSelected && <span style={{ color: activeColorScheme.bg }}>●</span>}
-              </button>
-            );
-          })}
-        </div>,
-        document.body
-      )}
     </>
   );
 }
