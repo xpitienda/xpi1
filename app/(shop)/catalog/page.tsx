@@ -133,7 +133,9 @@ async function getProductsWithImages(query: string, category: string, filter: st
       
       // Para cada hijo, obtener sus subcategorías recursivamente
       for (const child of directChildren) {
-        names.push(...getAllSubcategoryNames(child.name));
+        if (child.name) { // ✅ Validar que child.name no sea null
+          names.push(...getAllSubcategoryNames(String(child.name))); // ✅ Convertir a string
+        }
       }
       
       return names;
