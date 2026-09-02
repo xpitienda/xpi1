@@ -1,5 +1,7 @@
 'use client';
 
+import AIGenerateButton from '@/components/AIGenerateButton';
+
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, Sparkles } from 'lucide-react';
@@ -35,6 +37,8 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState<string[]>([]);
 
   const [createdProductId, setCreatedProductId] = useState<string | null>(null);
+  const [mainImageUrl, setMainImageUrl] = useState<string>('');
+  const [currentProductName, setCurrentProductName] = useState<string>('');
   const [additionalImages, setAdditionalImages] = useState<AdditionalImage[]>([]);
   const [uploadingAdditional, setUploadingAdditional] = useState(false);
   const additionalFileInputRef = useRef<HTMLInputElement>(null);
@@ -123,6 +127,10 @@ export default function AddProductPage() {
       });
       const uploadData = await uploadRes.json();
       if (!uploadData.url) throw new Error(uploadData.error || 'Error al subir imagen');
+
+      const productName = formData.get('name') as string;
+      setMainImageUrl(uploadData.url);
+      setCurrentProductName(productName);
 
       const productData = {
         name: formData.get('name'),
@@ -571,6 +579,15 @@ export default function AddProductPage() {
                   disabled={uploadingAdditional}
                   style={{ marginBottom: '1rem', width: '100%' }}
                 />
+
+                {createdProductId && mainImageUrl && (
+                  <AIGenerateButton 
+                    productId={createdProductId}
+                    imageUrl={mainImageUrl}
+                    productName={currentProductName}
+                    onSuccess={loadAdditionalImages}
+                  />
+                )}
 
                 {uploadingAdditional && <p style={{ color: '#16a34a', fontWeight: 'bold' }}>⏳ Subiendo imágenes...</p>}
 
