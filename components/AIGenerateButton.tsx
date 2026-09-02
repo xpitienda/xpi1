@@ -6,7 +6,7 @@ interface AIGenerateButtonProps {
   productId: string;
   imageUrl: string;
   productName: string;
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>; // ✅ Aceptar funciones async
 }
 
 export default function AIGenerateButton({ 
@@ -75,8 +75,8 @@ export default function AIGenerateButton({
         text: `✅ ¡Éxito! ${data.count} variaciones agregadas al carrusel` 
       });
 
-      // 3. Llamar al callback para recargar imágenes
-      onSuccess();
+      // 3. Llamar al callback para recargar imágenes (puede ser async)
+      await onSuccess();
 
     } catch (error: any) {
       console.error('Error generando imágenes:', error);

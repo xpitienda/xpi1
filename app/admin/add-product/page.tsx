@@ -585,7 +585,7 @@ export default function AddProductPage() {
                     productId={createdProductId}
                     imageUrl={mainImageUrl}
                     productName={currentProductName}
-                    onSuccess={loadAdditionalImages}
+                    onSuccess={() => { loadAdditionalImages(createdProductId); }}
                   />
                 )}
 
@@ -975,3 +975,4 @@ export default function AddProductPage() {
     </div>
   );
 }
+
