@@ -31,11 +31,17 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   const [loading, setLoading] = useState(() => !initialCategories || initialCategories.length === 0);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null); // ✅ NUEVO: Ref para el dropdown flotante
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
+  // ✅ MODIFICADO: Verificar tanto el contenedor como el dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const isOutsideContainer = containerRef.current && !containerRef.current.contains(event.target as Node);
+      const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target as Node);
+      
+      // Solo cerrar si el clic fue fuera de AMBOS
+      if (isOutsideContainer && isOutsideDropdown) {
         setActiveDropdown(null);
         setDropdownPosition(null);
       }
@@ -77,7 +83,6 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     setDropdownPosition(null);
   };
 
-  // ✅ CALCULAR POSICIÓN EXACTA DEL DROPDOWN
   const handleDropdownToggle = useCallback((e: React.MouseEvent | React.TouchEvent, catId: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -85,9 +90,8 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     const button = buttonRefs.current[catId];
     if (button) {
       const rect = button.getBoundingClientRect();
-      // Calcular posición justo debajo del botón
       setDropdownPosition({
-        top: rect.bottom + 5, // 5px de margen debajo del botón
+        top: rect.bottom + 5,
         left: rect.left
       });
     }
@@ -185,34 +189,44 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         </div>
       </div>
 
-      {/* ✅ DROPDOWN FLOTANTE CON POSICIÓN CALCULADA */}
+      {/* ✅ DROPDOWN FLOTANTE CON SU PROPIO REF */}
       {activeDropdown && dropdownPosition && (() => {
         const activeCat = categoryTree.find(c => c.id === activeDropdown);
         if (!activeCat || !activeCat.children || activeCat.children.length === 0) return null;
         const colorScheme = modernColors[categoryTree.indexOf(activeCat) % modernColors.length];
         
         return (
-          <div style={{
-            position: 'fixed',
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            minWidth: '220px',
-            background: 'rgba(255,255,255,0.98)',
-            borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-            border: `2px solid ${colorScheme.bg}`,
-            overflow: 'hidden',
-            zIndex: 99999,
-          }}>
+          <div 
+            ref={dropdownRef} // ✅ NUEVO: Ref para que handleClickOutside no lo cierre prematuramente
+            style={{
+              position: 'fixed',
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              minWidth: '220px',
+              background: 'rgba(255,255,255,0.98)',
+              borderRadius: '12px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              border: `2px solid ${colorScheme.bg}`,
+              overflow: 'hidden',
+              zIndex: 99999,
+            }}
+          >
             {activeCat.children.map((child) => {
               const isChildSelected = currentCategory === child.name;
               return (
-                <button key={child.id} onClick={(e) => { e.stopPropagation(); handleCategoryChange(child.name); }} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.75rem 1.25rem',
-                  background: isChildSelected ? `${colorScheme.bg}20` : 'transparent', color: '#3D1A78',
-                  border: 'none', borderBottom: '1px solid rgba(0,107,60,0.1)', fontSize: '0.875rem',
-                  fontWeight: isChildSelected ? 'bold' : '500', cursor: 'pointer', textAlign: 'left',
-                }}>
+                <button 
+                  key={child.id} 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    handleCategoryChange(child.name); 
+                  }} 
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.75rem 1.25rem',
+                    background: isChildSelected ? `${colorScheme.bg}20` : 'transparent', color: '#3D1A78',
+                    border: 'none', borderBottom: '1px solid rgba(0,107,60,0.1)', fontSize: '0.875rem',
+                    fontWeight: isChildSelected ? 'bold' : '500', cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
                   <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
                   <span style={{ flex: 1 }}>{child.name}</span>
                   {isChildSelected && <span style={{ color: colorScheme.bg }}>●</span>}
