@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
@@ -28,8 +28,23 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   const [loading, setLoading] = useState(() => {
     return !initialCategories || initialCategories.length === 0;
   });
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Cerrar dropdown al hacer clic o toque fuera del menú
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -69,7 +84,10 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     setActiveDropdown(null);
   };
 
-  const handleDropdownToggle = (categoryId: string) => {
+  // ✅ CORRECCIÓN ANDROID: Detener propagación del evento táctil
+  const handleDropdownToggle = (categoryId: string, e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); 
     setActiveDropdown(activeDropdown === categoryId ? null : categoryId);
   };
 
@@ -96,7 +114,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
       <style>{`
         .nav-category { transition: all 0.3s ease; }
         .nav-category:hover { transform: translateY(-2px); }
-        .dropdown-toggle:active { transform: scale(0.9); background: rgba(255,255,255,0.3) !important; }
+        .dropdown-toggle:active { transform: scale(0.95); background: rgba(255,255,255,0.3) !important; }
         .dropdown-item:active { background: rgba(0,0,0,0.1) !important; }
         .category-scroll {
           scrollbar-width: none;
@@ -107,7 +125,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         }
       `}</style>
 
-      <div 
+      <div
         ref={containerRef}
         style={{
           position: 'sticky',
@@ -131,6 +149,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
           gap: isMobile ? '0.5rem' : '0.75rem',
           alignItems: 'flex-start',
           overflowX: isMobile ? 'auto' : 'visible',
+          overflowY: 'visible', // ✅ Permitir que el dropdown se vea hacia abajo
         }}
         className="category-scroll"
         >
@@ -204,13 +223,13 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       position: 'relative',
                     }}
                   >
-                    <CategoryIcon 
-                      categoryName={cat.name} 
-                      size={isMobile ? 65 : 90} 
+                    <CategoryIcon
+                      categoryName={cat.name}
+                      size={isMobile ? 65 : 90}
                       showEmoji={true}
                       fill={true}
                     />
-                    
+
                     <div
                       style={{
                         position: 'absolute',
@@ -243,7 +262,8 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
 
                   {hasChildren && (
                     <button
-                      onClick={() => handleDropdownToggle(cat.id)}
+                      onClick={(e) => handleDropdownToggle(cat.id, e)}
+                      onTouchStart={(e) => e.stopPropagation()} // ✅ Detener burbujeo en Android
                       className="dropdown-toggle"
                       title={`Ver subcategorías de ${cat.name}`}
                       style={{
@@ -256,14 +276,16 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                           : 'rgba(255,255,255,0.1)',
                         color: 'white',
                         border: `2px solid ${colorScheme.shadow}`,
+                        borderLeft: 'none',
                         borderRadius: '0 12px 12px 0',
                         fontSize: '0.75rem',
                         fontWeight: 'bold',
                         cursor: 'pointer',
                         backdropFilter: 'blur(10px)',
-                        minWidth: '1.8rem',
+                        minWidth: '2rem', // ✅ Un poco más ancho para facilitar el toque
                         height: isMobile ? '65px' : '90px',
                         zIndex: 100,
+                        position: 'relative',
                       }}
                     >
                       {activeDropdown === cat.id ? '▲' : '▼'}
@@ -271,7 +293,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                   )}
                 </div>
 
-                {/* ✅ Dropdown renderizado DENTRO del contenedor, sin portal */}
+                {/* ✅ Dropdown con z-index altísimo para no quedar oculto */}
                 {hasChildren && activeDropdown === cat.id && (
                   <div
                     style={{
@@ -285,7 +307,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                       border: `2px solid ${colorScheme.bg}`,
                       overflow: 'hidden',
-                      zIndex: 2000,
+                      zIndex: 9999, 
                       width: 'auto',
                     }}
                   >
@@ -294,7 +316,10 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                       return (
                         <button
                           key={child.id}
-                          onClick={() => handleCategoryChange(child.name)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCategoryChange(child.name);
+                          }}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
