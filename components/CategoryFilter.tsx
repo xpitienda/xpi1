@@ -15,11 +15,6 @@ interface CategoryFilterProps {
   initialCategories?: CategoryNode[];
 }
 
-interface DropdownPosition {
-  top: number;
-  left: number;
-}
-
 export default function CategoryFilter({ initialCategories }: CategoryFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,14 +26,13 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   });
   
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [loading, setLoading] = useState(() => !initialCategories || initialCategories.length === 0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  // Cerrar al tocar fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -83,7 +77,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     setDropdownPosition(null);
   };
 
-  // ✅ CALCULAR POSICIÓN FIJA DEL DROPDOWN
+  // ✅ CALCULAR POSICIÓN EXACTA DEL DROPDOWN
   const handleDropdownToggle = useCallback((e: React.MouseEvent | React.TouchEvent, catId: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -91,9 +85,10 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     const button = buttonRefs.current[catId];
     if (button) {
       const rect = button.getBoundingClientRect();
+      // Calcular posición justo debajo del botón
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8, // 8px de margen
-        left: rect.left + window.scrollX
+        top: rect.bottom + 5, // 5px de margen debajo del botón
+        left: rect.left
       });
     }
     
@@ -190,7 +185,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         </div>
       </div>
 
-      {/* ✅ DROPDOWN FLOTANTE CON position: fixed - FUERA del contenedor con overflow */}
+      {/* ✅ DROPDOWN FLOTANTE CON POSICIÓN CALCULADA */}
       {activeDropdown && dropdownPosition && (() => {
         const activeCat = categoryTree.find(c => c.id === activeDropdown);
         if (!activeCat || !activeCat.children || activeCat.children.length === 0) return null;
@@ -199,8 +194,8 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         return (
           <div style={{
             position: 'fixed',
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
             minWidth: '220px',
             background: 'rgba(255,255,255,0.98)',
             borderRadius: '12px',
