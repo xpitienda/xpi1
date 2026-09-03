@@ -33,9 +33,18 @@ export default function ProductImageCarousel({
   // Imagen por defecto (logo XPI Tienda)
   const defaultImage = '/logo.png';
 
-  // ✅ CORRECCIÓN: Si no hay imágenes, mostrar 5 logos. Si hay, mostrar hasta 5.
-  const displayImages = images.length > 0 
-    ? images.slice(0, 5) 
+  // ✅ CORRECCIÓN: Filtrar solo imágenes con URLs válidas y no vacías
+  const validImages = images.filter(img => 
+    img.image_url && 
+    img.image_url.trim() !== '' && 
+    img.image_url !== null &&
+    img.image_url !== 'null' &&
+    img.image_url !== 'undefined'
+  );
+
+  // Si no hay imágenes válidas, mostrar 5 logos
+  const displayImages = validImages.length > 0 
+    ? validImages.slice(0, 5) 
     : Array(5).fill({
         id: 0,
         product_id: 0,
@@ -130,6 +139,12 @@ export default function ProductImageCarousel({
                 transition: 'transform 0.4s ease',
                 filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.2))'
               }}
+              onError={(e) => {
+                // ✅ Si la imagen falla, usar el logo como fallback
+                if (currentImage.image_url !== defaultImage) {
+                  (e.target as HTMLImageElement).src = defaultImage;
+                }
+              }}
             />
           </div>
 
@@ -222,7 +237,16 @@ export default function ProductImageCarousel({
                     cursor: 'pointer', transition: 'all 0.2s ease'
                   }}
                 >
-                  <img src={img.image_url} alt={`Vista ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img 
+                    src={img.image_url} 
+                    alt={`Vista ${index + 1}`} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      if (img.image_url !== defaultImage) {
+                        (e.target as HTMLImageElement).src = defaultImage;
+                      }
+                    }}
+                  />
                 </button>
               ))}
             </div>
