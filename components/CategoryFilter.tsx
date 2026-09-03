@@ -20,18 +20,19 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category') || 'Todas';
   const currentSearch = searchParams.get('q') || '';
+  
   const [categoryTree, setCategoryTree] = useState<CategoryNode[]>(() => {
     return initialCategories && initialCategories.length > 0 ? initialCategories : [];
   });
+  
+  // Usamos un string simple para el ID de la categoría activa
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [loading, setLoading] = useState(() => {
-    return !initialCategories || initialCategories.length === 0;
-  });
+  const [loading, setLoading] = useState(() => !initialCategories || initialCategories.length === 0);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Cerrar dropdown al hacer clic o toque fuera del menú
+  // Cerrar al tocar fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -47,9 +48,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   }, []);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
@@ -59,11 +58,9 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
           setLoading(true);
           const response = await fetch('/api/categories/tree');
           const data = await response.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setCategoryTree(data);
-          }
+          if (Array.isArray(data) && data.length > 0) setCategoryTree(data);
         } catch (err) {
-          console.error('Error:', err);
+          console.error('Error cargando categorías:', err);
         } finally {
           setLoading(false);
         }
@@ -84,16 +81,15 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
     setActiveDropdown(null);
   };
 
-  // ✅ CORRECCIÓN ANDROID: Detener propagación del evento táctil
+  // ✅ Función de toggle a prueba de fallos para móvil y PC
   const handleDropdownToggle = (categoryId: string, e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    e.stopPropagation(); 
-    setActiveDropdown(activeDropdown === categoryId ? null : categoryId);
+    e.stopPropagation();
+    setActiveDropdown(prev => prev === categoryId ? null : categoryId);
   };
 
   const truncateName = (name: string, maxLength: number = 9): string => {
-    if (name.length <= maxLength) return name;
-    return name.substring(0, maxLength) + '..';
+    return name.length <= maxLength ? name : name.substring(0, maxLength) + '..';
   };
 
   const modernColors = [
@@ -106,23 +102,17 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   ];
 
   if (loading) {
-    return <div style={{ padding: '1rem', textAlign: 'center', background: 'white', margin: '1rem', borderRadius: '12px' }}>Cargando...</div>;
+    return <div style={{ padding: '1rem', textAlign: 'center', background: 'white', margin: '1rem', borderRadius: '12px' }}>Cargando categorías...</div>;
   }
 
   return (
     <>
       <style>{`
-        .nav-category { transition: all 0.3s ease; }
-        .nav-category:hover { transform: translateY(-2px); }
-        .dropdown-toggle:active { transform: scale(0.95); background: rgba(255,255,255,0.3) !important; }
-        .dropdown-item:active { background: rgba(0,0,0,0.1) !important; }
-        .category-scroll {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .category-scroll::-webkit-scrollbar {
-          display: none;
-        }
+        .nav-category { transition: all 0.2s ease; }
+        .nav-category:active { transform: scale(0.95); }
+        .dropdown-toggle:active { transform: scale(0.9); background: rgba(255,255,255,0.3) !important; }
+        .category-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .category-scroll::-webkit-scrollbar { display: none; }
       `}</style>
 
       <div
@@ -137,44 +127,35 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
           marginBottom: isMobile ? '0.5rem' : '2rem',
           borderRadius: '0 0 20px 20px',
           border: '3px solid rgba(255,255,255,0.1)',
-          borderBottom: 'none'
+          borderBottom: 'none',
+          overflow: 'visible' // ✅ CRUCIAL: Permite que el dropdown salga del contenedor
         }}
       >
-        <div style={{
-          maxWidth: '80rem',
-          margin: '0 auto',
-          padding: `0 ${isMobile ? '0.5rem' : '1rem'}`,
-          display: 'flex',
-          flexWrap: isMobile ? 'nowrap' : 'wrap',
-          gap: isMobile ? '0.5rem' : '0.75rem',
-          alignItems: 'flex-start',
-          overflowX: isMobile ? 'auto' : 'visible',
-          overflowY: 'visible', // ✅ Permitir que el dropdown se vea hacia abajo
-        }}
-        className="category-scroll"
+        <div 
+          className="category-scroll"
+          style={{
+            maxWidth: '80rem',
+            margin: '0 auto',
+            padding: `0 ${isMobile ? '0.5rem' : '1rem'}`,
+            display: 'flex',
+            flexWrap: isMobile ? 'nowrap' : 'wrap',
+            gap: isMobile ? '0.5rem' : '0.75rem',
+            alignItems: 'flex-start',
+            overflowX: isMobile ? 'auto' : 'visible',
+            overflowY: 'visible', // ✅ CRUCIAL: Permite scroll vertical para el dropdown
+          }}
         >
           <button
             onClick={() => handleCategoryChange('Todas')}
             className="nav-category"
-            title="Ver todos los productos"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
+              display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
               padding: isMobile ? '0.5rem 0.75rem' : '0.875rem 1.75rem',
-              background: currentCategory === 'Todas'
-                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                : 'rgba(255,255,255,0.1)',
-              color: 'white',
-              border: `2px solid ${currentCategory === 'Todas' ? '#F59E0B' : 'rgba(255,255,255,0.3)'}`,
-              borderRadius: '12px',
-              fontSize: isMobile ? '0.75rem' : '1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              boxShadow: currentCategory === 'Todas'
-                ? '0 6px 0 #92400E, 0 8px 16px rgba(0,0,0,0.3)'
-                : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
+              background: currentCategory === 'Todas' ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' : 'rgba(255,255,255,0.1)',
+              color: 'white', border: `2px solid ${currentCategory === 'Todas' ? '#F59E0B' : 'rgba(255,255,255,0.3)'}`,
+              borderRadius: '12px', fontSize: isMobile ? '0.75rem' : '1rem', fontWeight: 'bold',
+              cursor: 'pointer', backdropFilter: 'blur(10px)',
+              boxShadow: currentCategory === 'Todas' ? '0 6px 0 #92400E, 0 8px 16px rgba(0,0,0,0.3)' : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
               flexShrink: 0,
             }}
           >
@@ -189,72 +170,33 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
             const truncatedName = truncateName(cat.name, 9);
 
             return (
-              <div
-                key={cat.id}
-                style={{
-                  position: 'relative',
-                  display: 'inline-block',
-                  flexShrink: 0,
-                }}
-              >
+              <div key={cat.id} style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: 0 }}>
                   <button
                     onClick={() => handleCategoryChange(cat.name)}
                     className="nav-category"
                     title={cat.name}
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      background: 'transparent',
-                      color: 'white',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                      background: 'transparent', color: 'white',
                       border: `3px solid ${isSelected ? colorScheme.bg : 'rgba(255,255,255,0.3)'}`,
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      backdropFilter: 'blur(10px)',
-                      boxShadow: isSelected
-                        ? `0 6px 0 ${colorScheme.shadow}, 0 8px 16px rgba(0,0,0,0.3)`
-                        : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
-                      width: isMobile ? '65px' : '90px',
-                      height: isMobile ? '65px' : '90px',
-                      transition: 'all 0.3s ease',
-                      overflow: 'hidden',
-                      position: 'relative',
+                      borderRadius: '12px', cursor: 'pointer', backdropFilter: 'blur(10px)',
+                      boxShadow: isSelected ? `0 6px 0 ${colorScheme.shadow}, 0 8px 16px rgba(0,0,0,0.3)` : '0 4px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2)',
+                      width: isMobile ? '65px' : '90px', height: isMobile ? '65px' : '90px',
+                      transition: 'all 0.3s ease', overflow: 'hidden', position: 'relative',
                     }}
                   >
-                    <CategoryIcon
-                      categoryName={cat.name}
-                      size={isMobile ? 65 : 90}
-                      showEmoji={true}
-                      fill={true}
-                    />
-
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
-                        padding: '10px 4px 5px 4px',
-                        zIndex: 10,
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <div
-                        style={{
-                          color: 'white',
-                          fontSize: isMobile ? '0.65rem' : '0.9rem',
-                          fontWeight: '900',
-                          textAlign: 'center',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                          letterSpacing: '0.5px',
-                        }}
-                      >
+                    <CategoryIcon categoryName={cat.name} size={isMobile ? 65 : 90} showEmoji={true} fill={true} />
+                    <div style={{
+                      position: 'absolute', bottom: 0, left: 0, right: 0,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+                      padding: '10px 4px 5px 4px', zIndex: 10, pointerEvents: 'none',
+                    }}>
+                      <div style={{
+                        color: 'white', fontSize: isMobile ? '0.65rem' : '0.9rem', fontWeight: '900',
+                        textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)', letterSpacing: '0.5px',
+                      }}>
                         {truncatedName}
                       </div>
                     </div>
@@ -263,29 +205,17 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                   {hasChildren && (
                     <button
                       onClick={(e) => handleDropdownToggle(cat.id, e)}
-                      onTouchStart={(e) => e.stopPropagation()} // ✅ Detener burbujeo en Android
+                      onTouchStart={(e) => e.stopPropagation()}
                       className="dropdown-toggle"
                       title={`Ver subcategorías de ${cat.name}`}
                       style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         padding: isMobile ? '0.4rem 0.5rem' : '0.75rem 0.75rem',
-                        background: isSelected
-                          ? `${colorScheme.shadow}80`
-                          : 'rgba(255,255,255,0.1)',
-                        color: 'white',
-                        border: `2px solid ${colorScheme.shadow}`,
-                        borderLeft: 'none',
-                        borderRadius: '0 12px 12px 0',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(10px)',
-                        minWidth: '2rem', // ✅ Un poco más ancho para facilitar el toque
-                        height: isMobile ? '65px' : '90px',
-                        zIndex: 100,
-                        position: 'relative',
+                        background: isSelected ? `${colorScheme.shadow}80` : 'rgba(255,255,255,0.1)',
+                        color: 'white', border: `2px solid ${colorScheme.shadow}`, borderLeft: 'none',
+                        borderRadius: '0 12px 12px 0', fontSize: '0.75rem', fontWeight: 'bold',
+                        cursor: 'pointer', backdropFilter: 'blur(10px)', minWidth: '2rem',
+                        height: isMobile ? '65px' : '90px', zIndex: 100, position: 'relative',
                       }}
                     >
                       {activeDropdown === cat.id ? '▲' : '▼'}
@@ -293,24 +223,15 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                   )}
                 </div>
 
-                {/* ✅ Dropdown con z-index altísimo para no quedar oculto */}
+                {/* ✅ Dropdown con z-index altísimo y posición absoluta */}
                 {hasChildren && activeDropdown === cat.id && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      marginTop: '0.5rem',
-                      minWidth: '220px',
-                      background: 'rgba(255,255,255,0.98)',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                      border: `2px solid ${colorScheme.bg}`,
-                      overflow: 'hidden',
-                      zIndex: 9999, 
-                      width: 'auto',
-                    }}
-                  >
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, marginTop: '0.5rem',
+                    minWidth: '220px', background: 'rgba(255,255,255,0.98)',
+                    borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                    border: `2px solid ${colorScheme.bg}`, overflow: 'hidden',
+                    zIndex: 9999, width: 'auto',
+                  }}>
                     {cat.children.map((child) => {
                       const isChildSelected = currentCategory === child.name;
                       return (
@@ -321,19 +242,11 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                             handleCategoryChange(child.name);
                           }}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            width: '100%',
-                            padding: '0.75rem 1.25rem',
-                            background: isChildSelected ? `${colorScheme.bg}20` : 'transparent',
-                            color: '#3D1A78',
-                            border: 'none',
-                            borderBottom: '1px solid rgba(0,107,60,0.1)',
-                            fontSize: '0.875rem',
-                            fontWeight: isChildSelected ? 'bold' : '500',
-                            cursor: 'pointer',
-                            textAlign: 'left',
+                            display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%',
+                            padding: '0.75rem 1.25rem', background: isChildSelected ? `${colorScheme.bg}20` : 'transparent',
+                            color: '#3D1A78', border: 'none', borderBottom: '1px solid rgba(0,107,60,0.1)',
+                            fontSize: '0.875rem', fontWeight: isChildSelected ? 'bold' : '500',
+                            cursor: 'pointer', textAlign: 'left',
                           }}
                         >
                           <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
