@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 
 export async function POST(request: Request) {
@@ -25,25 +25,46 @@ export async function POST(request: Request) {
       );
     }
 
-    // Crear el shipment
-    const result = await turso.execute({
-      sql: `INSERT INTO shipments (sale_id, courier_company_id, tracking_number, status, created_at)
-            VALUES (?, ?, ?, 'En tránsito', datetime('now'))`,
-      args: [saleId, courierCompanyId, trackingNumber]
+    // ✅ NUEVO: Verificar si YA existe un envío para esta venta
+    const existingShipment = await turso.execute({
+      sql: 'SELECT id FROM shipments WHERE sale_id = ?',
+      args: [saleId]
     });
 
-    // Convertir BigInt a string para evitar error de serialización
-    const shipmentId = result.lastInsertRowid ? result.lastInsertRowid.toString() : null;
+    let shipmentId = null;
+
+    if (existingShipment.rows && existingShipment.rows.length > 0) {
+      // ✅ ACTUALIZAR el envío existente (Upsert)
+      await turso.execute({
+        sql: `UPDATE shipments 
+              SET courier_company_id = ?, 
+                  tracking_number = ?, 
+                  status = 'En tránsito' 
+              WHERE sale_id = ?`,
+        args: [courierCompanyId, trackingNumber, saleId]
+      });
+      shipmentId = existingShipment.rows[0].id;
+    } else {
+      // ✅ CREAR un envío nuevo si no existe
+      const result = await turso.execute({
+        sql: `INSERT INTO shipments (sale_id, courier_company_id, tracking_number, status, created_at)
+              VALUES (?, ?, ?, 'En tránsito', datetime('now'))`,
+        args: [saleId, courierCompanyId, trackingNumber]
+      });
+      shipmentId = result.lastInsertRowid ? result.lastInsertRowid.toString() : null;
+    }
 
     return NextResponse.json({
       success: true,
       shipmentId: shipmentId,
-      message: 'Envío creado correctamente'
+      message: existingShipment.rows && existingShipment.rows.length > 0 
+        ? 'Envío actualizado correctamente' 
+        : 'Envío creado correctamente'
     });
   } catch (error: any) {
-    console.error('Error creando shipment:', error);
+    console.error('Error procesando shipment:', error);
     return NextResponse.json(
-      { error: error.message || 'Error al crear el envío' },
+      { error: error.message || 'Error al procesar el envío' },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 
 export async function GET(request: Request) {
@@ -9,12 +9,13 @@ export async function GET(request: Request) {
 
     if (!phone && !invoice) {
       return NextResponse.json(
-        { error: 'Debes proporcionar teléfono o número de factura' }, 
+        { error: 'Debes proporcionar teléfono o número de factura' },
         { status: 400 }
       );
     }
 
-    // Usamos DISTINCT y subconsulta para evitar duplicados
+    // ✅ MODIFICADO: Agregado ORDER BY sh.created_at DESC antes del LIMIT 1
+    // para asegurar que siempre se muestre el envío MÁS RECIENTE.
     let sql = `
       SELECT DISTINCT
         s.id as sale_id,
@@ -24,11 +25,11 @@ export async function GET(request: Request) {
         s.total_amount,
         s.status,
         s.created_at,
-        (SELECT sh.id FROM shipments sh WHERE sh.sale_id = s.id LIMIT 1) as shipment_id,
-        (SELECT sh.tracking_number FROM shipments sh WHERE sh.sale_id = s.id LIMIT 1) as tracking_number,
-        (SELECT cc.name FROM shipments sh LEFT JOIN courier_companies cc ON sh.courier_company_id = cc.id WHERE sh.sale_id = s.id LIMIT 1) as courier_name,
-        (SELECT cc.id FROM shipments sh LEFT JOIN courier_companies cc ON sh.courier_company_id = cc.id WHERE sh.sale_id = s.id LIMIT 1) as courier_company_id,
-        (SELECT cc.api_endpoint FROM shipments sh LEFT JOIN courier_companies cc ON sh.courier_company_id = cc.id WHERE sh.sale_id = s.id LIMIT 1) as api_endpoint
+        (SELECT sh.id FROM shipments sh WHERE sh.sale_id = s.id ORDER BY sh.created_at DESC LIMIT 1) as shipment_id,
+        (SELECT sh.tracking_number FROM shipments sh WHERE sh.sale_id = s.id ORDER BY sh.created_at DESC LIMIT 1) as tracking_number,
+        (SELECT cc.name FROM shipments sh LEFT JOIN courier_companies cc ON sh.courier_company_id = cc.id WHERE sh.sale_id = s.id ORDER BY sh.created_at DESC LIMIT 1) as courier_name,
+        (SELECT cc.id FROM shipments sh LEFT JOIN courier_companies cc ON sh.courier_company_id = cc.id WHERE sh.sale_id = s.id ORDER BY sh.created_at DESC LIMIT 1) as courier_company_id,
+        (SELECT cc.api_endpoint FROM shipments sh LEFT JOIN courier_companies cc ON sh.courier_company_id = cc.id WHERE sh.sale_id = s.id ORDER BY sh.created_at DESC LIMIT 1) as api_endpoint
       FROM sales s
       WHERE 1=1
     `;
