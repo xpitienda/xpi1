@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import AIGenerateButton from '@/components/AIGenerateButton';
 
 interface Product {
   id: string;
@@ -17,6 +18,13 @@ interface Product {
   sale_price?: number;
 }
 
+interface AdditionalImage {
+  id: number;
+  product_id: string;
+  image_url: string;
+  display_order: number;
+}
+
 export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +35,16 @@ export default function AdminDashboard() {
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const [showMainMenu, setShowMainMenu] = useState(true);
   const [showProductsMenu, setShowProductsMenu] = useState(true);
+  
+  // Estados para el modal de carrusel
+  const [showCarouselModal, setShowCarouselModal] = useState(false);
+  const [carouselProductId, setCarouselProductId] = useState<string | null>(null);
+  const [carouselProductImages, setCarouselProductImages] = useState<AdditionalImage[]>([]);
+  const [carouselUploading, setCarouselUploading] = useState(false);
+  const [currentProductName, setCurrentProductName] = useState('');
+  const [mainImageUrl, setMainImageUrl] = useState('');
+  const carouselFileInputRef = useRef<HTMLInputElement>(null);
+  
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -224,6 +242,95 @@ export default function AdminDashboard() {
     setImageError(prev => ({ ...prev, [productId]: true }));
   };
 
+  // ==========================================
+  // FUNCIONES PARA GESTIONAR CARRUSEL
+  // ==========================================
+  const handleManageCarousel = async (product: Product) => {
+    setCarouselProductId(product.id);
+    setCurrentProductName(product.name);
+    setMainImageUrl(product.image_url || '');
+    await loadCarouselImages(product.id);
+    setShowCarouselModal(true);
+  };
+
+  const loadCarouselImages = async (productId: string) => {
+    try {
+      const res = await fetch(`/api/admin/product-images?product_id=${productId}`, {
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCarouselProductImages(data.images);
+      }
+    } catch (err) {
+      console.error('Error cargando imágenes del carrusel:', err);
+    }
+  };
+
+  const handleCarouselUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !carouselProductId) return;
+
+    setCarouselUploading(true);
+    try {
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`La imagen ${file.name} supera los 5MB`);
+          continue;
+        }
+
+        const imgFormData = new FormData();
+        imgFormData.append('image', file);
+        const uploadRes = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: imgFormData,
+          headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+        });
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.url) {
+          const order = carouselProductImages.length;
+          await fetch('/api/admin/product-images', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD
+            },
+            body: JSON.stringify({
+              product_id: carouselProductId,
+              image_url: uploadData.url,
+              display_order: order
+            })
+          });
+        }
+      }
+
+      await loadCarouselImages(carouselProductId);
+      if (carouselFileInputRef.current) carouselFileInputRef.current.value = '';
+      alert('✅ Imágenes agregadas al carrusel correctamente');
+    } catch (error: any) {
+      alert('Error al subir imágenes: ' + error.message);
+    } finally {
+      setCarouselUploading(false);
+    }
+  };
+
+  const deleteCarouselImage = async (imageId: number) => {
+    if (!confirm('¿Estás seguro de eliminar esta imagen del carrusel?')) return;
+    try {
+      const res = await fetch(`/api/admin/product-images?id=${imageId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+      });
+      if (res.ok) {
+        await loadCarouselImages(carouselProductId!);
+        alert('✅ Imagen eliminada del carrusel');
+      }
+    } catch (error) {
+      alert('Error al eliminar la imagen');
+    }
+  };
+
   const cardStyle = { background: 'white', padding: '1rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' };
   const labelStyle = { fontSize: '0.875rem', color: '#6b7280' };
 
@@ -299,12 +406,7 @@ export default function AdminDashboard() {
               <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🧾 Factureros</button>
               <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>👥 Vendedores</button>
               <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📊 Ventas</button>
-              
-              {/* ✅ NUEVO BOTÓN: CALCULADORA DE VENTAS */}
-              <button onClick={() => router.push('/admin/calculator')} style={{ background: 'linear-gradient(135deg, #6B2D8B, #1B8A3B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(107, 45, 139, 0.3)' }}>
-                🧮 Calculadora de Ventas
-              </button>
-
+              <button onClick={() => router.push('/admin/calculator')} style={{ background: 'linear-gradient(135deg, #6B2D8B, #1B8A3B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(107, 45, 139, 0.3)' }}>🧮 Calculadora de Ventas</button>
               <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>⭐ Pegatinas</button>
               <button onClick={() => router.push('/admin/banners')} style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🖼️ Banners</button>
               <button onClick={() => router.push('/admin/advanced-banners')} style={{ background: 'linear-gradient(135deg, #10B981, #059669)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🖼️ Banners Visual</button>
@@ -402,6 +504,12 @@ export default function AdminDashboard() {
                             </p>
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                            <button 
+                              onClick={() => handleManageCarousel(product)} 
+                              style={{ flex: 1, background: '#059669', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
+                            >
+                              🖼️ Carrusel
+                            </button>
                             <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
                             <button onClick={() => handleDelete(product.id, product.name)} style={{ flex: 1, background: '#dc2626', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Eliminar</button>
                           </div>
@@ -424,6 +532,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* MODAL DE CREAR/EDITAR PRODUCTO */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }} onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setImagePreview(''); } }}>
           <div style={{ background: 'white', borderRadius: '1rem', maxWidth: '42rem', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -475,6 +584,221 @@ export default function AdminDashboard() {
                 <button type="button" onClick={() => { setShowModal(false); setImagePreview(''); }} style={{ flex: 1, padding: '0.75rem', background: '#9ca3af', color: 'white', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>Cancelar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE GESTIÓN DE CARRUSEL */}
+      {showCarouselModal && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            background: 'rgba(0,0,0,0.7)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: 9999, 
+            padding: '1rem' 
+          }} 
+          onClick={(e) => { 
+            if (e.target === e.currentTarget) { 
+              setShowCarouselModal(false); 
+              setCarouselProductId(null); 
+            } 
+          }}
+        >
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '1rem', 
+            maxWidth: '50rem', 
+            width: '100%', 
+            maxHeight: '90vh', 
+            overflowY: 'auto' 
+          }}>
+            <div style={{ 
+              padding: '1.5rem', 
+              borderBottom: '1px solid #e5e7eb', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center' 
+            }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#7e22ce' }}>
+                🖼️ Gestionar Carrusel - {currentProductName}
+              </h2>
+              <button 
+                onClick={() => { 
+                  setShowCarouselModal(false); 
+                  setCarouselProductId(null); 
+                }} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '1.5rem', 
+                  cursor: 'pointer', 
+                  color: '#6b7280' 
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ padding: '1.5rem' }}>
+              <div style={{ 
+                background: '#f0fdf4', 
+                padding: '1.5rem', 
+                borderRadius: '0.75rem', 
+                border: '2px solid #16a34a',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#166534', marginBottom: '0.75rem' }}>
+                  📤 Subir Imágenes al Carrusel
+                </h3>
+                <p style={{ color: '#15803d', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                  Estas imágenes aparecerán en el carrusel del producto. Puedes subir varias fotos extra.
+                </p>
+                
+                <input
+                  ref={carouselFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleCarouselUpload}
+                  disabled={carouselUploading}
+                  style={{ width: '100%', marginBottom: '1rem' }}
+                />
+                
+                {carouselUploading && (
+                  <p style={{ color: '#16a34a', fontWeight: 'bold' }}>⏳ Subiendo imágenes...</p>
+                )}
+                
+                <div style={{ 
+                  background: 'white', 
+                  padding: '1rem', 
+                  borderRadius: '0.5rem',
+                  border: '1px solid #bbf7d0'
+                }}>
+                  <p style={{ fontSize: '0.875rem', color: '#166534', margin: 0 }}>
+                    💡 <strong>Consejo:</strong> También puedes usar el botón "✨ Generar con IA" abajo para crear automáticamente vistas del producto.
+                  </p>
+                </div>
+              </div>
+
+              {mainImageUrl && carouselProductId && (
+                <AIGenerateButton
+                  productId={carouselProductId}
+                  imageUrl={mainImageUrl}
+                  productName={currentProductName}
+                  onSuccess={() => { loadCarouselImages(carouselProductId!); }}
+                />
+              )}
+
+              {carouselProductImages.length > 0 ? (
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#7e22ce', marginBottom: '1rem' }}>
+                    📷 Imágenes del Carrusel ({carouselProductImages.length})
+                  </h3>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+                    gap: '1rem' 
+                  }}>
+                    {carouselProductImages.map((img, idx) => (
+                      <div key={img.id} style={{ 
+                        position: 'relative', 
+                        borderRadius: '0.75rem', 
+                        overflow: 'hidden', 
+                        border: '2px solid #e5e7eb',
+                        background: 'white'
+                      }}>
+                        <img 
+                          src={img.image_url} 
+                          alt={`Carrusel ${idx + 1}`} 
+                          style={{ width: '100%', height: '150px', objectFit: 'cover' }} 
+                        />
+                        <button
+                          onClick={() => deleteCarouselImage(img.id)}
+                          style={{
+                            position: 'absolute', 
+                            top: '5px', 
+                            right: '5px', 
+                            background: 'rgba(239, 68, 68, 0.95)', 
+                            color: 'white',
+                            border: 'none', 
+                            borderRadius: '50%', 
+                            width: '28px', 
+                            height: '28px', 
+                            cursor: 'pointer', 
+                            fontSize: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          ×
+                        </button>
+                        <div style={{ 
+                          position: 'absolute', 
+                          bottom: '0', 
+                          left: '0', 
+                          right: '0', 
+                          background: 'rgba(147, 51, 234, 0.9)', 
+                          color: 'white', 
+                          fontSize: '0.875rem', 
+                          fontWeight: 'bold',
+                          textAlign: 'center', 
+                          padding: '0.5rem' 
+                        }}>
+                          #{idx + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ 
+                  background: '#fef3c7', 
+                  padding: '2rem', 
+                  borderRadius: '0.75rem', 
+                  textAlign: 'center',
+                  border: '2px solid #fbbf24'
+                }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📷</div>
+                  <p style={{ color: '#92400e', fontWeight: 'bold', margin: 0 }}>
+                    Este producto aún no tiene imágenes en el carrusel
+                  </p>
+                  <p style={{ color: '#92400e', margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
+                    Sube imágenes arriba o usa la IA para generarlas automáticamente
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ 
+              padding: '1.5rem', 
+              borderTop: '1px solid #e5e7eb', 
+              display: 'flex', 
+              gap: '1rem' 
+            }}>
+              <button 
+                onClick={() => { 
+                  setShowCarouselModal(false); 
+                  setCarouselProductId(null); 
+                }} 
+                style={{ 
+                  flex: 1, 
+                  padding: '0.75rem', 
+                  background: '#9ca3af', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '0.5rem', 
+                  fontWeight: 'bold', 
+                  cursor: 'pointer' 
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
