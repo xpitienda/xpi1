@@ -36,6 +36,10 @@ export default function AdminDashboard() {
   const [showMainMenu, setShowMainMenu] = useState(true);
   const [showProductsMenu, setShowProductsMenu] = useState(true);
   
+  // Estados para filtrar por categoría
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+  const [groupByCategory, setGroupByCategory] = useState<boolean>(true);
+  
   // Estados para el modal de carrusel
   const [showCarouselModal, setShowCarouselModal] = useState(false);
   const [carouselProductId, setCarouselProductId] = useState<string | null>(null);
@@ -87,7 +91,8 @@ export default function AdminDashboard() {
         headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
       });
       const data = await res.json();
-      setCategories(Array.isArray(data) ? data.map((c: any) => c.name) : []);
+      const categoryNames = Array.isArray(data) ? data.map((c: any) => c.name) : [];
+      setCategories(['Todas', ...categoryNames]);
     } catch (err) {
       console.error('Error cargando categorías:', err);
     }
@@ -331,6 +336,21 @@ export default function AdminDashboard() {
     }
   };
 
+  // Filtrar productos por categoría seleccionada
+  const filteredProducts = selectedCategory === 'Todas' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
+
+  // Agrupar productos por categoría
+  const productsByCategory = filteredProducts.reduce((acc, product) => {
+    const category = product.category || 'Sin Categoría';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(product);
+    return acc;
+  }, {} as Record<string, Product[]>);
+
   const cardStyle = { background: 'white', padding: '1rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' };
   const labelStyle = { fontSize: '0.875rem', color: '#6b7280' };
 
@@ -338,8 +358,8 @@ export default function AdminDashboard() {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Cargando...</div>;
   }
 
-  const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= 5).length;
-  const outOfStockCount = products.filter(p => p.stock === 0).length;
+  const lowStockCount = filteredProducts.filter(p => p.stock > 0 && p.stock <= 5).length;
+  const outOfStockCount = filteredProducts.filter(p => p.stock === 0).length;
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #f0fdf4)', padding: '1.5rem' }}>
@@ -367,7 +387,7 @@ export default function AdminDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           <div style={cardStyle}>
             <div style={labelStyle}>Total Productos</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#7e22ce' }}>{products.length}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#7e22ce' }}>{filteredProducts.length}</div>
           </div>
           <div style={{ ...cardStyle, border: lowStockCount > 0 ? '2px solid #f59e0b' : 'none' }}>
             <div style={labelStyle}>⚠️ Stock Bajo (≤ 5)</div>
@@ -380,7 +400,7 @@ export default function AdminDashboard() {
           <div style={cardStyle}>
             <div style={labelStyle}>Valor Inventario</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1d4ed8' }}>
-              ${products.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}
+              ${filteredProducts.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}
             </div>
           </div>
         </div>
@@ -403,9 +423,9 @@ export default function AdminDashboard() {
               top: '1rem'
             }}>
               <button onClick={() => router.push('/admin/categories')} style={{ background: 'linear-gradient(135deg, #9333ea, #16a34a)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📂 Categorías</button>
-              <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🧾 Factureros</button>
+              <button onClick={() => router.push('/admin/invoices')} style={{ background: 'linear-gradient(135deg, #4B0082, #2E7D32)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}> Factureros</button>
               <button onClick={() => router.push('/admin/sellers')} style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>👥 Vendedores</button>
-              <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>📊 Ventas</button>
+              <button onClick={() => router.push('/admin/sales')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}> Ventas</button>
               <button onClick={() => router.push('/admin/calculator')} style={{ background: 'linear-gradient(135deg, #6B2D8B, #1B8A3B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(107, 45, 139, 0.3)' }}>🧮 Calculadora de Ventas</button>
               <button onClick={() => router.push('/admin/stickers')} style={{ background: 'linear-gradient(135deg, #FF006E, #FFBE0B)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>⭐ Pegatinas</button>
               <button onClick={() => router.push('/admin/banners')} style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>🖼️ Banners</button>
@@ -456,7 +476,7 @@ export default function AdminDashboard() {
                     <button onClick={() => router.push('/admin/backups')} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>💾 Backups</button>
                     <button onClick={() => router.push('/admin/backups-download')} style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📥 Backup ZIP</button>
                     <button onClick={() => router.push('/admin/backup-schedule')} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>⏰ Programar</button>
-                    <button onClick={() => router.push('/admin/backups-history')} style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>📜 Historial</button>
+                    <button onClick={() => router.push('/admin/backups-history')} style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}> Historial</button>
                     <button onClick={() => router.push('/admin/delete-by-category')} style={{ background: 'linear-gradient(135deg, #dc2626, #991b1b)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>🗑️ Borrar por Categoría</button>
                     <button onClick={() => router.push('/admin/process-images')} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>💻 Procesador Local</button>
                     <button onClick={() => router.push('/admin/process-images-cloud')} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}>☁️ Procesador Cloud</button>
@@ -464,70 +484,208 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
-                {/* GRID DE PRODUCTOS */}
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-                  {products.map((product) => {
-                    const hasImageError = imageError[product.id];
-                    const showPlaceholder = !product.image_url || hasImageError;
-                    return (
-                      <div key={product.id} style={{ background: 'white', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '2px solid #16a34a', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ height: '192px', position: 'relative', background: showPlaceholder ? '#e5e7eb' : '#f3f4f6' }}>
-                          {showPlaceholder ? (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>📷</div>
-                          ) : (
-                            <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
-                          )}
+                {/* CONTENIDO DE PRODUCTOS CON FILTRO Y AGRUPACIÓN */}
+                <div style={{ flex: 1 }}>
+                  
+                  {/* FILTRO DE CATEGORÍAS */}
+                  <div style={{ 
+                    background: 'white', 
+                    padding: '1rem', 
+                    borderRadius: '0.75rem', 
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    gap: '1rem',
+                    alignItems: 'center',
+                    flexWrap: 'wrap'
+                  }}>
+                    <label style={{ fontWeight: 'bold', color: '#374151', fontSize: '0.875rem' }}>
+                       Filtrar por Categoría:
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        borderRadius: '0.5rem',
+                        border: '2px solid #9333ea',
+                        background: 'white',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        minWidth: '200px'
+                      }}
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600', marginLeft: 'auto' }}>
+                      <input
+                        type="checkbox"
+                        checked={groupByCategory}
+                        onChange={(e) => setGroupByCategory(e.target.checked)}
+                        style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                      />
+                      <span>Agrupar por Categoría</span>
+                    </label>
+                  </div>
 
-                          {product.stock === 0 && product.is_active === 1 && (
-                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                              🚫 SIN STOCK
-                            </div>
-                          )}
-                          {product.stock > 0 && product.stock <= 5 && product.is_active === 1 && (
-                            <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-                              ⚠️ Stock: {product.stock}
-                            </div>
-                          )}
-                          {!product.is_active && (
-                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                              INACTIVO
-                            </div>
-                          )}
+                  {/* PRODUCTOS AGRUPADOS POR CATEGORÍA */}
+                  {groupByCategory ? (
+                    Object.keys(productsByCategory).sort().map((category) => (
+                      <div key={category} style={{ marginBottom: '2.5rem' }}>
+                        <div style={{
+                          background: 'linear-gradient(135deg, #9333ea 0%, #16a34a 100%)',
+                          color: 'white',
+                          padding: '0.75rem 1.25rem',
+                          borderRadius: '0.75rem',
+                          marginBottom: '1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          boxShadow: '0 4px 6px rgba(147, 51, 234, 0.3)'
+                        }}>
+                          <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
+                            📦 {category}
+                          </h3>
+                          <span style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.875rem',
+                            fontWeight: 'bold'
+                          }}>
+                            {productsByCategory[category].length} producto{productsByCategory[category].length !== 1 ? 's' : ''}
+                          </span>
                         </div>
-                        <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                          <div>
-                            <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{product.name}</h3>
-                            <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.5rem' }}>{product.category}</p>
-                            <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '1.3rem' }}>${product.price.toLocaleString()}</p>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : (product.stock <= 5 ? '#d97706' : '#16a34a') }}>
-                              Stock: {product.stock}
-                            </p>
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                            <button 
-                              onClick={() => handleManageCarousel(product)} 
-                              style={{ flex: 1, background: '#059669', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
-                            >
-                              🖼️ Carrusel
-                            </button>
-                            <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
-                            <button onClick={() => handleDelete(product.id, product.name)} style={{ flex: 1, background: '#dc2626', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Eliminar</button>
-                          </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                          {productsByCategory[category].map((product) => {
+                            const hasImageError = imageError[product.id];
+                            const showPlaceholder = !product.image_url || hasImageError;
+                            return (
+                              <div key={product.id} style={{ background: 'white', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '2px solid #16a34a', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ height: '192px', position: 'relative', background: showPlaceholder ? '#e5e7eb' : '#f3f4f6' }}>
+                                  {showPlaceholder ? (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>📷</div>
+                                  ) : (
+                                    <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
+                                  )}
+
+                                  {product.stock === 0 && product.is_active === 1 && (
+                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                       SIN STOCK
+                                    </div>
+                                  )}
+                                  {product.stock > 0 && product.stock <= 5 && product.is_active === 1 && (
+                                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                                      ⚠️ Stock: {product.stock}
+                                    </div>
+                                  )}
+                                  {!product.is_active && (
+                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                      INACTIVO
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                  <div>
+                                    <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{product.name}</h3>
+                                    <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.5rem' }}>{product.category}</p>
+                                    <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '1.3rem' }}>${product.price.toLocaleString()}</p>
+                                    <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : (product.stock <= 5 ? '#d97706' : '#16a34a') }}>
+                                      Stock: {product.stock}
+                                    </p>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                                    <button 
+                                      onClick={() => handleManageCarousel(product)} 
+                                      style={{ flex: 1, background: '#059669', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
+                                    >
+                                      🖼️ Carrusel
+                                    </button>
+                                    <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
+                                    <button onClick={() => handleDelete(product.id, product.name)} style={{ flex: 1, background: '#dc2626', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Eliminar</button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    /* PRODUCTOS SIN AGRUPAR (VISTA PLANA) */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                      {filteredProducts.map((product) => {
+                        const hasImageError = imageError[product.id];
+                        const showPlaceholder = !product.image_url || hasImageError;
+                        return (
+                          <div key={product.id} style={{ background: 'white', borderRadius: '0.75rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '2px solid #16a34a', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ height: '192px', position: 'relative', background: showPlaceholder ? '#e5e7eb' : '#f3f4f6' }}>
+                              {showPlaceholder ? (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>📷</div>
+                              ) : (
+                                <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => handleImageError(product.id)} />
+                              )}
+
+                              {product.stock === 0 && product.is_active === 1 && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(220, 38, 38, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                  🚫 SIN STOCK
+                                </div>
+                              )}
+                              {product.stock > 0 && product.stock <= 5 && product.is_active === 1 && (
+                                <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                                  ⚠️ Stock: {product.stock}
+                                </div>
+                              )}
+                              {!product.is_active && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                  INACTIVO
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                              <div>
+                                <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>{product.name}</h3>
+                                <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.5rem' }}>{product.category}</p>
+                                <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '1.3rem' }}>${product.price.toLocaleString()}</p>
+                                <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: product.stock === 0 ? '#dc2626' : (product.stock <= 5 ? '#d97706' : '#16a34a') }}>
+                                  Stock: {product.stock}
+                                </p>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                                <button 
+                                  onClick={() => handleManageCarousel(product)} 
+                                  style={{ flex: 1, background: '#059669', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
+                                >
+                                  ️ Carrusel
+                                </button>
+                                <button onClick={() => handleEdit(product)} style={{ flex: 1, background: '#9333ea', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Editar</button>
+                                <button onClick={() => handleDelete(product.id, product.name)} style={{ flex: 1, background: '#dc2626', color: 'white', padding: '0.6rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Eliminar</button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {filteredProducts.length === 0 && (
+                    <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
+                      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
+                      <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>
+                        No hay productos {selectedCategory !== 'Todas' ? `en "${selectedCategory}"` : ''}
+                      </h3>
+                      <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-
-            {products.length === 0 && (
-              <div style={{ background: 'white', padding: '3rem', textAlign: 'center', borderRadius: '1rem', marginTop: '2rem' }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#374151' }}>No hay productos</h3>
-                <button onClick={handleAddNew} style={{ marginTop: '1rem', background: '#16a34a', color: 'white', padding: '0.75rem 2rem', borderRadius: '0.5rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Agregar Primer Producto</button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -562,7 +720,7 @@ export default function AdminDashboard() {
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#374151', marginBottom: '0.25rem' }}>Categoría</label>
                 <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', background: 'white' }}>
-                  {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                  {categories.filter(c => c !== 'Todas').map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
               <div>
@@ -624,7 +782,7 @@ export default function AdminDashboard() {
               alignItems: 'center' 
             }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#7e22ce' }}>
-                🖼️ Gestionar Carrusel - {currentProductName}
+                ️ Gestionar Carrusel - {currentProductName}
               </h2>
               <button 
                 onClick={() => { 
