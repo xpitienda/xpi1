@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -8,6 +8,7 @@ interface CategoryNode {
   id: string;
   name: string;
   parent_id: string | null;
+  image_url?: string; // ✅ Agregado para soportar la imagen
   children: CategoryNode[];
 }
 
@@ -20,27 +21,25 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category') || 'Todas';
   const currentSearch = searchParams.get('q') || '';
-  
+
   const [categoryTree, setCategoryTree] = useState<CategoryNode[]>(() => {
     return initialCategories && initialCategories.length > 0 ? initialCategories : [];
   });
-  
+
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [loading, setLoading] = useState(() => !initialCategories || initialCategories.length === 0);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null); // ✅ NUEVO: Ref para el dropdown flotante
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  // ✅ MODIFICADO: Verificar tanto el contenedor como el dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const isOutsideContainer = containerRef.current && !containerRef.current.contains(event.target as Node);
       const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target as Node);
-      
-      // Solo cerrar si el clic fue fuera de AMBOS
+
       if (isOutsideContainer && isOutsideDropdown) {
         setActiveDropdown(null);
         setDropdownPosition(null);
@@ -86,7 +85,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
   const handleDropdownToggle = useCallback((e: React.MouseEvent | React.TouchEvent, catId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const button = buttonRefs.current[catId];
     if (button) {
       const rect = button.getBoundingClientRect();
@@ -95,7 +94,7 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         left: rect.left
       });
     }
-    
+
     setActiveDropdown(prev => prev === catId ? null : catId);
   }, []);
 
@@ -158,7 +157,17 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                     borderRadius: '12px', cursor: 'pointer', boxShadow: isSelected ? `0 6px 0 ${colorScheme.shadow}` : '0 4px 0 rgba(0,0,0,0.3)',
                     width: isMobile ? '65px' : '90px', height: isMobile ? '65px' : '90px', overflow: 'hidden', position: 'relative',
                   }}>
-                    <CategoryIcon categoryName={cat.name} size={isMobile ? 65 : 90} showEmoji={true} fill={true} />
+                    {/* ✅ AQUÍ ESTÁ EL CAMBIO: Si hay imagen, la muestra. Si no, usa el ícono por defecto */}
+                    {cat.image_url ? (
+                      <img 
+                        src={cat.image_url} 
+                        alt={cat.name} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
+                    ) : (
+                      <CategoryIcon categoryName={cat.name} size={isMobile ? 65 : 90} showEmoji={true} fill={true} />
+                    )}
+                    
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)', padding: '10px 4px 5px 4px', zIndex: 10, pointerEvents: 'none' }}>
                       <div style={{ color: 'white', fontSize: isMobile ? '0.65rem' : '0.9rem', fontWeight: '900', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncatedName}</div>
                     </div>
@@ -189,15 +198,15 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
         </div>
       </div>
 
-      {/* ✅ DROPDOWN FLOTANTE CON SU PROPIO REF */}
+      {/* DROPDOWN FLOTANTE */}
       {activeDropdown && dropdownPosition && (() => {
         const activeCat = categoryTree.find(c => c.id === activeDropdown);
         if (!activeCat || !activeCat.children || activeCat.children.length === 0) return null;
         const colorScheme = modernColors[categoryTree.indexOf(activeCat) % modernColors.length];
-        
+
         return (
-          <div 
-            ref={dropdownRef} // ✅ NUEVO: Ref para que handleClickOutside no lo cierre prematuramente
+          <div
+            ref={dropdownRef}
             style={{
               position: 'fixed',
               top: `${dropdownPosition.top}px`,
@@ -214,12 +223,12 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
             {activeCat.children.map((child) => {
               const isChildSelected = currentCategory === child.name;
               return (
-                <button 
-                  key={child.id} 
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    handleCategoryChange(child.name); 
-                  }} 
+                <button
+                  key={child.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCategoryChange(child.name);
+                  }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.75rem 1.25rem',
                     background: isChildSelected ? `${colorScheme.bg}20` : 'transparent', color: '#3D1A78',
@@ -227,7 +236,12 @@ export default function CategoryFilter({ initialCategories }: CategoryFilterProp
                     fontWeight: isChildSelected ? 'bold' : '500', cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
+                  {/* ✅ También en el dropdown mostramos la imagen si existe */}
+                  {child.image_url ? (
+                    <img src={child.image_url} alt={child.name} style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover' }} />
+                  ) : (
+                    <CategoryIcon categoryName={child.name} size={24} showEmoji={true} />
+                  )}
                   <span style={{ flex: 1 }}>{child.name}</span>
                   {isChildSelected && <span style={{ color: colorScheme.bg }}>●</span>}
                 </button>

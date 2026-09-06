@@ -7,6 +7,7 @@ interface Category {
   id: string;
   name: string;
   parent_id: string | null;
+  image_url?: string;
 }
 
 export default function CategoriesAdmin() {
@@ -14,11 +15,13 @@ export default function CategoriesAdmin() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  
-  // Nuevo estado para subcategorías masivas
+
   const [subcategoriesInput, setSubcategoriesInput] = useState('');
+  const [formData, setFormData] = useState({ name: '', parent_id: '', image_url: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploading, setUploading] = useState(false);
   
-  const [formData, setFormData] = useState({ name: '', parent_id: '' });
   const router = useRouter();
 
   const fetchCategories = async () => {
@@ -59,56 +62,91 @@ export default function CategoriesAdmin() {
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({ name: category.name, parent_id: category.parent_id || '' });
-    setSubcategoriesInput(''); // Limpiar input de subcategorías al editar
+    setFormData({ name: category.name, parent_id: category.parent_id || '', image_url: category.image_url || '' });
+    setImagePreview(category.image_url || '');
+    setImageFile(null);
+    setSubcategoriesInput('');
     setShowModal(true);
   };
 
   const handleAddNew = () => {
     setEditingCategory(null);
-    setFormData({ name: '', parent_id: '' });
+    setFormData({ name: '', parent_id: '', image_url: '' });
+    setImagePreview('');
+    setImageFile(null);
     setSubcategoriesInput('');
     setShowModal(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) { alert('El nombre es obligatorio'); return; }
-    
+
     try {
-      // 1. Crear/Actualizar la categoría principal
+      let finalImageUrl = formData.image_url;
+
+      // 1. Subir imagen si hay una nueva seleccionada
+      if (imageFile) {
+        setUploading(true);
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', imageFile);
+        
+        const uploadRes = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: uploadFormData,
+          headers: { 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD }
+        });
+        const uploadData = await uploadRes.json();
+        
+        if (uploadRes.ok && uploadData.url) {
+          finalImageUrl = uploadData.url;
+        } else {
+          alert('Error al subir imagen: ' + (uploadData.error || 'Error desconocido'));
+          setUploading(false);
+          return;
+        }
+        setUploading(false);
+      }
+
+      // 2. Crear/Actualizar la categoría principal
       const url = '/api/admin/categories';
       const method = editingCategory ? 'PUT' : 'POST';
       const bodyData = {
         ...(editingCategory && { id: editingCategory.id }),
         name: formData.name.trim(),
         parent_id: formData.parent_id || null,
+        image_url: finalImageUrl || null,
       };
-      
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.NEXT_PUBLIC_ADMIN_PASSWORD },
         body: JSON.stringify(bodyData),
       });
-      
+
       const responseData = await res.json();
-      
+
       if (!res.ok) {
         alert('Error: ' + (responseData.error || 'Error al guardar categoría principal'));
         return;
       }
 
-      // Obtener el ID de la categoría recién creada o editada
       const mainCategoryId = editingCategory ? editingCategory.id : responseData.id;
-
-      // Solo permitimos añadir subcategorías a categorías principales (sin padre)
       const canAddSubcategories = !formData.parent_id;
 
-      // 2. Procesar subcategorías masivas si existen
+      // 3. Procesar subcategorías masivas si existen
       let createdSubs = 0;
       if (subcategoriesInput.trim() && canAddSubcategories) {
         const subNames = subcategoriesInput
-          .split(/[\n,]/) // Separar por saltos de línea o comas
+          .split(/[\n,]/)
           .map(s => s.trim())
           .filter(s => s.length > 0);
 
@@ -135,7 +173,7 @@ export default function CategoriesAdmin() {
 
       setShowModal(false);
       fetchCategories();
-      
+
     } catch (err: any) {
       alert('Error de conexión: ' + err.message);
     }
@@ -176,9 +214,14 @@ export default function CategoriesAdmin() {
             return (
               <div key={category.id} style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '1rem', boxShadow: '0 10px 25px -5px rgba(61, 26, 120, 0.3), 0 0 0 2px #006B3C', overflow: 'hidden', backdropFilter: 'blur(10px)' }}>
                 <div style={{ padding: '1rem', background: 'linear-gradient(135deg, #3D1A78 0%, #5B2D9E 100%)', borderBottom: '3px solid #006B3C', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{category.name}</h3>
-                    <p style={{ fontSize: '0.875rem', color: '#d8b4fe', margin: '0.25rem 0 0 0' }}>Categoría principal</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {category.image_url && (
+                      <img src={category.image_url} alt={category.name} style={{ width: '50px', height: '50px', borderRadius: '0.5rem', objectFit: 'cover', border: '2px solid white' }} />
+                    )}
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{category.name}</h3>
+                      <p style={{ fontSize: '0.875rem', color: '#d8b4fe', margin: '0.25rem 0 0 0' }}>Categoría principal</p>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button onClick={() => handleEdit(category)} style={{ background: '#9333ea', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', border: '2px solid #006B3C', cursor: 'pointer', transition: 'all 0.3s ease' }}>Editar</button>
@@ -191,7 +234,12 @@ export default function CategoriesAdmin() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       {subcategories.map((subcat) => (
                         <div key={subcat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'white', borderRadius: '0.5rem', border: '1px solid #006B3C', transition: 'all 0.3s ease' }}>
-                          <span style={{ color: '#3D1A78', fontWeight: '500' }}>{subcat.name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {subcat.image_url && (
+                              <img src={subcat.image_url} alt={subcat.name} style={{ width: '40px', height: '40px', borderRadius: '0.375rem', objectFit: 'cover', border: '1px solid #006B3C' }} />
+                            )}
+                            <span style={{ color: '#3D1A78', fontWeight: '500' }}>{subcat.name}</span>
+                          </div>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button onClick={() => handleEdit(subcat)} style={{ background: '#9333ea', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.875rem', fontWeight: 'bold', border: '1px solid #006B3C', cursor: 'pointer' }}>Editar</button>
                             <button onClick={() => handleDelete(subcat.id, subcat.name)} style={{ background: '#dc2626', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.875rem', fontWeight: 'bold', border: '1px solid #006B3C', cursor: 'pointer' }}>Eliminar</button>
@@ -224,20 +272,36 @@ export default function CategoriesAdmin() {
             </div>
             <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                
+                {/* ✅ NUEVO: Campo de Imagen */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>Imagen de la Categoría (Opcional)</label>
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Preview" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '0.5rem', marginBottom: '0.5rem', border: '2px solid #006B3C' }} />
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageChange} 
+                    disabled={uploading}
+                    style={{ width: '100%', padding: '0.5rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '0.875rem' }} 
+                  />
+                  {uploading && <p style={{ color: '#9333ea', fontSize: '0.875rem', marginTop: '0.25rem' }}>Subiendo imagen...</p>}
+                </div>
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>Nombre *</label>
                   <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }} placeholder="Ej: Calzado" required />
                 </div>
-                
-                {/* CAMPO PARA SUBCATEGORÍAS MASIVAS (solo en categorías principales) */}
+
                 {!formData.parent_id && (
                   <div>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: '#3D1A78', marginBottom: '0.5rem' }}>{editingCategory ? 'Añadir subcategorías (Opcional)' : 'Subcategorías (Opcional)'}</label>
-                    <textarea 
-                      value={subcategoriesInput} 
-                      onChange={(e) => setSubcategoriesInput(e.target.value)} 
-                      style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none', minHeight: '80px', fontFamily: 'inherit' }} 
-                      placeholder="Escribe cada subcategoría en una nueva línea o sepáralas por comas&#10;Ej: Tennis, Zapatillas, Zapatos Dama" 
+                    <textarea
+                      value={subcategoriesInput}
+                      onChange={(e) => setSubcategoriesInput(e.target.value)}
+                      style={{ width: '100%', padding: '0.75rem', border: '2px solid #006B3C', borderRadius: '0.5rem', fontSize: '1rem', boxSizing: 'border-box', outline: 'none', minHeight: '80px', fontFamily: 'inherit' }}
+                      placeholder="Escribe cada subcategoría en una nueva línea o sepáralas por comas&#10;Ej: Tennis, Zapatillas, Zapatos Dama"
                     />
                     <p style={{ fontSize: '0.75rem', color: '#006B3C', marginTop: '0.25rem' }}>Estas se crearán automáticamente como hijas de "{formData.name || 'la categoría'}"</p>
                   </div>
@@ -253,7 +317,7 @@ export default function CategoriesAdmin() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '2px solid #006B3C' }}>
-                <button type="submit" style={{ flex: 1, background: 'linear-gradient(135deg, #3D1A78 0%, #5B2D9E 100%)', color: 'white', padding: '1rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '1.125rem', border: '2px solid #006B3C', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(61, 26, 120, 0.4)' }}>{editingCategory ? 'Actualizar' : 'Crear Categoría'}</button>
+                <button type="submit" disabled={uploading} style={{ flex: 1, background: 'linear-gradient(135deg, #3D1A78 0%, #5B2D9E 100%)', color: 'white', padding: '1rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '1.125rem', border: '2px solid #006B3C', cursor: uploading ? 'not-allowed' : 'pointer', boxShadow: '0 10px 15px -3px rgba(61, 26, 120, 0.4)', opacity: uploading ? 0.7 : 1 }}>{editingCategory ? 'Actualizar' : 'Crear Categoría'}</button>
                 <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, background: '#6b7280', color: 'white', padding: '1rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '1.125rem', border: '2px solid #006B3C', cursor: 'pointer' }}>Cancelar</button>
               </div>
             </form>

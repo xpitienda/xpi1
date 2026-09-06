@@ -1,19 +1,24 @@
 import { NextResponse } from 'next/server';
 import { turso } from '@/lib/turso';
 
-// Asegura que la tabla exista antes de operar
 async function ensureTable() {
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS categories (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       parent_id TEXT,
+      image_url TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // Intentar añadir la columna si la tabla ya existía sin ella
+  try {
+    await turso.execute(`ALTER TABLE categories ADD COLUMN image_url TEXT`);
+  } catch (e) {
+    // Ignorar si la columna ya existe
+  }
 }
 
-// Genera un id de texto único para la categoría
 function generateId() {
   return 'cat_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
 }
@@ -35,13 +40,12 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await ensureTable();
-    const { name, parent_id } = await request.json();
+    const { name, parent_id, image_url } = await request.json();
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 });
     }
 
-    // Validar que el padre exista si se envía uno
     if (parent_id) {
       const parent = await turso.execute({
         sql: 'SELECT id FROM categories WHERE id = ?',
@@ -55,11 +59,11 @@ export async function POST(request: Request) {
     const id = generateId();
 
     await turso.execute({
-      sql: 'INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?)',
-      args: [id, name.trim(), parent_id || null],
+      sql: 'INSERT INTO categories (id, name, parent_id, image_url) VALUES (?, ?, ?, ?)',
+      args: [id, name.trim(), parent_id || null, image_url || null],
     });
 
-    return NextResponse.json({ id, name: name.trim(), parent_id: parent_id || null });
+    return NextResponse.json({ id, name: name.trim(), parent_id: parent_id || null, image_url: image_url || null });
   } catch (error) {
     console.error('[v0] Error creando categoría:', error);
     return NextResponse.json(
@@ -72,7 +76,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     await ensureTable();
-    const { id, name, parent_id } = await request.json();
+    const { id, name, parent_id, image_url } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
@@ -80,17 +84,16 @@ export async function PUT(request: Request) {
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 });
     }
-    // Evitar que una categoría sea su propio padre
     if (parent_id && parent_id === id) {
       return NextResponse.json({ error: 'Una categoría no puede ser su propio padre' }, { status: 400 });
     }
 
     await turso.execute({
-      sql: 'UPDATE categories SET name = ?, parent_id = ? WHERE id = ?',
-      args: [name.trim(), parent_id || null, id],
+      sql: 'UPDATE categories SET name = ?, parent_id = ?, image_url = ? WHERE id = ?',
+      args: [name.trim(), parent_id || null, image_url || null, id],
     });
 
-    return NextResponse.json({ id, name: name.trim(), parent_id: parent_id || null });
+    return NextResponse.json({ id, name: name.trim(), parent_id: parent_id || null, image_url: image_url || null });
   } catch (error) {
     console.error('[v0] Error actualizando categoría:', error);
     return NextResponse.json(
@@ -110,7 +113,6 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
     }
 
-    // Borrado en cascada manual (las FK pueden no estar activas en libsql)
     await turso.execute({
       sql: 'DELETE FROM categories WHERE parent_id = ?',
       args: [id],
