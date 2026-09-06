@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // ✅ CORREGIDO: Usar comillas simples '' en lugar de dobles ""
+    // ✅ CONSULTAR TODAS LAS TABLAS QUE USAN IMÁGENES
     const catalogResult = await turso.execute({
       sql: "SELECT image_url FROM catalog WHERE image_url IS NOT NULL AND image_url != ''"
     });
@@ -34,8 +34,13 @@ export async function GET(request: NextRequest) {
       sql: "SELECT image_url FROM product_images WHERE image_url IS NOT NULL AND image_url != ''"
     });
 
+    // ✅ NUEVO: Consultar imágenes de categorías
+    const categoriesResult = await turso.execute({
+      sql: "SELECT image_url FROM categories WHERE image_url IS NOT NULL AND image_url != ''"
+    });
+
     const dbKeys = new Set<string>();
-    
+
     const extractKey = (url: string) => {
       try {
         const parsed = new URL(url);
@@ -46,10 +51,12 @@ export async function GET(request: NextRequest) {
       }
     };
 
+    // ✅ Extraer claves de TODAS las tablas
     catalogResult.rows.forEach(row => extractKey(row.image_url as string));
     productImagesResult.rows.forEach(row => extractKey(row.image_url as string));
+    categoriesResult.rows.forEach(row => extractKey(row.image_url as string)); // ✅ NUEVO
 
-    console.log(` Imágenes en BD: ${dbKeys.size}`);
+    console.log(`📊 Imágenes en BD: ${dbKeys.size}`);
 
     const r2Keys: string[] = [];
     let continuationToken: string | undefined;
