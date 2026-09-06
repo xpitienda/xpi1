@@ -94,7 +94,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               fill
               className="object-cover"
               style={{ objectFit: 'cover' }}
-              unoptimized={isR2Image} // ✅ Desactivar optimización para R2
+              unoptimized={isR2Image}
             />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '3rem' }}>
@@ -209,12 +209,13 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
               }}
             >
-              {added ? '✅ Agregado' : inCart ? ' En carrito' : ' Agregar al carrito'}
+              {added ? '✅ Agregado' : inCart ? ' En carrito' : '🛒 Agregar al carrito'}
             </button>
           </div>
         </div>
       </div>
 
+      {/* MODAL DE DETALLES DEL PRODUCTO */}
       {showModal && (
         <div
           style={{
@@ -272,10 +273,9 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               </button>
             </div>
 
-            <div 
+            <div
               style={{ position: 'relative', width: '100%', height: '400px', background: '#f9fafb', cursor: 'pointer' }}
               onClick={() => {
-                console.log(' Click en imagen - Abriendo carrusel');
                 setIsCarouselOpen(true);
               }}
             >
@@ -285,15 +285,15 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                   alt={product.name}
                   fill
                   style={{ objectFit: 'contain' }}
-                  unoptimized={isR2Image} // ✅ Desactivar optimización para R2
+                  unoptimized={isR2Image}
                 />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem' }}>
-                  
+                  📦
                 </div>
               )}
-              
-              <div 
+
+              <div
                 style={{
                   position: 'absolute',
                   inset: 0,
@@ -392,7 +392,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
         </div>
       )}
 
-      {/* CARRUSEL 3D CON MINIATURAS */}
+      {/* CARRUSEL 3D CON MINIATURAS (Se abre al hacer clic en la imagen del modal) */}
       {isCarouselOpen && (
         <ProductCarouselWithThumbnails
           images={product.additionalImages || []}
@@ -400,17 +400,14 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           price={product.price}
           description={product.description || ''}
           onClose={() => {
-            console.log(' Cerrando carrusel');
             setIsCarouselOpen(false);
           }}
           onAddToCart={(selectedImage) => {
-            console.log('🛒 Agregando al carrito', selectedImage ? `con imagen ${selectedImage}` : '');
-            
             const productToAdd = {
               ...product,
               image: selectedImage || product.image_url
             };
-            
+
             addToCart(productToAdd);
             setIsCartOpen(true);
             setIsCarouselOpen(false);

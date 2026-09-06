@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar';
 import { turso } from '@/lib/turso';
 import Header from '@/components/Header';
 import CatalogClient from './CatalogClient';
+import WhatsAppButton from '@/components/WhatsAppButton';
 
 // ✅ Generación dinámica de metadata para SEO
 export async function generateMetadata({
@@ -107,7 +108,7 @@ async function getVisitorCount() {
   try {
     await turso.execute('UPDATE page_views SET view_count = view_count + 1 WHERE id = 1');
     const result = await turso.execute('SELECT view_count FROM page_views WHERE id = 1');
-    return result.rows[0]?.view_count || 0;
+    return Number(result.rows[0]?.view_count) || 0; // ✅ Forzar conversión a number
   } catch (error) {
     console.error('Error al obtener contador:', error);
     return 0;
@@ -125,34 +126,34 @@ async function getProductsWithImages(query: string, category: string, filter: st
     function getAllSubcategoryNames(categoryName: string): string[] {
       const catRecord = allCats.find((c: any) => c.name === categoryName);
       if (!catRecord) return [categoryName];
-      
+
       const names: string[] = [categoryName];
-      
+
       // Buscar hijos directos
       const directChildren = allCats.filter((c: any) => c.parent_id === catRecord.id);
-      
+
       // Para cada hijo, obtener sus subcategorías recursivamente
       for (const child of directChildren) {
         if (child.name) { // ✅ Validar que child.name no sea null
           names.push(...getAllSubcategoryNames(String(child.name))); // ✅ Convertir a string
         }
       }
-      
+
       return names;
     }
 
     let sql = 'SELECT * FROM catalog WHERE is_active = 1';
     let args: (string | number)[] = [];
 
-    if (query) { 
-      sql += ' AND (name LIKE ? OR description LIKE ?)'; 
-      args.push(`%${query}%`, `%${query}%`); 
+    if (query) {
+      sql += ' AND (name LIKE ? OR description LIKE ?)';
+      args.push(`%${query}%`, `%${query}%`);
     }
 
     // ✅ Buscar TODA la jerarquía de categorías (padre + hijos + nietos)
     if (category && category !== 'Todas') {
       const allCategoryNames = getAllSubcategoryNames(category);
-      
+
       if (allCategoryNames.length === 1) {
         sql += ' AND category = ?';
         args.push(allCategoryNames[0]);
@@ -165,7 +166,7 @@ async function getProductsWithImages(query: string, category: string, filter: st
     if (filter === 'featured') { sql += ' AND is_featured = 1'; }
     else if (filter === 'day') { sql += ' AND offer_type = ?'; args.push('day'); }
     else if (filter === 'week') { sql += ' AND offer_type = ?'; args.push('week'); }
-    
+
     sql += ' ORDER BY created_at DESC';
 
     const productsResult = await turso.execute({ sql, args });
@@ -292,66 +293,8 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
         </Link>
       </div>
 
-      <div style={{
-        marginTop: '40px',
-        padding: '16px 24px',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85))',
-        border: '2px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: '12px',
-        textAlign: 'center',
-        fontSize: '0.8rem',
-        color: '#666',
-        maxWidth: '450px',
-        margin: '40px auto 40px auto',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1) inset',
-        position: 'relative',
-        overflow: 'hidden',
-        transform: 'translateZ(0)',
-        perspective: '1000px'
-      }}>
-        <div style={{
-          position: 'absolute',
-          top: '0',
-          left: '0',
-          right: '0',
-          height: '3px',
-          background: 'linear-gradient(90deg, transparent, #00ff00, #39ff14, transparent)',
-          boxShadow: '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #39ff14',
-          animation: 'scanline-clockwise 3s linear infinite',
-        }} />
-
-        <div style={{
-          position: 'absolute',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          height: '3px',
-          background: 'linear-gradient(90deg, transparent, #9d00ff, #bf00ff, transparent)',
-          boxShadow: '0 0 10px #9d00ff, 0 0 20px #9d00ff, 0 0 30px #bf00ff',
-          animation: 'scanline-counterclockwise 3s linear infinite',
-        }} />
-
-        <span style={{ position: 'relative', zIndex: '1' }}>
-          Eres el visitante nro. <strong style={{ color: '#333', fontSize: '0.9rem' }}>{visitorCount.toLocaleString()}</strong> · Gracias por elegirnos 💚
-        </span>
-
-        <style>{`
-          @keyframes scanline-clockwise {
-            0% { transform: translateX(-100%) rotate(0deg); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateX(100%) rotate(360deg); opacity: 0; }
-          }
-          @keyframes scanline-counterclockwise {
-            0% { transform: translateX(100%) rotate(0deg); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateX(-100%) rotate(-360deg); opacity: 0; }
-          }
-          .info-button:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 8px 25px rgba(157, 0, 255, 0.5) !important;
-          }
-        `}</style>
-      </div>
+      {/* ✅ REEMPLAZADO: El contador viejo se eliminó y ahora usamos el botón flotante con el número real */}
+      <WhatsAppButton visitorCount={visitorCount} />
 
     </div>
   );
@@ -359,4 +302,3 @@ export default async function CatalogPage(props: { searchParams: Promise<{ q?: s
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-// Build forzado: 2026-09-01 17:27:35
